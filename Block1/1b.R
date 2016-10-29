@@ -1,63 +1,66 @@
-library(zoo)
-
-monkeyFun <- function(string, nSampleSize) {
-  a <- proc.time()
+fnInfiniteMonkey <- function(strTarget) {
+  # This function is a simulation of the infinite monkey theorem. It generates a
+  # random sequence of letters until a given target string appears.
+  # 
+  # Args:
+  #   strTarget: The target string which should be matched
+  #   
+  # Returns:
+  #   The number of generated letters until the target string appeared
   
-  # split given string to vector of chars
-  vCharChain <- strsplit(string, "")[[1]]
-  # store char chain size
-  nCharChainSize <- length(vCharChain)
+  # Split target string to vector of chars
+  vecCharTarget <- strsplit(strTarget, "")[[1]]
+  # Get the number of letters in target string
+  nTarget <- length(vecCharTarget)
   
-  # set helping variables for counting loop iterations
-  # and vector to store overlapping parts if window
-  nCounter <- 0
-  overlap <- NULL
+  # Set counting variable (at least nTarget letters needed)
+  nCounter <- nTarget
   
-  # take time in the beginning
-  t0 <- proc.time()
+  # Switch on the monkey (i.e. sample the first nTarget letters)
+  vecLetterSeqTail <- sample(letters, nTarget, replace = TRUE)
   
-  # while loop, which iterates as long as the string was randonmly created
-  while(TRUE) {
-    # counts the number of steps necessary for finding
-    nCounter <- nCounter + 1
+  # Let the monkey type until target string was written
+  while(!identical(vecCharTarget, vecLetterSeqTail)) {
     
-    # save a random sample of letters and add overlap from iteration before
-    randomLetters <- c(overlap, sample(letters, nSampleSize, replace = TRUE))
-    
-    # calculate overlap to add it to chain in next iteration
-    overlap <- tail(randomLetters, nCharChainSize)
-    
-    # search for matches
-    matches <- rollapply(randomLetters, nCharChainSize, identical, vCharChain)
-    
-    if(sum(matches) >= 1) {
-      # take time in the end
-      t1 <- proc.time()
-      
-      # take position of first hit
-      firstHit <- which(matches)[1]
-      
-      # calculate number of necessary random letters
-      nRandomsNecessary <- nCounter*nSampleSize - (nSampleSize-firstHit)
-      
-      # break loop and return number of necessary random letters
-      return(list(randomLetters = nRandomsNecessary, timeElapsed = (t1-t0)[[3]]))
+    # Let the monkey hit another key (sample next letter) and store in 
+    # vecLetterSeqTail (first in, first out)
+    if (nTarget == 1) {
+      vecLetterSeqTail <- sample(letters, 1)
+    } else {
+      vecLetterSeqTail <- c(vecLetterSeqTail[2:nTarget], 
+                            sample(letters, 1, replace = TRUE))
     }
+
+    # Count
+    nCounter <- nCounter + 1
   }
+  
+  # Return the length of the generated letter sequence
+  return(nCounter)
 }
 
 
-evaluateMonkey <- function(string, nSampleSize, nSteps) {
-  vRandomLetters <- NULL
-  for(i in 1:nSteps) {
-    result <- monkeyFun(string, nSampleSize)
-    vRandomLetters <- c(vRandomLetters, result$randomLetters)
-  }
-  hist(vRandomLetters,
-       xlab = "Number of random values necessary",
-       main = paste("Histogram of necessary random values to have '", string, "'", sep = ""))
-  abline(v = mean(vRandomLetters), col = "red")
+# Repeat the infinite monkey experiment
+nSamples <- 1000
+
+# Set a target string
+strTarget <- "hi"
+
+# Prepare vector for resulting lengths of letter sequences
+vecLetterSeqLen <- integer(nSamples)
+
+# RELEASE THE MONKEYS! (... one after another)
+for (i in 1:nSamples) {
+  vecLetterSeqLen[i] <- fnInfiniteMonkey(strTarget)
 }
 
-evaluateMonkey("abc", nSampleSize = 10000, nSteps = 100)
+# Compute mean with each new sample
+vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
 
+# Plot means
+plot(1:nSamples, vecLetterSeqLenMeans,
+     xlab = "Number of samples",
+     ylab = "Mean length of letter sequence up to sample",
+     pch = 4,
+     cex = 0.8)
+abline(vecLetterSeqLenMeans[nSamples], 0)
