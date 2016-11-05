@@ -39,28 +39,51 @@ fnInfiniteMonkey <- function(strTarget) {
   return(nCounter)
 }
 
-
-# Repeat the infinite monkey experiment
-nSamples <- 1000
-
-# Set a target string
-strTarget <- "hi"
-
-# Prepare vector for resulting lengths of letter sequences
-vecLetterSeqLen <- integer(nSamples)
-
-# RELEASE THE MONKEYS! (... one after another)
-for (i in 1:nSamples) {
-  vecLetterSeqLen[i] <- fnInfiniteMonkey(strTarget)
+fnEvaluateMonkey <- function(strTarget, nSamples) {
+  # This function runs the inifinite monkey multiple times with a given
+  # string and evaluates the outcome with some plots
+  # 
+  # Args:
+  #   strTarget: The target string which should be matched
+  #   nSamples:  Number of samples, which should be used for evaluation
+  #   
+  # Returns:
+  #   -
+  
+  # Prepare vector for resulting lengths of letter sequences
+  vecLetterSeqLen <- integer(nSamples)
+  
+  # RELEASE THE MONKEYS! (... one after another)
+  for (i in 1:nSamples) {
+    vecLetterSeqLen[i] <- fnInfiniteMonkey(strTarget)
+  }
+  
+  # Compute mean with each new sample
+  vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
+  
+  # Split plot panel
+  par(mfrow = c(1,2), oma = c(0,0,2,0))
+  
+  # Plot histogram
+  hist(vecLetterSeqLen,
+       breaks = seq(min(vecLetterSeqLen), max(vecLetterSeqLen), length = 50),
+       xlab = "Length of letter sequence",
+       main = NULL)
+  abline(v = vecLetterSeqLenMeans[nSamples], col = "red")
+  
+  # Plot means
+  plot(1:nSamples, vecLetterSeqLenMeans,
+       xlab = "Number of samples",
+       ylab = "Mean length of letter sequence up to sample",
+       pch = 4,
+       cex = 0.8)
+  abline(h = vecLetterSeqLenMeans[nSamples], col = "red")
+  
+  # Set title
+  title(paste("Target string '",strTarget, "'",
+              ", Mean length of letter sequence: ",
+              vecLetterSeqLenMeans[nSamples], sep = ""),
+        outer = TRUE)
 }
 
-# Compute mean with each new sample
-vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
-
-# Plot means
-plot(1:nSamples, vecLetterSeqLenMeans,
-     xlab = "Number of samples",
-     ylab = "Mean length of letter sequence up to sample",
-     pch = 4,
-     cex = 0.8)
-abline(vecLetterSeqLenMeans[nSamples], 0)
+fnEvaluateMonkey("ab", 100)
