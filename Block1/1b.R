@@ -87,3 +87,6 @@ fnEvaluateMonkey <- function(strTarget, nSamples) {
 }
 
 fnEvaluateMonkey("ab", 100)
+
+# reset plot parameters
+dev.off()
