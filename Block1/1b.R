@@ -62,7 +62,7 @@ fnEvaluateMonkey <- function(strTarget, nSamples) {
   vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
   
   # Split plot panel
-  par(mfrow = c(1,2), oma = c(0,0,2,0))
+  par(mfrow = c(1,2))
   
   # Plot histogram
   hist(vecLetterSeqLen,
@@ -83,10 +83,7 @@ fnEvaluateMonkey <- function(strTarget, nSamples) {
   title(paste("Target string '",strTarget, "'",
               ", Mean length of letter sequence: ",
               vecLetterSeqLenMeans[nSamples], sep = ""),
-        outer = TRUE)
+        outer = TRUE, line = -2)
 }
 
 fnEvaluateMonkey("ab", 100)
-
-# reset plot parameters
-dev.off()

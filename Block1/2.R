@@ -1,162 +1,203 @@
-# 1. ###########################################################################
-
-# Monte-Carlo approximation of pi
-fnMcPi <- function(n, lPlotPoints = 10000) {
-  # Create random uniform values for x and y axis
-  x1 <- runif(n, min = -1, max = 1)
-  x2 <- runif(n, min = -1, max = 1)
+fnErrorEstimation <- function(X, fnRandom, m = 100,
+                    fnValueCalculation = function(x) {x}) {
+  # Calculate values
+  X = ifelse(class(X) == "list", X, list(X))
+  x <- do.call(fnValueCalculation, X)
   
-  # Indicate which values are inside of the circle and which are not
-  # Multiply by 4 to have 1 in sum again (area size of 2*2 = 4)
-  indicator <- ((x1^2 + x2^2) <= 1) * 4
+  # Save length of sample in variable
+  n <- length(x)
   
-  # Check if points to plot are lower than sample size
-  # If so, reduce sample size
-  if(lPlotPoints > n) {
-    lPlotPoints <- n
+  ################ Error estimation using central limit theorem ################
+  
+  # Compute mean with each new sample
+  vecMeans <- cumsum(x) / (1:n)
+  
+  # Compute confidence band
+  vecConf <- list(top = NULL, bottom = NULL)
+  for(i in 1:n) {
+    vecConf$top[i] <- vecMeans[n] + 1.96*sqrt(var(x[1:i])/i)
+    vecConf$bottom[i] <- vecMeans[n] - 1.96*sqrt(var(x[1:i])/i)
   }
   
-  # Define reduced values for plotting
-  s1 <- x1[1:lPlotPoints]
-  s2 <- x2[1:lPlotPoints]
+  # Plot means against number of samples
+  plot(1:n, vecMeans,
+       xlab = "Number of Monte-Carlo samples",
+       ylab = "Monte-Carlo approximation",
+       ylim = c(min(na.omit(vecConf$bottom), vecMeans),
+                max(na.omit(vecConf$top), vecMeans)),
+       pch = 4, cex = 0.8)
   
+  # Plot overall mean
+  abline(vecMeans[n], 0, col = "red")
+  
+  # Plot confidence band
+  lines(vecConf$top, col = "blue")
+  lines(vecConf$bottom, col = "blue")
+  
+  ##################### Error estimation using simulation #####################
+  
+  # Generate n x m matrix with random values
+  mSampleMatrix <- NULL
+  for(i in 1:m) {
+    X <- fnRandom(n)
+    X = ifelse(class(X) == "list", X, list(X))
+    mSampleMatrix <- cbind(mSampleMatrix, do.call(fnValueCalculation, X))
+  }
+  
+  # Calculate confidence band
+  mEst <- apply(mSampleMatrix, 2, cumsum)/(1:n)
+  mConf <- apply(mEst, 1, quantile, c(.025, .975))
+  
+  # Plot upper and lower confidence bound
+  lines(mConf[1,], col = "green")
+  lines(mConf[2,], col = "green")
+  
+  # Add legend for all lines
+  legend("topright", c("Approximation of pi", "Error estimation (CLT)",
+                       "Error estimation (Simulation)"), 
+         lty = 1, col=c("red", "blue", "green"), bty="n", cex=.75)
+}
+
+# 1. ###########################################################################
+
+# Monte Carlo approximation of pi
+
+fnPiRandom <- function(n) {
+  # Create random uniform values for x and y axis
+  return(list(x1 = runif(n, min = -1, max = 1),
+              x2 = runif(n, min = -1, max = 1)))
+}
+
+fnPiIndicator <- function(x1, x2) {
   # Indicate which values are inside of the cirelce and which are outside
-  inside <- ((s1^2 + s2^2) <= 1)
+  return(((x1^2 + x2^2) <= 1)*4)
+}
+
+fnPiPlotCircle <- function(x1, x2) {
+  inside <- as.logical(fnPiIndicator(x1, x2))
   outside <- !inside
   
-  # plot points inside and outside
-  plot(s1[inside], s2[inside], pch = 20, cex = 0.5, col = "red",
-       xlab = "x", ylab = "y",
-       main = paste("Monte-Carlo simulation with sample size of ", n,
-                    " results in pi value of ", mean(indicator), sep = ""))
-  points(s1[outside], s2[outside], pch = 20, cex = 0.5, col = "blue")
+  # Plot points inside and outside
+  plot(x1[inside], x2[inside], pch = 20, cex = 0.5, col = "red",
+       xlab = "x", ylab = "y", xlim = c(-1,1), ylim = c(-1,1))
+  points(x1[outside], x2[outside], pch = 20, cex = 0.5, col = "blue")
   
-  # plot circle points to mark the border
+  # Plot circle points to mark the border
   points(sin(1:10000), cos(1:10000), pch = 20, cex = 0.2, col = "black")
-  return(list(s1,s2))
 }
 
-X <- fnMcPi(1000000)
+# Split plot panel
+par(mfrow = c(1,2))
 
-# Compute mean with each new sample
-vecMeans <- cumsum(X[[1]]) / (1:length(X[[1]]))
+# Create random values
+X <- fnPiRandom(2000)
 
-# Plot means against number of samples
-plot(1:length(X[[1]]), vecMeans,
-     xlab = "Number of Monte-Carlo samples",
-     ylab = "Monte-Carlo approximation",
-     pch = 4,
-     cex = 0.8)
-abline(vecMeans[length(X[[1]])], 0, col = "red")
+# Plot random values and circle
+fnPiPlotCircle(X$x1, X$x2)
 
-vecVariances <- NULL
-for(i in 1:length(X[[1]])) {
-  vecVariances[i] <- var(X[[1]][1:i])
-}
+# Run error estimation
+fnErrorEstimation(X, fnPiRandom, fnValueCalculation = fnPiIndicator)
 
-cTop <- vecMeans[length(X[[1]])] - 2*sqrt(length(X[[1]])*vecVariances)
-#cBottom <- 
-lines(cTop, col = "red")
-
+# Set title for plots
+title(paste("Monte-Carlo simulation with sample size of ", length(X$x1),
+            " results in pi value of ", mean(fnPiIndicator(X$x1, X$x2)), sep = ""),
+      outer = TRUE,  line = -2)
 
 # 2. ###########################################################################
 
+# Set plot panel to one plot
+par(mfrow = c(1,1))
+
 # Using pnorm
-1- pnorm(20)
+print(1 - pnorm(20))
 
 # Naive Monte-Carlo approximation
 n <- 1000000
 x <- rnorm(n)
 indicator <- (x > 20) * 1
-result <- mean(indicator)
+print(mean(indicator))
 
 # Monte-Carlo integration after substitution Y := 1/X
-n <- 10000
-u <- runif(n, min = 0, max = 1/20)
-g <- (1/20) * (1/sqrt(2*pi)) * exp(-1/(2*(u^2))) * (1/(u^2))
-result <- mean(g)
 
-# Compute mean with each new sample
-vecMeans <- cumsum(g) / (1:n)
-
-# Plot means against number of samples
-plot(1:n, vecMeans,
-     xlab = "Number of Monte-Carlo samples",
-     ylab = "Monte-Carlo approximation",
-     pch = 4,
-     cex = 0.8)
-abline(vecMeans[n], 0, col = "red")
-
-# Plot MSE against number of samples (inefficient implementation...)
-MSE <- rep(0, n)
-for (i in 1:n) {
-  MSE[i] <- mean((g[1:i] - vecMeans[i])^2)
+fnProbRandom <- function(n) {
+  # Create random uniform values
+  return(runif(n, min = 0, max = 1/20))
 }
 
-plot(1:n, MSE,
-     xlab = "Number of Monte-Carlo samples",
-     ylab = "Mean Squared Error",
-     type = "l",
-     cex = 0.8)
+fnProbG <- function(u) {
+  return((1/20) * (1/sqrt(2*pi)) * exp(-1/(2*(u^2))) * (1/(u^2)))
+}
 
-# TODO
-# error estimation
-# implement as a function
+# Generate random values
+u <- fnProbRandom(10000)
+
+# Calculate values with function g
+g <- fnProbG(u)
+
+# Run error estimation
+fnErrorEstimation(u, fnProbRandom, fnValueCalculation = fnProbG)
+
+# Set title for plot
+title(paste("Monte-Carlo simulation with sample size of ", length(u),
+            " results in P value of ", mean(g), sep = ""),
+      outer = TRUE,  line = -2)
 
 # 3. ###########################################################################
 
-# Using R's integrate function
-h1 <- function(x) {
+# Set plot panel to two plots
+par(mfrow = c(1,2))
+
+fnIntRandom <- function(n) {
+  # Generate random uniform values
+  return(runif(n))
+}
+
+fnIntH1 <- function(x) {
   return((cos(50*x)+sin(20*x))^2)
 }
-resultInt <- integrate(h1, 0, 1)
 
-# Using Monte-Carlo integration
-n <- 1000000
-u <- runif(n)
-resultMC <- mean(h1(u))
-
-# TODO
-# error estimation and compare with error of integrate function
-
-# Using R's integrate function
-h2 <- function(x) {
+fnIntH2 <- function(x) {
   return(sin(1/x))
 }
-resultInt <- integrate(h2, 0, 1)
+
+# Using R's integrate function
+print(integrate(fnIntH1, 0, 1))
+print(integrate(fnIntH2, 0, 1))
 
 # Using Monte-Carlo integration
-n <- 1000000
-u <- runif(n)
-resultMC <- mean(h2(u))
+u <- fnIntRandom(10000)
+h1 <- fnIntH1(u)
+h2 <- fnIntH2(u)
 
-# TODO
-# error estimation and compare with error of integrate function
+# Run error estimation
+fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH1)
+title(paste("h1: ", length(u), " samples, result: ",
+            round(mean(h1), 3), sep = ""))
+fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH2)
+title(paste("h2: ", length(u), "samples, result ",
+            round(mean(h2), 3), sep = ""))
 
+## TODO: Compare errors of integrate function with monte carlo
 
 # 4. ###########################################################################
 
-n <- 1000
-areas <- rep(0, n)
+# Set plot panel to one plot
+par(mfrow = c(1,1))
 
-for (i in 1:n) {
-  x <- runif(3)
-  y <- runif(3)
-  areas[i] <- abs(0.5 * det(matrix(c(x, y, c(1, 1, 1)), nrow = 3, ncol = 3)))
+fnAreaRandom <- function(n) {
+  areas <- NULL
+  for (i in 1:n) {
+    x <- runif(3)
+    y <- runif(3)
+    areas[i] <- abs(0.5 * det(matrix(c(x, y, c(1, 1, 1)), nrow = 3, ncol = 3)))
+  }
+  return(areas)
 }
 
-result <- mean(areas)
+# Generate random triangle area values
+A <- fnAreaRandom(1000)
 
-# Compute mean with each new sample
-vecMeans <- cumsum(areas) / (1:n)
-
-# Plot means against number of samples
-plot(1:n, vecMeans,
-     xlab = "Number of Monte-Carlo samples",
-     ylab = "Monte-Carlo approximation",
-     pch = 4,
-     cex = 0.8)
-abline(vecMeans[n], 0, col = "red")
-
-# TODO
-# error estimation
+# Run error estimation
+fnErrorEstimation(A, fnAreaRandom)
+title(paste("Monte-Carlo simulation with sample size of ", length(A),
+            " results in area of ", round(mean(A), 4), sep = ""))
