@@ -1,5 +1,22 @@
 fnErrorEstimation <- function(X, fnRandom, m = 100,
                     fnValueCalculation = function(x) {x}) {
+  # This function is doing the error calculation, plotting all results,
+  # generating and plotting confidence band.
+  # There are two different methods in use:
+  #  * Using central limit theorem
+  #  * Using simulation
+  # 
+  # Args:
+  #   X:        Contains the data, can be raw random or already precalculated
+  #   fnRandom: Function to use in specific case to generate random values
+  #   m:        Number of MC-Simulations, has default value
+  #   fnValueCalculation:
+  #             If values should be computed in any way, this function is doing
+  #             it. If no value is given, just use values X as they are (default)
+  #   
+  # Returns:
+  #   Nothing, just prints the plot
+  
   # Calculate values
   X = ifelse(class(X) == "list", X, list(X))
   x <- do.call(fnValueCalculation, X)
@@ -63,17 +80,43 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
 # Monte Carlo approximation of pi
 
 fnPiRandom <- function(n) {
-  # Create random uniform values for x and y axis
+  # Generates random uniform values for x (x1) and y (x2) axis
+  # 
+  # Args:
+  #   n: Number of samples
+  #   
+  # Returns:
+  #   A list of x1 and x2 random values with size of n
   return(list(x1 = runif(n, min = -1, max = 1),
               x2 = runif(n, min = -1, max = 1)))
 }
 
 fnPiIndicator <- function(x1, x2) {
-  # Indicate which values are inside of the cirelce and which are outside
+  # Indicate which values are inside of the circle with radius 1
+  # and which are outside
+  # 
+  # Args:
+  #   x1: Random values of x-axis
+  #   x2: Random values of y-axis
+  #   
+  # Returns:
+  #   A vector containing values 0, if point is outside of circle, and 4, 
+  #   if point is inside of circle with radius 1
   return(((x1^2 + x2^2) <= 1)*4)
 }
 
 fnPiPlotCircle <- function(x1, x2) {
+  # Plots all random points.
+  # Points which are inside are red, points outside blue and some circle-points
+  # are calculated, to mark the border in black
+  # 
+  # Args:
+  #   x1: Random values of x-axis
+  #   x2: Random values of y-axis
+  #   
+  # Returns:
+  #   Nothing, just prints the plot
+  
   inside <- as.logical(fnPiIndicator(x1, x2))
   outside <- !inside
   
@@ -120,11 +163,24 @@ print(mean(indicator))
 # Monte-Carlo integration after substitution Y := 1/X
 
 fnProbRandom <- function(n) {
-  # Create random uniform values
+  # Generate random uniform values between 0 and 1/20
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n with values between 0 and 1/20
   return(runif(n, min = 0, max = 1/20))
 }
 
 fnProbG <- function(u) {
+  # Calculate values of function g
+  # 
+  # Args:
+  #   u: Random values
+  #   
+  # Returns:
+  #   Result of function g, using random values u as argument
   return((1/20) * (1/sqrt(2*pi)) * exp(-1/(2*(u^2))) * (1/(u^2)))
 }
 
@@ -149,14 +205,34 @@ par(mfrow = c(1,2))
 
 fnIntRandom <- function(n) {
   # Generate random uniform values
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n with values between 0 and 1
   return(runif(n))
 }
 
 fnIntH1 <- function(x) {
+  # Calculate values of function h1
+  # 
+  # Args:
+  #   x: Random values
+  #   
+  # Returns:
+  #   Result of function h1, using random values x as argument
   return((cos(50*x)+sin(20*x))^2)
 }
 
 fnIntH2 <- function(x) {
+  # Calculate values of function h2
+  # 
+  # Args:
+  #   x: Random values
+  #   
+  # Returns:
+  #   Result of function h2, using random values x as argument
   return(sin(1/x))
 }
 
@@ -185,12 +261,26 @@ title(paste("h2: ", length(u), "samples, result ",
 par(mfrow = c(1,1))
 
 fnAreaRandom <- function(n) {
+  # Generate three random uniform values between 0 and 1 for x and y
+  # respectively. The function directly calculates the area of triangle
+  # between these three random points.
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n containing area values of random triangles
+  
   areas <- NULL
   for (i in 1:n) {
+    # Generate random values for x- and y-axis
     x <- runif(3)
     y <- runif(3)
+    # Calculate area of trinangle and add to vector
     areas[i] <- abs(0.5 * det(matrix(c(x, y, c(1, 1, 1)), nrow = 3, ncol = 3)))
   }
+  
+  # Return vector of random triangle areas
   return(areas)
 }
 
