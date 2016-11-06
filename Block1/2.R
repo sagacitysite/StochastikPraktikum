@@ -29,6 +29,8 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
   # Compute mean with each new sample
   vecMeans <- cumsum(x) / (1:n)
   
+  
+  # TODO: use quantile function? (see below)
   # Compute confidence band
   vecConf <- list(top = NULL, bottom = NULL)
   for(i in 1:n) {
