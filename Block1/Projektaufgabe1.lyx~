@@ -290,7 +290,7 @@ status open
 
 
 \backslash
-begin{align*}
+begin{align}
 \end_layout
 
 \begin_layout Plain Layout
@@ -344,7 +344,7 @@ mathbbm{1}_{[-1,1]}(x_2)
 
 
 \backslash
-end{align*}
+end{align}
 \end_layout
 
 \end_inset

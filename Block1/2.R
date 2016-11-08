@@ -18,7 +18,7 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
   #   Nothing, just prints the plot
   
   # Calculate values
-  X = ifelse(class(X) == "list", X, list(X))
+  if(class(X) != "list") { X = list(X) }
   x <- do.call(fnValueCalculation, X)
   
   # Save length of sample in variable
@@ -29,17 +29,16 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
   # Compute mean with each new sample
   vecMeans <- cumsum(x) / (1:n)
   
-  
-  # TODO: use quantile function? (see below)
+  # NOTE: t-distribution
   # Compute confidence band
   vecConf <- list(top = NULL, bottom = NULL)
   for(i in 1:n) {
-    vecConf$top[i] <- vecMeans[n] + 1.96*sqrt(var(x[1:i])/i)
-    vecConf$bottom[i] <- vecMeans[n] - 1.96*sqrt(var(x[1:i])/i)
+    vecConf$top[i] <- vecMeans[i] + 1.96*sqrt(var(x[1:i])/i)
+    vecConf$bottom[i] <- vecMeans[i] - 1.96*sqrt(var(x[1:i])/i)
   }
   
   # Plot means against number of samples
-  plot(1:n, vecMeans,
+  plot(1:n, vecMeans, type="l",
        xlab = "Number of Monte-Carlo samples",
        ylab = "Monte-Carlo approximation",
        ylim = c(min(na.omit(vecConf$bottom), vecMeans),
@@ -59,7 +58,7 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
   mSampleMatrix <- NULL
   for(i in 1:m) {
     X <- fnRandom(n)
-    X = ifelse(class(X) == "list", X, list(X))
+    if(class(X) != "list") { X = list(X) }
     mSampleMatrix <- cbind(mSampleMatrix, do.call(fnValueCalculation, X))
   }
   
