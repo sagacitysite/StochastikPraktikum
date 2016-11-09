@@ -1,0 +1,29 @@
+---
+title: "Projektaufgaben Block 1"
+author: "Carlo Michaelis, <Matr.-Nr.>; Lukas Ruff, 572521"
+date: "15 November 2016"
+documentclass: article
+fontsize: 11pt
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    keep_tex: true
+    fig_caption: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Infinite-Monkey-Theorem
+
+
+# Monte-Carlo-Approximationen
+
+
+# Eine (naive) Datenanalyse
+
+
+# Normalverteilung
