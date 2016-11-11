@@ -39,7 +39,7 @@ P \left( \limsup_{n \to \infty} A_n \right) = 1.
 $$
 \end{satz}
 
-Um das Infinite-Monkey-Theorem formulieren zu können, modellieren wir zunächst einen geeigneten Wahrscheinlichkeitsraum. Definiere dazu ein endliches Alphabet $\Omega := \{\text{a, b, c, } \ldots \}$, d.h.\ $\Omega$ ist eine Menge von Zeichen (Buchstaben, Satzzeichen, Zahlen, etc.\) mit $\vert \Omega \vert = n$ für ein $n \in \mathbb{N}$. Setze weiter als zugehörige $\sigma$-Algebra die Potenzmenge $\mathcal{F} := \mathcal{P}(\Omega)$ und definiere das Wahrscheinlichkeitsmaß $P$ als diskrete Gleichverteilung, d.h.\ $P(A) = \frac{\vert A \vert}{\vert \Omega \vert} = \frac{\vert A \vert}{n}$ für $A \in \mathcal{F}$. Somit modelliert $(\Omega, \mathcal{F}, P)$ das Ziehen von Zeichen aus einem Alphabet mit gleicher Wahtscheinlichkeit. Den Übergang zu Zeichenketten (Folgen von Zeichen aus dem Alphabet $\Omega$) können wir nun mittels des (stets existierenden und eindeutigen) Produktraumes $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ mit $\mathbb{P} := P^{\mathbb{N}}$ bewerkstelligen. Hiermit können wir das Infinite-Monkey-Theorem wie folgt formulieren und beweisen: \newline
+Um das Infinite-Monkey-Theorem formulieren zu können, modellieren wir zunächst einen geeigneten Wahrscheinlichkeitsraum. Definiere dazu ein endliches Alphabet $\Omega := \{\text{a, b, c, } \ldots \}$, d.h.\ $\Omega$ ist eine Menge von Zeichen (Buchstaben, Satzzeichen, Zahlen, etc.\) mit $\vert \Omega \vert = n$ für ein $n \in \mathbb{N}$. Setze weiter die zugehörige $\sigma$-Algebra als Potenzmenge $\mathcal{F} := \mathcal{P}(\Omega)$ und definiere das Wahrscheinlichkeitsmaß $P$ als diskrete Gleichverteilung, d.h.\ $P(A) = \frac{\vert A \vert}{\vert \Omega \vert} = \frac{\vert A \vert}{n}$ für $A \in \mathcal{F}$. Somit modelliert $(\Omega, \mathcal{F}, P)$ das Ziehen von Zeichen aus einem Alphabet mit gleicher Wahtscheinlichkeit. Den Übergang zu Zeichenketten (Folgen von Zeichen aus dem Alphabet $\Omega$) können wir nun mittels des (stets existierenden und eindeutigen) Produktraumes $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ mit $\mathbb{P} := P^{\mathbb{N}}$ bewerkstelligen. Hiermit können wir das Infinite-Monkey-Theorem wie folgt formulieren und beweisen: \newline
 
 \begin{satz}[Infinite-Monkey-Theorem]
 Betrachte den oben definierten Produktraum $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ von (unendlich langen) Zeichenketten und sei $s = (s_1, \ldots, s_m) \in \Omega^m$ eine beliebige Zeichenkette der Länge $m$ (String). Definiere zu $k \in \mathbb{N}$ das Ereignis
@@ -53,27 +53,27 @@ $$
 \end{satz}
 
 \begin{proof}[Beweis]
-Es sei $\pi_i: \Omega^{\mathbb{N}} \to \Omega, (\omega_j)_{j \in \mathbb{N}} \mapsto \omega_i$ die $i$-te Koordinatenprojektion auf dem kartesischen Produkt $\Omega^{\mathbb{N}}$. Dann folgt für $j \in \mathbb{N}_0$
+Es sei $\pi_i: \Omega^{\mathbb{N}} \to \Omega, (\omega_j)_{j \in \mathbb{N}} \mapsto \omega_i$ die $i$-te Koordinatenprojektion auf dem kartesischen Produkt $\Omega^{\mathbb{N}}$. Weiter sei $(I_j)_{j \in \mathbb{N}_0}$ eine Zerlegung von $\mathbb{N}$ in disjunkte Blöcke der Länge $m$, d.h.\ 
+$$
+\mathbb{N} = \bigcup_{j \in \mathbb{N}_0} I_j \qquad \text{mit} \qquad I_j := \bigcup_{k = 1}^m \{jm+k\}, \, j \in \mathbb{N}_0.
+$$
+Dann folgt für $j \in \mathbb{N}_0$
 $$
 \begin{aligned}
 \mathbb{P}(A_{jm+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{jm+1} = s_1, \ldots, \omega_{(j+1)m} = s_m \right\} \right) \\
-&= \mathbb{P}\left( \pi_{jm+1}^{-1}(\{s_1\}) \cap \ldots \cap \pi_{(j+1)m}^{-1}(\{s_m\}) \right) \\
-&= \prod_{i=1}^m P(\{s_i\}) = \left(\frac{1}{n} \right)^m,
+&= \mathbb{P}\left( \bigcap_{k = 1}^m \pi_{jm+k}^{-1}(\{s_k\}) \right) \\
+&= \prod_{k=1}^m P(\{s_k\}) = \left(\frac{1}{n} \right)^m,
 \end{aligned}
 $$
-da $\mathbb{P} = P^{\mathbb{N}}$ Produktmaß ist. Weiter folgt für $j_1 \not = j_2$
+da $\mathbb{P} = P^{\mathbb{N}}$ Produktmaß ist. Weiter folgt für $j_1, j_2 \in \mathbb{N}_0, j_1 \not = j_2$:
 $$
 \begin{aligned}
-\mathbb{P}(A_{j_1m+1} \cap A_{j_2m+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{j_1m+1} = s_1, \ldots, \omega_{(j_1+1)m} = s_m \right\} \bigcap \left\{ \omega \, : \, \omega_{j_2m+1} = s_1, \ldots, \omega_{(j_2+1)m} = s_m \right\} \right) \\
-&= \mathbb{P}\left( \left( \pi_{j_1m+1}^{-1}(\{s_1\}) \cap \ldots \cap \pi_{(j_1+1)m}^{-1}(\{s_m\}) \right) \bigcap \left( \pi_{j_2m+1}^{-1}(\{s_1\}) \cap \ldots \cap \pi_{(j_2+1)m}^{-1}(\{s_m\}) \right) \right) \\
-&= \left( \prod_{i=1}^m P(\{s_i\}) \right)^2 = \left(\frac{1}{n} \right)^m \cdot \left(\frac{1}{n} \right)^m = \mathbb{P}(A_{j_1m+1}) \cdot \mathbb{P}(A_{j_2m+1}),
+\mathbb{P}(A_{j_1m+1} \cap A_{j_2m+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{j_1m+1} = s_1, \ldots, \omega_{(j_1+1)m} = s_m \right\} \cap \left\{ \omega \, : \, \omega_{j_2m+1} = s_1, \ldots, \omega_{(j_2+1)m} = s_m \right\} \right) \\
+&= \mathbb{P}\left( \left( \bigcap_{k = 1}^m \pi_{j_1m+k}^{-1}(\{s_k\}) \right) \cap \left( \bigcap_{k = 1}^m \pi_{j_2m+k}^{-1}(\{s_k\}) \right) \right) \\
+&= \left( \prod_{k=1}^m P(\{s_k\}) \right)^2 = \left(\frac{1}{n} \right)^m \cdot \left(\frac{1}{n} \right)^m = \mathbb{P}(A_{j_1m+1}) \cdot \mathbb{P}(A_{j_2m+1}),
 \end{aligned}
 $$
-da die Indexmengen für $j_1 \not= j_2$ disjunkt sind:
-$$
-\{j_1m+1, \ldots, (j_1+1)m\} \cap \{j_2m+1, \ldots, (j_2+1)m\} = \emptyset.
-$$
-Somit ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse mit
+da $I_{j_1} \cap I_{j_2} = \emptyset$ für $j_1 \not= j_2$ gilt. Somit ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse mit
 $$
 \sum_{j \in \mathbb{N}_0} P(A_{jm+1}) = \sum_{j \in \mathbb{N}_0} \left(\frac{1}{n}\right)^m = + \infty.
 $$
