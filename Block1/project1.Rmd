@@ -3,7 +3,11 @@ title: "Projektaufgaben Block 1"
 author: "Carlo Michaelis, <Matr.-Nr.>; Lukas Ruff, 572521"
 date: "15 November 2016"
 documentclass: article
-fontsize: 11pt
+fontsize: 10pt
+header-includes:
+  - \usepackage{amsthm}
+  - \usepackage{theoremref}
+  - \newtheorem{satz}{Satz}
 output: 
   pdf_document:
     latex_engine: pdflatex
@@ -18,6 +22,63 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Infinite-Monkey-Theorem
+
+Laut dem Infinite-Monkey-Theorem wird ein Affe, der unendlich lange zufällig auf einer Schreibmaschine tippt, fast sicher jede beliebige Zeichenkette unendlich oft schreiben. Diese bildhafte Interpretation des mathematischen Satzes soll der gedanklichen Einordnung von Unendlichkeit dienen. Das Infinite-Monkey-Theorem ist ein Beispiel für die Anwendung des Lemmas von Borel-Cantelli. \newline
+
+\begin{satz}[Lemma von Borel-Cantelli] 
+Sei $(\Omega, \mathcal{F}, P)$ ein Wahrscheinlichkeitsraum.
+
+a) Ist $(A_n)_{n \in \mathbb{N}}$ eine Folge von Ereignissen mit $\sum_{n \in \mathbb{N}} P(A_n) < \infty$, so gilt 
+$$ 
+P \left( \limsup_{n \to \infty} A_n \right) = 0.
+$$
+
+b) Ist $(A_n)_{n \in \mathbb{N}}$ eine Folge von unabhängigen Ereignissen mit $\sum_{n \in \mathbb{N}} P(A_n) = + \infty$, so gilt 
+$$
+P \left( \limsup_{n \to \infty} A_n \right) = 1.
+$$
+\end{satz}
+
+Um das Infinite-Monkey-Theorem formulieren zu können, modellieren wir zunächst einen geeigneten Wahrscheinlichkeitsraum. Definiere dazu ein endliches Alphabet $\Omega := \{\text{a, b, c, } \ldots \}$, d.h.\ $\Omega$ ist eine Menge von Zeichen (Buchstaben, Satzzeichen, Zahlen, etc.\) mit $\vert \Omega \vert = n$ für ein $n \in \mathbb{N}$. Setze weiter als zugehörige $\sigma$-Algebra die Potenzmenge $\mathcal{F} := \mathcal{P}(\Omega)$ und definiere das Wahrscheinlichkeitsmaß $P$ als diskrete Gleichverteilung, d.h.\ $P(A) = \frac{\vert A \vert}{\vert \Omega \vert} = \frac{\vert A \vert}{n}$ für $A \in \mathcal{F}$. Somit modelliert $(\Omega, \mathcal{F}, P)$ das Ziehen von Zeichen aus einem Alphabet mit gleicher Wahtscheinlichkeit. Den Übergang zu Zeichenketten (Folgen von Zeichen aus dem Alphabet $\Omega$) können wir nun mittels des (stets existierenden und eindeutigen) Produktraumes $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ mit $\mathbb{P} := P^{\mathbb{N}}$ bewerkstelligen. Hiermit können wir das Infinite-Monkey-Theorem wie folgt formulieren und beweisen: \newline
+
+\begin{satz}[Infinite-Monkey-Theorem]
+Betrachte den oben definierten Produktraum $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ von (unendlich langen) Zeichenketten und sei $s = (s_1, \ldots, s_m) \in \Omega^m$ eine beliebige Zeichenkette der Länge $m$ (String). Definiere zu $k \in \mathbb{N}$ das Ereignis
+$$ 
+A_{k} := \left\{ \omega = (\omega_j)_{j \in \mathbb{N}} \in \Omega^{\mathbb{N}} \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \right\},
+$$
+d.h.\ $A_k$ ist das Ereignis, dass String $s$ der Länge $m$ an der Stelle $k$ in einer Zeichenkette beginnt. Dann ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse und es gilt
+$$
+\mathbb{P} \left( \limsup_{j \to \infty} A_{jm+1} \right) = 1.
+$$
+\end{satz}
+
+\begin{proof}[Beweis]
+Es sei $\pi_i: \Omega^{\mathbb{N}} \to \Omega, (\omega_j)_{j \in \mathbb{N}} \mapsto \omega_i$ die $i$-te Koordinatenprojektion auf dem kartesischen Produkt $\Omega^{\mathbb{N}}$. Dann folgt für $j \in \mathbb{N}_0$
+$$
+\begin{aligned}
+\mathbb{P}(A_{jm+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{jm+1} = s_1, \ldots, \omega_{(j+1)m} = s_m \right\} \right) \\
+&= \mathbb{P}\left( \pi_{jm+1}^{-1}(\{s_1\}) \cap \ldots \cap \pi_{(j+1)m}^{-1}(\{s_m\}) \right) \\
+&= \prod_{i=1}^m P(\{s_i\}) = \left(\frac{1}{n} \right)^m,
+\end{aligned}
+$$
+da $\mathbb{P} = P^{\mathbb{N}}$ Produktmaß ist. Weiter folgt für $j_1 \not = j_2$
+$$
+\begin{aligned}
+\mathbb{P}(A_{j_1m+1} \cap A_{j_2m+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{j_1m+1} = s_1, \ldots, \omega_{(j_1+1)m} = s_m \right\} \bigcap \left\{ \omega \, : \, \omega_{j_2m+1} = s_1, \ldots, \omega_{(j_2+1)m} = s_m \right\} \right) \\
+&= \mathbb{P}\left( \left( \pi_{j_1m+1}^{-1}(\{s_1\}) \cap \ldots \cap \pi_{(j_1+1)m}^{-1}(\{s_m\}) \right) \bigcap \left( \pi_{j_2m+1}^{-1}(\{s_1\}) \cap \ldots \cap \pi_{(j_2+1)m}^{-1}(\{s_m\}) \right) \right) \\
+&= \left( \prod_{i=1}^m P(\{s_i\}) \right)^2 = \left(\frac{1}{n} \right)^m \cdot \left(\frac{1}{n} \right)^m = \mathbb{P}(A_{j_1m+1}) \cdot \mathbb{P}(A_{j_2m+1}),
+\end{aligned}
+$$
+da die Indexmengen für $j_1 \not= j_2$ disjunkt sind:
+$$
+\{j_1m+1, \ldots, (j_1+1)m\} \cap \{j_2m+1, \ldots, (j_2+1)m\} = \emptyset.
+$$
+Somit ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse mit
+$$
+\sum_{j \in \mathbb{N}_0} P(A_{jm+1}) = \sum_{j \in \mathbb{N}_0} \left(\frac{1}{n}\right)^m = + \infty.
+$$
+D.h.\ mit Teil b) des Lemma von Borel-Cantelli folgt die Behauptung.
+\end{proof}
 
 
 # Monte-Carlo-Approximationen
