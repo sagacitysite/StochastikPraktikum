@@ -6,6 +6,7 @@ documentclass: article
 fontsize: 10pt
 header-includes:
   - \usepackage{amsthm}
+  - \usepackage{MnSymbol}
   - \usepackage{theoremref}
   - \newtheorem{satz}{Satz}
 output: 
@@ -22,6 +23,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Infinite-Monkey-Theorem
+
+## Formulierung und Beweis des Infinite-Monkey-Theorems
 
 Laut dem Infinite-Monkey-Theorem wird ein Affe, der unendlich lange zufällig auf einer Schreibmaschine tippt, fast sicher jede beliebige Zeichenkette unendlich oft schreiben. Diese bildhafte Interpretation des mathematischen Satzes soll der gedanklichen Einordnung von Unendlichkeit dienen. Das Infinite-Monkey-Theorem ist ein Beispiel für die Anwendung des Lemmas von Borel-Cantelli. \newline
 
@@ -42,7 +45,7 @@ $$
 Um das Infinite-Monkey-Theorem formulieren zu können, modellieren wir zunächst einen geeigneten Wahrscheinlichkeitsraum. Definiere dazu ein endliches Alphabet $\Omega := \{\text{a, b, c, } \ldots \}$, d.h.\ $\Omega$ ist eine Menge von Zeichen (Buchstaben, Satzzeichen, Zahlen, etc.\) mit $\vert \Omega \vert = n$ für ein $n \in \mathbb{N}$. Setze weiter die zugehörige $\sigma$-Algebra als Potenzmenge $\mathcal{F} := \mathcal{P}(\Omega)$ und definiere das Wahrscheinlichkeitsmaß $P$ als diskrete Gleichverteilung, d.h.\ $P(A) = \frac{\vert A \vert}{\vert \Omega \vert} = \frac{\vert A \vert}{n}$ für $A \in \mathcal{F}$. Somit modelliert $(\Omega, \mathcal{F}, P)$ das Ziehen von Zeichen aus einem Alphabet mit gleicher Wahtscheinlichkeit. Den Übergang zu Zeichenketten (Folgen von Zeichen aus dem Alphabet $\Omega$) können wir nun mittels des (stets existierenden und eindeutigen) Produktraumes $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ mit $\mathbb{P} := P^{\mathbb{N}}$ bewerkstelligen. Hiermit können wir das Infinite-Monkey-Theorem wie folgt formulieren und beweisen: \newline
 
 \begin{satz}[Infinite-Monkey-Theorem]
-Betrachte den oben definierten Produktraum $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ von (unendlich langen) Zeichenketten und sei $s = (s_1, \ldots, s_m) \in \Omega^m$ eine beliebige Zeichenkette der Länge $m$ (String). Definiere zu $k \in \mathbb{N}$ das Ereignis
+Betrachte den oben definierten Produktraum $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ von (unendlich langen) Zeichenketten und sei $s = (s_1, \ldots, s_m)^\top \in \Omega^m$ eine beliebige Zeichenkette der Länge $m \in \mathbb{N}$ (String). Definiere zu $k \in \mathbb{N}$ das Ereignis
 $$ 
 A_{k} := \left\{ \omega = (\omega_j)_{j \in \mathbb{N}} \in \Omega^{\mathbb{N}} \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \right\},
 $$
@@ -55,7 +58,7 @@ $$
 \begin{proof}[Beweis]
 Es sei $\pi_i: \Omega^{\mathbb{N}} \to \Omega, (\omega_j)_{j \in \mathbb{N}} \mapsto \omega_i$ die $i$-te Koordinatenprojektion auf dem kartesischen Produkt $\Omega^{\mathbb{N}}$. Weiter sei $(I_j)_{j \in \mathbb{N}_0}$ eine Zerlegung von $\mathbb{N}$ in disjunkte Blöcke der Länge $m$, d.h.\ 
 $$
-\mathbb{N} = \bigcup_{j \in \mathbb{N}_0} I_j \qquad \text{mit} \qquad I_j := \bigcup_{k = 1}^m \{jm+k\}, \, j \in \mathbb{N}_0.
+\mathbb{N} = \bigcupdot_{j \in \mathbb{N}_0} I_j \qquad \text{mit} \qquad I_j := \bigcup_{k = 1}^m \{jm+k\}, \, j \in \mathbb{N}_0.
 $$
 Dann folgt für $j \in \mathbb{N}_0$
 $$
@@ -68,23 +71,159 @@ $$
 da $\mathbb{P} = P^{\mathbb{N}}$ Produktmaß ist. Weiter folgt für $j_1, j_2 \in \mathbb{N}_0, j_1 \not = j_2$:
 $$
 \begin{aligned}
-\mathbb{P}(A_{j_1m+1} \cap A_{j_2m+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{j_1m+1} = s_1, \ldots, \omega_{(j_1+1)m} = s_m \right\} \cap \left\{ \omega \, : \, \omega_{j_2m+1} = s_1, \ldots, \omega_{(j_2+1)m} = s_m \right\} \right) \\
+\mathbb{P} \left( A_{j_1m+1} \cap A_{j_2m+1} \right) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{j_1m+1} = s_1, \ldots, \omega_{(j_1+1)m} = s_m \right\} \cap \left\{ \omega \, : \, \omega_{j_2m+1} = s_1, \ldots, \omega_{(j_2+1)m} = s_m \right\} \right) \\
 &= \mathbb{P}\left( \left( \bigcap_{k = 1}^m \pi_{j_1m+k}^{-1}(\{s_k\}) \right) \cap \left( \bigcap_{k = 1}^m \pi_{j_2m+k}^{-1}(\{s_k\}) \right) \right) \\
-&= \left( \prod_{k=1}^m P(\{s_k\}) \right)^2 = \left(\frac{1}{n} \right)^m \cdot \left(\frac{1}{n} \right)^m = \mathbb{P}(A_{j_1m+1}) \cdot \mathbb{P}(A_{j_2m+1}),
+&= \left( \prod_{k=1}^m P(\{s_k\}) \right)^2 = \left(\frac{1}{n} \right)^m  \left(\frac{1}{n} \right)^m = \mathbb{P}(A_{j_1m+1}) \cdot \mathbb{P}(A_{j_2m+1}),
 \end{aligned}
 $$
-da $I_{j_1} \cap I_{j_2} = \emptyset$ für $j_1 \not= j_2$ gilt. Somit ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse mit
+da $I_{j_1} \cap I_{j_2} = \emptyset$ für $j_1 \not= j_2$. Somit ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse mit
 $$
 \sum_{j \in \mathbb{N}_0} P(A_{jm+1}) = \sum_{j \in \mathbb{N}_0} \left(\frac{1}{n}\right)^m = + \infty.
 $$
 D.h.\ mit Teil b) des Lemma von Borel-Cantelli folgt die Behauptung.
 \end{proof}
 
+Es gilt also
+
+$$
+\begin{aligned}
+\mathbb{P} \left( \limsup_{j \to \infty} A_{jm+1} \right) &= \mathbb{P} \left( \bigcap_{j \in \mathbb{N}_0} \bigcup_{k \geq j} A_{km+1} \right) \\
+&= \mathbb{P} \left( \left\{ \omega \in \Omega^{\mathbb{N}}  \, : \, \forall j \in \mathbb{N}_0 \, \exists k \geq j : \omega \in A_{km+1} \right\} \right) \\
+&= \mathbb{P} \left( \left\{ \omega \in \Omega^{\mathbb{N}}  \, : \, \omega \in A_{jm+1} \text{ für unendlich viele } j \in \mathbb{N}_0 \right\} \right) = 1,
+\end{aligned}
+$$
+d.h.\ jeder beliebige String $s$ der Länge $m$ erscheint fast sicher unendlich oft.
+
+## Simulation eines Infinite-Monkey Experiments
+
+In diesem Abschnitt wollen wir das Infinite-Monkey-Theorem experimentell simulieren. Wir schreiben hierzu eine R-Funktion die solange zufällig Zeichen aus dem Alphabet $\Omega = \{a, b, \ldots, y, z\}$ mit gleicher Wahrscheinlichkeit (d.h.\ $\frac{1}{26}$) auswählt, bis eine vorgegebene Zeichenkette $s = (s_1, \ldots, s_m)^\top \in \Omega^m, m \in \mathbb{N},$ vollständig erschienen ist. Die R-Funktion gibt dann die Anzahl der bis zum Erscheinen der Zeichenkette $s$ gezogenen Zeichen zurück. Damit simulieren wir die Zufallsvariable $X: \Omega^{\mathbb{N}} \to \mathbb{N}$ mit 
+$$ 
+X(\omega) = \min\{k+m-1 \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \text{ für } k \in \mathbb{N} \}
+$$
+
+Wir haben die Funktion wie folgt in R implementiert:[^1]
+
+[^1]: Eine effizientere Implementierung wäre je Schleifendurchlauf eine größere Anzahl an Zeichen zu generieren und den resultierenden Zeichen-Block mit einem Fenster nach `strTarget` zu durchsuchen. Dabei muss beachtet werden, dass `strTarget` auch in der Überlappung zweier Blöcke erscheinen könnte. Für unsere Untersuchung ist eine vereinfachte (ineffiziente) Implementierung jedoch ausreichend. Für große Samples oder einen langen String `strTarget` sollte jedoch auf jeden Fall eine effizientere Implementierung herangezogen werden.
+
+\newpage
+```{r Infinite-Monkey}
+fnInfiniteMonkey <- function(strTarget) {
+  # This function is a simulation of the Infinite-Monkey-Theorem. It generates a
+  # random sequence of letters until a given target string appears.
+  # 
+  # Args:
+  #   strTarget: The target string which should be matched
+  #   
+  # Returns:
+  #   The number of generated letters until the target string appeared
+  
+  # Split target string to vector of chars
+  vecCharTarget <- strsplit(strTarget, "")[[1]]
+  # Get the number of letters in target string
+  nTarget <- length(vecCharTarget)
+  
+  # Set counting variable (at least nTarget letters needed)
+  nCounter <- nTarget
+  
+  # Switch on the monkey (i.e. sample the first nTarget letters)
+  vecLetterSeqTail <- sample(letters, nTarget, replace = TRUE)
+  
+  # Let the monkey type until target string was written
+  while(!identical(vecCharTarget, vecLetterSeqTail)) {
+    
+    # Let the monkey hit another key (sample next letter) and store in 
+    # vecLetterSeqTail (first in, first out)
+    if (nTarget == 1) {
+      vecLetterSeqTail <- sample(letters, 1)
+    } else {
+      vecLetterSeqTail <- c(vecLetterSeqTail[2:nTarget], 
+                            sample(letters, 1, replace = TRUE))
+    }
+    # Count
+    nCounter <- nCounter + 1
+  }
+  
+  # Return the length of the generated letter sequence
+  return(nCounter)
+}
+```
+
+```{r Infinite-Monkey Simulation, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram of letter sequence lengths and mean letter sequence length by number of samples.\\label{fig:plotMonkey}"}
+fnEvaluateMonkey <- function(strTarget, nSamples) {
+  # This function runs the Inifinite-Monkey multiple times with a given
+  # string and evaluates the outcome with some plots
+  # 
+  # Args:
+  #   strTarget: The target string which should be matched
+  #   nSamples:  Number of samples, which should be used for evaluation
+  #   
+  # Returns:
+  #   The Monte-Carlo approximation of the exptected value
+  
+  # Prepare vector for resulting lengths of letter sequences
+  vecLetterSeqLen <- integer(nSamples)
+  
+  # RELEASE THE MONKEYS! (... one after another)
+  for (i in 1:nSamples) {
+    vecLetterSeqLen[i] <- fnInfiniteMonkey(strTarget)
+  }
+  
+  # Compute mean with each new sample
+  vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
+  
+  # Split plot panel
+  par(mfrow = c(1,2),
+      ps = 9,
+      cex.axis = 0.9,
+      cex.lab = 0.9)
+  
+  # Plot histogram
+  hist(vecLetterSeqLen,
+       breaks = seq(min(vecLetterSeqLen), max(vecLetterSeqLen), length = 50),
+       xlab = "Length of letter sequence",
+       main = NULL)
+  abline(v = vecLetterSeqLenMeans[nSamples], col = "red")
+  legend("topright", legend = "Mean", lty = 1, col = "red")
+  
+  # Plot means
+  plot(1:nSamples, vecLetterSeqLenMeans,
+       xlab = "Number of samples",
+       ylab = "Mean length of letter sequence up to sample",
+       type = "l")
+  abline(h = vecLetterSeqLenMeans[nSamples], col = "red")
+  legend("topright", legend = "Mean", lty = 1, col = "red")
+  
+  # Set title
+  title(paste("Target string: '",strTarget, "'",
+              "; Mean length of letter sequence: ",
+              vecLetterSeqLenMeans[nSamples], sep = ""),
+        outer = TRUE, line = -2)
+  
+  # Return MC approximation
+  return(vecLetterSeqLenMeans[nSamples])
+}
+
+# Set seed
+set.seed(7)
+# Simulate
+numMCMean <- fnEvaluateMonkey("ab", 10^4)
+```
+
+In Figure \ref{fig:plotMonkey} haben wir ein Histogramm der simulierten Anzahlen von Zeichen und die durchschnittliche Anzahl von Zeichen, bis die Zeichenkette `'ab'` vollständig erschienen ist, für $10^4$ Samples geplottet. Wir können sehen, dass die Anzahl von Zeichen $X$ einer rechtsschiefen Verteilung folgt. Die durch das starke Gesetz der großen Zahlen motivierte Monte-Carlo-Approximation von $\mathbb{E}[X]$ liegt bei `r numMCMean`. 
+
+Zur Simulation von Infinite-Monkey Experimenten wollen wir abschließend noch folgende Überlegung durchführen: würden wir anstatt einer fortlaufenden Zeichenfolge, bei welcher je Schleife nur ein weiterer Letter generiert wird, je Schleifendurchlauf einen Zeichen-Block der Länge $m$ generieren und mit $s$ vergleichen, so entspräche jeder Schleifendurchlauf einem Bernoulli-Experiment mit Erfolgswahrscheinlichkeit $p = \left( \frac{1}{n} \right)^m$. In diesem Fall wäre die Anzahl der Blöcke, die notwendig sind um eine Übereinstimmung mit $s$ zu erhalten, gerade geometrisch-verteilt mit Erfolgswahrscheinlichkeit $p = \left( \frac{1}{n} \right)^m$. Diese Zerlegung in Blöcke der Länge $m$ entspricht genau der Folge unabhängiger Ereignisse aus dem Beweis des Theorems.
+
+
+\newpage
 
 # Monte-Carlo-Approximationen
 
 
+\newpage
+
 # Eine (naive) Datenanalyse
 
+
+\newpage
 
 # Normalverteilung
