@@ -7,6 +7,7 @@ fontsize: 10pt
 header-includes:
   - \usepackage{amsthm}
   - \usepackage{MnSymbol}
+  - \usepackage{bbm}
   - \usepackage{theoremref}
   - \newtheorem{satz}{Satz}
 output: 
@@ -92,7 +93,7 @@ $$
 &= \mathbb{P} \left( \left\{ \omega \in \Omega^{\mathbb{N}}  \, : \, \omega \in A_{jm+1} \text{ für unendlich viele } j \in \mathbb{N}_0 \right\} \right) = 1,
 \end{aligned}
 $$
-d.h.\ jeder beliebige String $s$ der Länge $m$ erscheint fast sicher unendlich oft.
+d.h.\ ein beliebiger String $s$ der Länge $m$ erscheint fast sicher unendlich oft.
 
 ## Simulation eines Infinite-Monkey Experiments
 
@@ -102,8 +103,6 @@ X(\omega) = \min\{k+m-1 \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \te
 $$
 
 Wir haben die Funktion wie folgt in R implementiert:[^1]
-
-[^1]: Eine effizientere Implementierung wäre je Schleifendurchlauf eine größere Anzahl an Zeichen zu generieren und den resultierenden Zeichen-Block mit einem Fenster nach `strTarget` zu durchsuchen. Dabei muss beachtet werden, dass `strTarget` auch in der Überlappung zweier Blöcke erscheinen könnte. Für unsere Untersuchung ist eine vereinfachte (ineffiziente) Implementierung jedoch ausreichend. Für große Samples oder einen langen String `strTarget` sollte jedoch auf jeden Fall eine effizientere Implementierung herangezogen werden.
 
 \newpage
 ```{r Infinite-Monkey}
@@ -227,3 +226,258 @@ Zur Simulation von Infinite-Monkey Experimenten wollen wir abschließend noch fo
 \newpage
 
 # Normalverteilung
+
+In diesem Abschnitt wollen wir verschiedene Zufallsgeneratoren, d.h.\ deterministische Algorithmen zur Erzeugung von pseudo-zufälligen Zahlen, vergleichen. Unser Ziel ist die Erzeugung von unabhängigen standard-normalverteilten (Pseudo-)Zufallszahlen $Z \sim N(0,1)$.
+
+Um die „Güte“ der erzeugten Zufallszahlen zu überprüfen verwenden wir Histogramme, QQ-Norm-Plots und zwei statistische Tests auf Normalverteilung (Kolmogorov-Smirnov-Test[^2] und Shapiro-Wilk-Test[^3]). Wir haben diese Überprüfungen in einer R-Funktion zusammengefasst:
+
+```{r fnCheckNormality}
+fnCheckNormality <- function(vecSample) {
+  # This function helps to check a sample of generated random numbers for 
+  # normality. It helps comparing different random number generators by using 
+  # histograms, qq-norm-plots, Kolmogorov-Smirnov-tests, and Shapiro-Wilk-test.
+  # 
+  # Args:
+  #   vecSample: A sample of generated random numbers
+  #   
+  # Returns:
+  #   -
+  
+  # Split plot panel
+  par(mfrow = c(1,2), ps = 9,
+      cex.axis = 0.9,
+      cex.lab = 0.9)
+  
+  # Plot histogram
+  hist(vecSample,
+       breaks = seq(min(vecSample), max(vecSample), length = 25),
+       probability = TRUE,
+       xlim = c(-5, 5),
+       ylim = c(0, 0.5),
+       xlab = "Samples from random number generator",
+       main = "Histogram of random samples")
+  
+  # Add density of standard normal to the plot
+  vecNorm <- seq(-5, 5, by = 0.1)
+  vecNormDensity <- dnorm(vecNorm)
+  lines(vecNorm, vecNormDensity, col = "blue")
+  legend("topright", legend = "Density of standard normal", 
+         lty = 1, col = "blue", cex = 0.75)
+  
+  # QQ-norm-plot
+  qqnorm(vecSample, ylim = c(-5, 5), cex = 0.8)
+  qqline(vecSample)
+  
+  # Perform Kolmogorov-Smirnov test
+  print(ks.test(vecSample, "pnorm"))
+  
+  # Perform Shapiro-Wilk test for normality
+  print(shapiro.test(vecSample))
+}
+```
+
+Als Benchmark überprüfen wir zunächst die in R mit der Funktion `rnorm` standardmäßig implementierte Methode zur Erzeugung standard-normalverteilter Zufallsvariablen:
+
+```{r rnormTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated with `rnorm`.\\label{fig:plotNormRnorm}"}
+# Test with rnorm-function
+set.seed(42)
+fnCheckNormality(rnorm(5000))
+```
+
+Wir können sehen, dass Histogramm und Dichtefunktion der Standard-Normalverteilung sowie die theoretischen mit den empirischen Quantile sehr gut übereinstimmen. Dieser optische Eindruck wird durch die beiden statistischen Tests unterstützt: in beiden Tests liegen die p-Werte deutlich über den gewöhnlichen Signifikanzniveaus $\alpha$ von 0.05 oder 0.01. D.h.\ in beiden Tests kann die Nullhypothese, dass die Zufallszahlen normalverteilt sind, nicht abgelehnt werden.
+
+Im Folgenden wollen wir drei verschiedene Methoden zur Erzeugung von standard-normalverteilten Zufallsvariablen vergleichen. Alle drei Methoden setzen die Erzeugung von unabhängigen $U([0,1])$-verteilten Zufallsvariablen voraus, wovon wir annehmen, dass diese zuverlässig in R erzeugt werden können.[^4]
+
+## Box-Muller-Methode
+
+Die Box-Muller-Methode nutzt aus, dass für $U_1, U_2 \overset{iid}{\sim} U([0,1])$ die Transformationen $Z = Z_1 := \sqrt{-2\log U_1} \cos(2\pi U_2), Z_2 := \sqrt{-2\log U_1} \sin(2\pi U_2)$ unabhängige standard-normalverteilte Zufallsvariablen sind.[^5] Wir überprüfen $Z = Z_1$:
+
+```{r BoxMullerTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated with the Box-Muller method.\\label{fig:plotNormBoxMuller}"}
+# Generate random numbers from the standard normal using the Box-Muller-Method
+set.seed(42)
+nSamples <- 5000
+
+vecU1 <- runif(nSamples)
+vecU2 <- runif(nSamples)
+vecZ1 <- sqrt((-2)*log(vecU1)) * cos(2*pi*vecU2)
+
+# Test for normality
+fnCheckNormality(vecZ1)
+```
+
+Wiederum stimmen Histogramm und Dichtefunktion sowie die theoretischen mit den empirischen Quantilen sehr gut überein. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte deutlich größer sind.
+
+## Summe stetig gleichverteilter Zufallsvariablen
+
+Als zweite Methode wollen wir gleichverteilte Zufallszahlen $U_1, \ldots, U_m \overset{iid}{\sim} U([-1/2,1/2])$ für ein $m \in \mathbb{N}$ erzeugen und $Z = \sum_{i=1}^m U_i$ setzen. Es ist $\mathbb{E}[U_1] = 0$ und $\text{Var}(U_1) = 1/12$. Damit gilt nach dem zentralen Grenzwertsatz, dass die standardisierte Summe in Verteilung gegen die Standard-Normalverteilung konvergiert:
+
+$$
+\sqrt{\frac{12}{m}} \sum_{i = 1}^m U_i \overset{d}{\longrightarrow} N(0,1).
+$$
+
+Damit stimmt die standardisierte Summe mit der Summe $Z = \sum_{i=1}^m U_i$ für $m = 12$ überein. Wir werden nun überprüfen, ob $m = 12$ bereits hinreichend groß ist, um normalverteilte Zufallszahlen durch $Z$ zu generieren[^6]:
+
+```{r UnifSumTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated from the sum of $m = 12$ uniform random variables.\\label{fig:plotNormUnifSum}"}
+# Generate random numbers from the standard normal as sum of i.i.d. 
+# U([-0.5, 0.5])-distributed random variables
+
+set.seed(42)
+nSamples <- 5000
+m <- 12  # number of i.i.d. random variables
+
+matUnif <- matrix(runif(nSamples*m, -0.5, 0.5), ncol = m)
+vecZ2 <- apply(matUnif, 1, sum)
+
+# Test for normality
+fnCheckNormality(vecZ2)
+```
+
+Das Histogramm und Dichtefunktion sowie die theoretischen mit den empirischen Quantilen stimmen wiederum gut überein. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte größer sind. Im Vergleich zur Box-Muller-Methode sind die p-Werte der Tests jedoch kleiner. Der QQ-Norm-Plot lässt des Weiteren vermuten, dass die Tails nicht so gut übereinstimmen.
+
+## Accept-Reject-Algorithmus mit Laplace-Kandidatendichte
+
+Als letzte Methode wollen wir den Accept-Reject-Algorithmus mit der Dichte der Laplace-Verteilung
+
+$$
+g_{\alpha}(x) = \frac{\alpha}{2} \exp(-\alpha|x|), \quad \alpha > 0,
+$$
+als Kandidatendichte implementieren. Um Zufallszahlen der Laplace-Verteilung zu generieren, wenden wir die Inversionsmethode an. Für die Verteilungsfunktion $F_{\alpha}$ der Laplace-Verteilung gilt:
+
+$$
+F_{\alpha} (x) = \int_{- \infty}^x \frac{\alpha}{2} \exp(-\alpha|y|) \, dy = \begin{cases}
+\int_{- \infty}^x \frac{\alpha}{2} \exp(\alpha y) \, dy = \frac{1}{2} \exp(\alpha x) &, x < 0, \\
+\frac{1}{2} \exp(0) + \int_{0}^x \frac{\alpha}{2} \exp(-\alpha y) \, dy = 1 - \frac{1}{2} \exp(\alpha x) &, x \geq 0. \\
+\end{cases}
+$$
+
+Somit folgt für die Inverse $F^{-1}_{\alpha}$:
+
+$$
+F^{-1}_{\alpha}(u) = \begin{cases}
+\frac{1}{\alpha} \log(2u) &, u < \frac{1}{2}, \\
+-\frac{1}{\alpha} \log(2(1-u)) &, u \geq \frac{1}{2}.
+\end{cases}
+$$
+
+Um Zufallszahlen einer Zielverteilung mit Dichte $f$ zu erzeugen, muss für die Kandidatendichte $g_{\alpha}$ und eine Konstante $M$ gelten, dass $\frac{f(x)}{g(x)} \leq M$ für alle $x \in \mathbb{R}$. Da die Akzeptanzwahrscheinlichkeit im Accept-Reject-Sampling durch $\frac{1}{M}$ gegeben ist, macht es Sinn $M$ möglichst „scharf“ (d.h.\ klein) zu wählen, sodass weniger Samples abgelehnt werden. Definiere
+
+$$
+h_{\alpha}(x) := \frac{f(x)}{g_{\alpha}(x)} = \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\alpha |x| - \frac{x^2}{2}\right), \quad x \in \mathbb{R},
+$$
+da $f$ in unserer Anwendung die Dichte der Standard-Normalverteilung ist. Dann ist $h_{\alpha}$ für $|x| = \alpha$ maximal, denn
+
+$$
+\begin{aligned}
+\frac{\partial}{\partial x} h_{\alpha}(x)  = h_{\alpha}(x) \cdot (\alpha \mathbbm{1}_{(0, \infty)}(x) -\alpha \mathbbm{1}_{(-\infty,0)}(x) - x) &\overset{!}{=} 0 \\
+\iff x &= \alpha \mathbbm{1}_{(0, \infty)}(x) -\alpha \mathbbm{1}_{(-\infty,0)}(x),
+\end{aligned}
+$$
+da $h_{\alpha}(x) > 0$ für alle $x \in \mathbb{R}$.
+
+```{r hPlot1, echo = FALSE, fig.height=4, fig.cap="The function $h_{\\alpha}$ for different values of $\\alpha$.\\label{fig:ploth1}"}
+# Define function h
+h <- function(x, alpha = 1) {
+  return(sqrt(2/pi) * (1/alpha) * exp(alpha*abs(x) - (x^2)/2))
+}
+
+# Set plotting parameters
+par(ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9) 
+
+# Plot
+x <- seq(-4, 4, 0.01)
+plot(x, h(x), 
+     type = "l",
+     ylim = c(0,3),
+     xlab = "x",
+     ylab = expression(h[alpha](x)))
+lines(x, h(x, alpha = 1.5), col = "blue")
+lines(x, h(x, alpha = 2), col = "red")
+legend("topright", 
+       legend = c(expression(alpha == 1), 
+                  expression(alpha == 1.5), 
+                  expression(alpha == 2)),
+       lty = c(1, 1, 1), 
+       col = c("black", "blue", "red"),
+       cex = 0.75)
+```
+
+Somit ist $h_{\alpha}$ uniform durch $h_{\alpha}(\alpha) = \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\frac{\alpha^2}{2}\right)$ beschränkt. Weiter können wir diese Schranke in $\alpha > 0$ minimieren:
+
+$$
+\begin{aligned}
+\frac{\partial}{\partial \alpha} \left( \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\frac{\alpha^2}{2}\right) \right) = \sqrt{\frac{2}{\pi}} \left( 1- \frac{1}{\alpha^2} \right) \exp\left( \frac{\alpha^2}{2} \right) &\overset{!}{=} 0 \\
+\iff \alpha &= 1.
+\end{aligned}
+$$
+
+```{r hPlot2, echo = FALSE, fig.height=4, fig.cap="$h_{\\alpha}(\\alpha)$ as a function in $\\alpha$.\\label{fig:ploth2}"}
+# Define function h
+h <- function(alpha) {
+  return(sqrt(2/pi) * (1/alpha) * exp((alpha^2)/2))
+}
+
+# Set plotting parameters
+par(ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9) 
+
+# Plot
+alpha <- seq(0.5, 2, 0.01)
+plot(alpha, h(alpha), 
+     type = "l",
+     xlab = expression(alpha),
+     ylab = expression(h[alpha](alpha)))
+```
+
+Somit wählen wir die scharfe Schranke $M = \sqrt{\frac{2}{\pi}} \exp(0.5) \approx 1.3155$ und können den Accept-Reject-Algorithmus wie folgt implementieren:
+
+```{r AcceptRejectTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated using Accept-Reject-Sampling with Laplace proposal density with $\\alpha = 1$.\\label{fig:plotNormAcceptReject}"}
+# Generate random numbers from the standard normal using the 
+# accept-reject-algorithm with Laplace proposal density
+
+# Set seed and number of samples
+set.seed(42)
+nSamples <- 5000
+
+# Define Laplace density
+g <- function(x, alpha = 1) {
+  return((alpha/2) * exp((-alpha)*  abs(x)))
+}
+
+# Define bound M efficiently
+M <- sqrt(2/pi) * exp(0.5)
+
+# Sample from U([0,1])
+vecU1 <- runif(nSamples)
+
+# Sample from the Laplace distibution using the inversion-method
+alpha <- 1
+vecU2 <- runif(nSamples)
+vecLaplace <- rep(0, nSamples)
+vecLaplace[vecU2 < 0.5] <- (1/alpha) * log(2*vecU2[vecU2 < 0.5])
+vecLaplace[vecU2 >= 0.5] <- (-1/alpha) * log(2*(1-vecU2[vecU2 >= 0.5]))
+
+# Accept or reject?
+vecZ3 <- vecLaplace[vecU1 <= dnorm(vecLaplace)/(M * g(vecLaplace))]
+
+# Acceptance ratio
+fAcceptRatio <- length(vecZ3) / nSamples
+
+# Test for normality
+fnCheckNormality(vecZ3)
+```
+
+Die Akzeptanzrate liegt bei `r fAcceptRatio`. D.h.\ es müssen im Schnitt etwa vier Zufallszahlen bzgl.\ $g_1$ erzeugt werden um drei standard-normalverteilte Zufallszahlen zu erhalten.
+
+Wir sehen wiederum, dass Histogramm und Dichtefunktion sowie die theoretischen und empirischen Quantile sehr gut übereinstimmen. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte größer sind.
+
+
+<!--Footnotes-->
+[^1]: Eine effizientere Implementierung wäre je Schleifendurchlauf eine größere Anzahl an Zeichen zu generieren und den resultierenden Zeichen-Block mit einem Fenster nach `strTarget` zu durchsuchen. Dabei muss beachtet werden, dass `strTarget` auch in der Überlappung zweier Blöcke erscheinen könnte. Für unsere Untersuchung ist eine vereinfachte (ineffiziente) Implementierung jedoch ausreichend. Für große Samples oder einen langen String `strTarget` sollte jedoch auf jeden Fall eine effizientere Implementierung herangezogen werden.
+[^2]: <https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test>
+[^3]:<https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test>
+[^4]: Die Methoden zur Erzeugung von Zufallszahlen in R finden sich in der Dokumentation unter „RNG“ (Random Number Generation), welche auch unter <https://stat.ethz.ch/R-manual/R-devel/library/base/html/Random.html> eingesehen werden kann.
+[^5]: Es ist $(Z_1, Z_2) = (R \cos(2\pi U_2), R \sin(2\pi U_2))$ die Polarkoordinatentransformation mit Radius $R := \sqrt{-2\log U_1}$. Die Aussage lässt sich dann mit Hilfe des Dichtetransformationssatzes nachweisen.
+[^6]: Ein bekanntes Resultat über die Güte der Konvergenz im zentralen Grenzwertsatz ist der Satz von Berry-Esseen. Dieser besagt (in einfacher Form), dass wenn das dritte absolute Moment existiert (was in unserem Fall zutrifft), die Konvergenzrate der Ordnung $n^{-\frac{1}{2}}$ ist. (<https://en.wikipedia.org/wiki/Berry%E2%80%93Esseen_theorem>)
