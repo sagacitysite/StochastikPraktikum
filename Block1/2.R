@@ -131,7 +131,10 @@ fnPiPlotCircle <- function(x1, x2) {
 }
 
 # Split plot panel
-par(mfrow = c(1,2))
+par(mfrow = c(1,2),
+    ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9)
 
 # Create random values
 X <- fnPiRandom(2000)
@@ -148,9 +151,6 @@ title(paste("Monte-Carlo simulation with sample size of ", length(X$x1),
       outer = TRUE,  line = -2)
 
 # 2. ###########################################################################
-
-# Set plot panel to one plot
-par(mfrow = c(1,1))
 
 # Using pnorm
 print(1 - pnorm(20))
@@ -185,6 +185,12 @@ fnProbG <- function(u) {
   return((1/20) * (1/sqrt(2*pi)) * exp(-1/(2*(u^2))) * (1/(u^2)))
 }
 
+# Set plot panel to one plot
+par(mfrow = c(1,1),
+    ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9)
+
 # Generate random values
 u <- fnProbRandom(10000)
 
@@ -201,8 +207,9 @@ title(paste("Monte-Carlo simulation with sample size of ", length(u),
 
 # 3. ###########################################################################
 
-# Set plot panel to two plots
-par(mfrow = c(1,2))
+# Using R's integrate function
+print(integrate(fnIntH1, 0, 1))
+print(integrate(fnIntH2, 0, 1))
 
 fnIntRandom <- function(n) {
   # Generate random uniform values
@@ -237,9 +244,11 @@ fnIntH2 <- function(x) {
   return(sin(1/x))
 }
 
-# Using R's integrate function
-print(integrate(fnIntH1, 0, 1))
-print(integrate(fnIntH2, 0, 1))
+# Set plot panel to two plots
+par(mfrow = c(1,2),
+    ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9)
 
 # Using Monte-Carlo integration
 u <- fnIntRandom(10000)
@@ -257,9 +266,6 @@ title(paste("h2: ", length(u), "samples, result ",
 ## TODO: Compare errors of integrate function with monte carlo
 
 # 4. ###########################################################################
-
-# Set plot panel to one plot
-par(mfrow = c(1,1))
 
 fnAreaRandom <- function(n) {
   # Generate three random uniform values between 0 and 1 for x and y
@@ -284,6 +290,12 @@ fnAreaRandom <- function(n) {
   # Return vector of random triangle areas
   return(areas)
 }
+
+# Set plot panel to one plot
+par(mfrow = c(1,1),
+    ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9)
 
 # Generate random triangle area values
 A <- fnAreaRandom(1000)

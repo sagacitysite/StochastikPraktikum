@@ -1,6 +1,6 @@
 ---
 title: "Projektaufgaben Block 1"
-author: "Carlo Michaelis, <Matr.-Nr.>; Lukas Ruff, 572521"
+author: "Carlo Michaelis, 573479; Lukas Ruff, 572521"
 date: "15 November 2016"
 documentclass: article
 fontsize: 10pt
@@ -9,6 +9,8 @@ header-includes:
   - \usepackage{MnSymbol}
   - \usepackage{theoremref}
   - \newtheorem{satz}{Satz}
+  - \usepackage{amssymb}
+  - \usepackage{bbm}
 output: 
   pdf_document:
     latex_engine: pdflatex
@@ -172,10 +174,7 @@ fnEvaluateMonkey <- function(strTarget, nSamples) {
   vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
   
   # Split plot panel
-  par(mfrow = c(1,2),
-      ps = 9,
-      cex.axis = 0.9,
-      cex.lab = 0.9)
+  par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
   
   # Plot histogram
   hist(vecLetterSeqLen,
@@ -206,7 +205,7 @@ fnEvaluateMonkey <- function(strTarget, nSamples) {
 # Set seed
 set.seed(7)
 # Simulate
-numMCMean <- fnEvaluateMonkey("ab", 10^4)
+numMCMean <- fnEvaluateMonkey("ab", 10^2)
 ```
 
 In Figure \ref{fig:plotMonkey} haben wir ein Histogramm der simulierten Anzahlen von Zeichen und die durchschnittliche Anzahl von Zeichen, bis die Zeichenkette `'ab'` vollständig erschienen ist, für $10^4$ Samples geplottet. Wir können sehen, dass die Anzahl von Zeichen $X$ einer rechtsschiefen Verteilung folgt. Die durch das starke Gesetz der großen Zahlen motivierte Monte-Carlo-Approximation von $\mathbb{E}[X]$ liegt bei `r numMCMean`. 
@@ -218,11 +217,624 @@ Zur Simulation von Infinite-Monkey Experimenten wollen wir abschließend noch fo
 
 # Monte-Carlo-Approximationen
 
+``` {r Monte-Carlo Fehlerabschätzung, echo=FALSE, cache=TRUE}
+fnErrorEstimation <- function(X, fnRandom, m = 100,
+                    fnValueCalculation = function(x) {x}) {
+  # This function is doing the error calculation, plotting all results,
+  # generating and plotting confidence band.
+  # There are two different methods in use:
+  #  * Using central limit theorem
+  #  * Using simulation
+  # 
+  # Args:
+  #   X:        Contains the data, can be raw random or already precalculated
+  #   fnRandom: Function to use in specific case to generate random values
+  #   m:        Number of MC-Simulations, has default value
+  #   fnValueCalculation:
+  #             If values should be computed in any way, this function is doing
+  #             it. If no value is given, just use values X as they are (default)
+  #   
+  # Returns:
+  #   Nothing, just prints the plot
+  
+  # Calculate values
+  if(class(X) != "list") { X = list(X) }
+  x <- do.call(fnValueCalculation, X)
+  
+  # Save length of sample in variable
+  n <- length(x)
+  
+  ################ Error estimation using central limit theorem ################
+  
+  # Compute mean with each new sample
+  vecMeans <- cumsum(x) / (1:n)
+  
+  # NOTE: t-distribution
+  # Compute confidence band
+  vecConf <- list(top = NULL, bottom = NULL)
+  for(i in 1:n) {
+    vecConf$top[i] <- vecMeans[i] + 1.96*sqrt(var(x[1:i])/i)
+    vecConf$bottom[i] <- vecMeans[i] - 1.96*sqrt(var(x[1:i])/i)
+  }
+  
+  # Plot means against number of samples
+  plot(1:n, vecMeans, type="l",
+       xlab = "Number of Monte-Carlo samples",
+       ylab = "Monte-Carlo approximation",
+       ylim = c(min(na.omit(vecConf$bottom), vecMeans),
+                max(na.omit(vecConf$top), vecMeans)),
+       pch = 4, cex = 0.8)
+  
+  # Plot overall mean
+  abline(vecMeans[n], 0, col = "red")
+  
+  # Plot confidence band
+  lines(vecConf$top, col = "blue")
+  lines(vecConf$bottom, col = "blue")
+  
+  ##################### Error estimation using simulation #####################
+  
+  # Generate n x m matrix with random values
+  mSampleMatrix <- NULL
+  for(i in 1:m) {
+    X <- fnRandom(n)
+    if(class(X) != "list") { X = list(X) }
+    mSampleMatrix <- cbind(mSampleMatrix, do.call(fnValueCalculation, X))
+  }
+  
+  # Calculate confidence band
+  mEst <- apply(mSampleMatrix, 2, cumsum)/(1:n)
+  mConf <- apply(mEst, 1, quantile, c(.025, .975))
+  
+  # Plot upper and lower confidence bound
+  lines(mConf[1,], col = "green")
+  lines(mConf[2,], col = "green")
+  
+  # Add legend for all lines
+  legend("topright", c("Approximation of pi", "Error estimation (CLT)",
+                       "Error estimation (Simulation)"), 
+         lty = 1, col=c("red", "blue", "green"), bty="n", cex=.75)
+}
+```
+
+## Nährerung für $\pi$
+
+Um eine Nährerung für $\pi$ zu erreichen, können in einem Quadrat zufällige Punkt erzeugt werden. Derjenige Anteil der Punkte, der innerhalb des Kreises liegt, ergibt $\pi$. Zunächst definieren wir die Zufallsvariablen, aus denen die Koordinaten gezogen werden:
+
+\begin{equation*}
+X \sim Uni[-1,1]\quad\text{, d.h}\quad X_1 \sim Uni[-1,1] \quad \text{und} \quad X_2 \sim Uni[-1,1]
+\end{equation*}
+
+Dabei sind $X_{1}$und $X_{2}$ unabhängig. Die gemeinsame Dichtefunktion ergibt sich aus den einzelnen Dichten und kann wie folgt beschrieben werden:
+
+\begin{align*}
+f(x_1, x_2) &= \frac{1}{4}\,\mathbbm{1}_{[-1,1]}(x_1)\,\mathbbm{1}_{[-1,1]}(x_2)\\
+&= \frac{1}{2}\,\mathbbm{1}_{[-1,1]}(x_1)\,\frac{1}{2}\,\mathbbm{1}_{[-1,1]}(x_2)\\
+&= f(x_1)f(x_2)
+\end{align*}
+
+$\pi$ kann allgemein definiert werden als:
+
+\begin{equation}
+\label{eq:def_pi}
+\pi = \int_{-1}^{1} \int_{-1}^{1} \mathbbm{1}_S(x_1,x_2)\,dx_1 dx_2
+\end{equation}
+
+wobei $S = \{x_1,x_2\,|\,x_1^2+x_2^2 \le 1\}$. Stochastisch ergibt sich $\pi$ wiederum als Erwartungswert der Indikatorfunktion von der gleichverteilten Zufallsvariablen $X$ auf der Menge der Kreispunkte:
+
+\begin{align*}
+\mathbb{E}[\mathbbm{1}_S(X)] &= \mathbb{E}[\mathbbm{1}_S(X_1,X_2)]\\
+&= \int_{\mathbb{R}^2} \mathbbm{1}_S(x_1,x_2) f(x_1,x_2)\,d\lambda(x_1,x_2)\\
+&= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} \mathbbm{1}_S(x_1,x_2) \cdot \frac{1}{4} \,\mathbbm{1}_{[-1,1]}(x_1)\,\mathbbm{1}_{[-1,1]}(x_2) \,dx_1 dx_2 \quad \text{(Fubini)}\\
+&= \frac{1}{4}\, \int_{-1}^1 \int_{-1}^1 \mathbbm{1}_S(x_1,x_2) \,dx_1 dx_2\\
+&\overset{\eqref{eq:def_pi}}{=} \frac{1}{4}\pi
+\end{align*}
+
+Durch Umstellung folgt damit direkt:
+
+\begin{equation*}
+\pi = 4\,\mathbb{E}[\mathbbm{1}_S(X)] = 4\,\mathbb{E}[\mathbbm{1}_S(X_1,X_2)]
+\end{equation*}
+
+Im Folgenden Code ist die Berechnung mittels `R` dargestellt. Die Funktion `fnErrorEstimation` ist hier auf Grund ihrer Länge nicht explizit aufgeführt, sie ist in der Datei `2.R` zu finden.
+
+```{r Näherung Pi, fig.height=4, fig.cap="Simulation result (left) and error estimation (right).\\label{fig:plotPi}"}
+fnPiRandom <- function(n) {
+  # Generates random uniform values for x (x1) and y (x2) axis
+  # 
+  # Args:
+  #   n: Number of samples
+  #   
+  # Returns:
+  #   A list of x1 and x2 random values with size of n
+  return(list(x1 = runif(n, min = -1, max = 1),
+              x2 = runif(n, min = -1, max = 1)))
+}
+
+fnPiIndicator <- function(x1, x2) {
+  # Indicate which values are inside of the circle with radius 1
+  # and which are outside
+  # 
+  # Args:
+  #   x1: Random values of x-axis
+  #   x2: Random values of y-axis
+  #   
+  # Returns:
+  #   A vector containing values 0, if point is outside of circle, and 4, 
+  #   if point is inside of circle with radius 1
+  return(((x1^2 + x2^2) <= 1)*4)
+}
+
+fnPiPlotCircle <- function(x1, x2) {
+  # Plots all random points.
+  # Points which are inside are red, points outside blue and some circle-points
+  # are calculated, to mark the border in black
+  # 
+  # Args:
+  #   x1: Random values of x-axis
+  #   x2: Random values of y-axis
+  #   
+  # Returns:
+  #   Nothing, just prints the plot
+  
+  inside <- as.logical(fnPiIndicator(x1, x2))
+  outside <- !inside
+  
+  # Plot points inside and outside
+  plot(x1[inside], x2[inside], pch = 20, cex = 0.5, col = "red",
+       xlab = "x", ylab = "y", xlim = c(-1,1), ylim = c(-1,1))
+  points(x1[outside], x2[outside], pch = 20, cex = 0.5, col = "blue")
+  
+  # Plot circle points to mark the border
+  points(sin(1:10000), cos(1:10000), pch = 20, cex = 0.2, col = "black")
+}
+
+# Split plot panel
+par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Create random values
+X <- fnPiRandom(2000)
+
+# Plot random values and circle
+fnPiPlotCircle(X$x1, X$x2)
+
+# Run error estimation
+fnErrorEstimation(X, fnPiRandom, fnValueCalculation = fnPiIndicator)
+
+# Set title for plots
+title(paste("Monte-Carlo simulation with sample size of ", length(X$x1),
+            " results in pi value of ", mean(fnPiIndicator(X$x1, X$x2)), sep = ""),
+      outer = TRUE,  line = -2)
+```
+
+Die Ergebnisse sind in Darstellung \ref{fig:plotPi} gezeigt. Auf der linken Seite sind die generierten Zufallswerte dargestellt. Die Werte, welche im inneren des Kreises (schwarz) gelandet sind, wurden rot markiert, Werte außerhalb blau. Auf der rechten Seite ist der kumulierte Mittelwert der Samples schwarz dargestellt. Die rote Linie markiert den Mittelwert über alle Samples und die blaue und grüne Linie markieren die zwei möglichen Methoden der Fehlerabschätzung (mittels Zentralem Grenzwertsatz und Simulation).
+
+## Approximation einer Wahrscheinlichkeit
+
+Gegeben sei eine Zufallsvariable $X \sim N(0,1)$. Die Wahrscheinlichkeit $\mathbb{P}(X > 20)$ soll per Monte-Carlo-Simulation approximiert werden. Zunächst formulieren wir die Wahrscheinlichkeit:
+
+\begin{align*}
+P(X > 20) &= 1-F(20) = \mathbb{E}[\mathbbm{1}_{(X > 20)}]\\
+&= \int_{-\infty}^{\infty} \mathbbm{1}_{(X > 20)} \frac{1}{\sqrt{2\pi\sigma^2}} \exp{\left(-\frac{(x -\mu)^2}{2\sigma}\right)}\,dx\\
+&= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\right)}\,dx
+\end{align*}
+
+wobei $F$ die Verteilungsfunktion der Standardnormalverteilung bezeichne.
+
+Um Zufallszahlen generieren zu können, müssen die Grenzen endlich sein, daher verwenden wir die Transformation $Y = \frac{1}{X} \,\Leftrightarrow\, X = \frac{1}{Y}$ und damit $\frac{dx}{dy} = -\frac{1}{y^2}$. Damit folgt im Weiteren:
+
+\begin{align*}
+P(X > 20) &= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\right)}\,dx\\
+&= \int_{0}^{\frac{1}{20}} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{1}{2y^2}\right)} \frac{1}{y^2}\,dy\\
+&= \int_{0}^{\frac{1}{20}} \tilde{g}(y)\,dy = \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)]
+\end{align*}
+
+Dabei ist $Y \sim Uni[0,\frac{1}{20}]$ mit Dichtefunktion $f_Y(y) = 20\,\mathbbm{1}_{[0,\frac{1}{20}]}(y)$, wodurch auch der Vorfaktor $\frac{1}{20}$ vor dem Erwartungswert begründet ist. Um das deutlich zu machen, kann folgende Rück-Umformung bzgl. der Gleichverteilung betrachtet werden:
+
+\begin{align*}
+\frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] &= \frac{1}{20}\,\int_{-\infty}^{\infty} \tilde{g}(y)\cdot 20\,f(y) \,dy\\
+&= \int_{-\infty}^{\infty} \tilde{g}(y)\cdot \mathbbm{1}_{[0,\frac{1}{20}]}(y) \,dy\\
+&= \int_{0}^{\frac{1}{20}} \tilde{g}(y) \,dy
+\end{align*}
+
+Definieren wir uns nun eine Funktion $g(y) = \frac{1}{20} \tilde{g}(y)$, dann gilt:
+
+\begin{equation*}
+P(X > 20) = \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] = \mathbb{E}[g(Y)] \approx \frac{1}{n}\sum_{i=1}^n g(y)
+\end{equation*}
+
+Der letzte Schritt entspricht der Monte-Carlo-Approximation und wird durch das Gesetz der großen Zahlen bzw. den Satz von Glivenko-Cantelli ermöglicht.
+
+Zunächst soll versucht werden die Wahrscheinlichkeit  mittels der `R`-Funktion `pnorm` zu bestimmen.
+
+``` {r Wahrscheinlichkeit Naiv 1}
+# Using pnorm
+1 - pnorm(20)
+```
+
+Die von `R` zur Verfügung gestellte Funktion `pnorm` kann die an der Stelle sehr kleine Wahrscheinlichkeit nicht mehr exakt angeben und rundet auf 0. Eine Möglichkeit trotzdem eine Lösung zu erhalten, wäre zunächst eine naive Monte-Carlo-Implementierung, die einfach eine hohe Zahl an standardnormalverteilten Zufallswerten erzeugt und prüft wie häufig diese Werte außerhalb von 20 vor kommen.
+
+``` {r Wahrscheinlichkeit Naiv 2}
+# Naive Monte-Carlo approximation
+n <- 1000000
+x <- rnorm(n)
+indicator <- (x > 20) * 1
+mean(indicator)
+```
+
+Auch hier ist das Ergebnis Null, da die Wahrscheinlichkeit so klein ist, dass selbst --- wie im obigen Fall --- $1.000.000$ Zufallszahlen nicht ausreichen, um ein solch unwahrscheinliches Ereignis zu erhalten.
+
+Im nächsten Versuch soll die oben beschriebene Transformation verwendet werden.
+
+``` {r Wahrscheinlichkeit Monte Carlo Transformation, fig.height=4, fig.cap="Results and error estimation of probability approximation.\\label{fig:plotP}"}
+
+fnProbRandom <- function(n) {
+  # Generate random uniform values between 0 and 1/20
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n with values between 0 and 1/20
+  return(runif(n, min = 0, max = 1/20))
+}
+
+fnProbG <- function(u) {
+  # Calculate values of function g
+  # 
+  # Args:
+  #   u: Random values
+  #   
+  # Returns:
+  #   Result of function g, using random values u as argument
+  return((1/20) * (1/sqrt(2*pi)) * exp(-1/(2*(u^2))) * (1/(u^2)))
+}
+
+# Set plot panel to one plot
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Generate random values
+u <- fnProbRandom(10000)
+
+# Calculate values with function g
+g <- fnProbG(u)
+
+# Run error estimation
+fnErrorEstimation(u, fnProbRandom, fnValueCalculation = fnProbG)
+
+# Set title for plot
+title(paste("Monte-Carlo simulation with sample size of ", length(u),
+            " results in P value of ", format(mean(g), digits = 3), sep = ""),
+      outer = TRUE,  line = -2)
+```
+
+Im Gegensatz zu den obigen naiven Ansätzen ist mittels der Transformation in gleichverteilte Zufallsvariablen eine Lösung bereits mit einer relativ kleinen Anzahl von Zufallswerten möglich. Die Ergebnisse sind in Abbildung \ref{fig:plotP} dargestellt.
+
+## Approximation eines Integrals
+
+Die Integrale in den Grenzen zwischen $0$ und $1$ zweiter Funktionen $h_1(x)$ und $h_2(x)$ sollen mit Hilfe einer Monte-Carlo Approximation bestimmt werden.
+
+\begin{equation*}
+h_1(x) = (\cos(50x) + \sin(20x))^2 \qquad h_2(x) = \sin(\frac{1}{x})
+\end{equation*}
+
+Die Implementierung in `R` efolgt über zwei Funktionen:
+
+``` {r integrate functions}
+fnIntH1 <- function(x) {
+  # Calculate values of function h1
+  # 
+  # Args:
+  #   x: Random values
+  #   
+  # Returns:
+  #   Result of function h1, using random values x as argument
+  return((cos(50*x)+sin(20*x))^2)
+}
+
+fnIntH2 <- function(x) {
+  # Calculate values of function h2
+  # 
+  # Args:
+  #   x: Random values
+  #   
+  # Returns:
+  #   Result of function h2, using random values x as argument
+  return(sin(1/x))
+}
+```
+
+Wie bei der Bestimmung der Wahrscheinlichkeit oben, kann auch hier zunächst mit einem naiven Ansatz begonnen werden. Mit Hilfe der `integrate`-Funktion von `R`, soll eine Lösung der Integrale erfolgen.
+
+``` {r naiv 1}
+# Using R's integrate function to integrate h1
+h1Int <- integrate(fnIntH1, 0, 1)
+h1Int
+```
+
+Für die Funktion $h_1(x)$ funktioniert die Bestimmung des Integrals ohne Probleme. Für die zweite Funktion $h_2(x)$, kommt es jedoch zu einem Fehler bei der Berechnung.
+
+``` {r naiv 2}
+# Using R's integrate function to integrate h2
+tryCatch({
+    integrate(fnIntH2, 0, 1)
+  }, error = function(e) {
+    print(e)
+  })
+```
+
+Die Monte-Carlo-Approximation kann beide Integrale annähern. Das Vorgehen ist weitestgehend anlog zur Bestimmung der Wahrscheinlichkeit in der vorigen Aufgabe.
+
+``` {r integral monte-carlo, fig.height=4, fig.cap="Results and error estimation of integral approximation.\\label{fig:plotInt}"}
+fnIntRandom <- function(n) {
+  # Generate random uniform values
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n with values between 0 and 1
+  return(runif(n))
+}
+  
+# Set plot panel to two plots
+par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Using Monte-Carlo integration
+u <- fnIntRandom(10000)
+h1 <- fnIntH1(u)
+h2 <- fnIntH2(u)
+
+# Run error estimation
+fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH1)
+title(paste("h1: ", length(u), " samples, result: ",
+            round(mean(h1), 3), sep = ""))
+fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH2)
+title(paste("h2: ", length(u), "samples, result ",
+            round(mean(h2), 3), sep = ""))
+```
+
+In Abbildung \ref{fig:plotInt} sind die Ergebnisse und Fehlerauswertungen der Integral-Approximationen mittels Monte-Carlo dargestellt. Ein Vergleich der Ergbnisse ist nur für $h_1(x)$ möglich, da nur hier die `integrate`-Funktion von `R` ein Ergebnis liefert.
+
+```{r integral comparison error}
+# Calculate percentage error
+round(abs(h1Int$value - mean(h1))/h1Int$value, 5)
+```
+
+Es ergibt sich als eine Abweichung von $\sim 1,924\%$ zwischen der `integrate`-Funktion und der Monte-Carlo-Approximation.
+
+## Erwartungswert der Fläche eines zufälligen Dreiecks
+
+Zur einfachen Bestimmung des Erwartungswertes eines zufälligen Dreiecks kann genutzt werden, dass die Fläche des Dreiecks durch folgende Formel gegeben ist:
+
+\begin{equation*}
+\frac{1}{2}|\text{Det}\,A|,\quad\text{wobei } A = \begin{pmatrix}x_1 & y_1 & 1\\ x_2 & y_2 & 1\\ x_2 & y_2 & 1\\\end{pmatrix}
+\end{equation*}
+
+Die Monte-Carlo-Approximation wurde wie folgt implementiert:
+
+``` {r triangle monte-carlo, fig.height=4, fig.cap="Results and error estimation of random triangle area.\\label{fig:plotTri}"}
+fnAreaRandom <- function(n) {
+  # Generate three random uniform values between 0 and 1 for x and y
+  # respectively. The function directly calculates the area of triangle
+  # between these three random points.
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n containing area values of random triangles
+  
+  areas <- NULL
+  for (i in 1:n) {
+    # Generate random values for x- and y-axis
+    x <- runif(3)
+    y <- runif(3)
+    # Calculate area of trinangle and add to vector
+    areas[i] <- abs(0.5 * det(matrix(c(x, y, c(1, 1, 1)), nrow = 3, ncol = 3)))
+  }
+  
+  # Return vector of random triangle areas
+  return(areas)
+}
+
+# Set plot panel to one plot
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Generate random triangle area values
+A <- fnAreaRandom(1000)
+
+# Run error estimation
+fnErrorEstimation(A, fnAreaRandom)
+title(paste("Monte-Carlo simulation with sample size of ", length(A),
+            " results in area of ", round(mean(A), 4), sep = ""))
+```
+
+Die Ergebniss und die Fehlerauswertung sind in Abbildung \ref{fig:plotTri} dargestellt.
 
 \newpage
 
 # Eine (naive) Datenanalyse
 
+Für die naive Datenanalyse am Beispieldatensatz `faithful` wurden verschiedene Diagramme erstellt, die eine intuitive Auswertung der Daten ermöglichen können. Der Datensatz bezieht sich auf erhobene Daten der Ausstoßzeiten und der Ausstoßdauer des Geysirs "Old Faithful Geyser" in den USA.
+
+## Histogramm
+
+Ein Histogramm stellt die Häufigkeit von Daten dar. Dabei werden Daten in Klassen (bins) eingeteilt und die jeweilige Häufigkeit von auftretenden Elementen innerhalb dieser Klasse auf der y-Achse aufgetragen. Ein Histogramm ermöglicht damit eine erste grobe Einschätzung der möglichen Verteilung der Daten.
+
+Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich unter Umständen um zwei normalverteilte Teilmengen handelt. Es könnte also z.B. sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Ein Blick auf getrennte Daten (Eruptionszeit größer bzw. kleiner als 3 Minuten), dargestellt in Abbilung \ref{fig:histoSep}, scheint diese Vermutung zu unterstützen. Ob es sich jedoch wirklich um normalverteilte Daten handelt kann erst it dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
+
+```{r histogram 1, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with all eruption data.\\label{fig:histoAll}"}
+# Create subsets of faithful
+faithLow  <- subset(faithful, eruptions <= 3)
+faithHigh <- subset(faithful, eruptions > 3)
+
+# Define some string variables for labeling plots 
+stEruption <- "Eruption time (in min)"
+stWaiting  <- "Waiting time (in min)"
+
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Histogram with all eruption time
+hist(faithful$eruptions,  main = "Eruption time", xlab = stEruption,
+     breaks = seq(min(faithful$eruptions), max(faithful$eruptions),
+                  length = 20))
+```
+
+```{r histograms 2, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with eruption data, separated in two categories.\\label{fig:histoSep}"}
+par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Histogram with waiting time, sparated by low/high eruption time
+hist(faithLow$waiting,  xlab = stWaiting,
+     main = "Waiting time (eruption time < 3 min)",
+     xlim= c(min(faithful$waiting), max(faithful$waiting)))
+hist(faithHigh$waiting,  xlab = stWaiting,
+     main = "Waiting time (eruption time > 3 min)",
+     xlim= c(min(faithful$waiting), max(faithful$waiting)))
+```
+
+## Boxplot
+
+Auch ein Boxplot soll dabei helfen die Verteilung der Daten einschätzen zu können. Der Boxplot besteht dabei aus drei oder vier Elementen. Es wird eine Box ausgegeben, deren Kanten den Bereich des unteren und oberen Quartils abdecken. Innerhalb der Box wird der Median als Linie eingezeichnet. Zusätzlich werden so genannte Whisker (ebenfalls oben und unten) eingezeichnet, die sich aus dem $1,5$-fachen des Interquartilsabstands ergeben. Optional können extreme Ausreißer als Punkte mit dargestellt werden. Der Boxplot gibt damit eine optische Einschätzung der empirischen Verteilung der Daten.
+
+In Abbildung \ref{fig:box} sind die Wartezeiten für die zwei Untermengen mit Eruptionszeiten über und unter 3 Minuten dargestellt.
+
+```{r boxplot, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Boxplot with waiting data, separated in two categories.\\label{fig:box}"}
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Boxplot with waiting time, one for low/hogh eruption time
+boxplot(faithLow$waiting, faithHigh$waiting,
+        names = c("eruption time < 3 min", "eruption time > 3 min"),
+        main = "Waiting time")
+```
+
+## QQ-Plot
+
+Ein QQ-Plot vergleicht die empirischen Quantile (eine Achse) mit den theoretischen Quantilen (andere Achse). Wenn die Daten einer theoretischen Verteilung exakt folgen, liegen alle Punkte somit auf einer Linie. Mit Hilfe eines QQ-Plots ist es bereits sehr gut möglich eine Einschätzung darüber zu bekommen, welche konkrete Verteilung den Daten vermutlich zu Grunde liegt.
+
+In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils vermutlich einzeln normalverteilt sind, die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam vermutlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Gaysirs nach zwei unterschiedlichen Prozessablaufen.
+
+```{r qq-plots, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="QQ-Plots in different data-combination.\\label{fig:qq}"}
+par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# QQ-Plot and QQ-Line for eruption time
+# One for (1) all, (2) low and (3) high eruptions time
+
+qqnorm(faithful$eruptions, pch = 20, cex = 0.75, ylab = stEruption,
+       main = "Eruption time (all eruption times)")
+qqline(faithful$eruptions)
+
+qqnorm(faithLow$eruptions, pch = 20, cex = 0.75, ylab = stEruption,
+       main = "Eruption time (eruption time < 3 min)")
+qqline(faithLow$eruptions)
+
+qqnorm(faithHigh$eruptions, pch = 20, cex = 0.75, ylab = stEruption,
+       main = "Eeruption time (eruption time > 3 min)")
+qqline(faithHigh$eruptions)
+
+# QQ-Plot and QQ-Line for waiting time
+# One for (1) all, (2) low and (3) high eruptions time
+
+qqnorm(faithful$waiting, pch = 20, cex = 0.75, ylab = stWaiting,
+       main = "Waiting time (all eruption times)")
+qqline(faithful$waiting)
+
+qqnorm(faithLow$waiting, pch = 20, cex = 0.75, ylab = stWaiting,
+       main = "Waiting time (eruption time < 3 min)")
+qqline(faithLow$waiting)
+
+qqnorm(faithHigh$waiting, pch = 20, cex = 0.75, ylab = stWaiting,
+       main = "Waiting time (eruption time > 3 min)")
+qqline(faithHigh$waiting)
+```
+
+## Scatter Plot and Regression
+
+Ein Scatter-Plot stellt alle Punkte zweier (oder mehrerer Variablen) dar. Dabei ist das Ziel Abhängigkeiten zwischen den Variablen einschätzen können.
+
+In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen on Daten gibt. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 5\%$) gibt. Die Auswertung der Regressionsanalysen ist hier aus Platzgründen nicht ausgegeben und ist der Datei `3.R` zu entnehmen.
+
+```{r scatter, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Scatter plots and regression lines in different data combinations.\\label{fig:scat}"}
+# Define some variables for scaling
+vecMinmaxEruption <- c(min(faithful$eruptions), max(faithful$eruptions))
+vecMinmaxWaiting  <- c(min(faithful$waiting), max(faithful$waiting))
+
+par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# 6 Scatter-Plots with regression lines and coefficients in all combinations
+
+# x: eruption, y: waiting
+
+plot(faithful$eruptions, faithful$waiting, main = "All eruption times",
+     xlab = stEruption, ylab = stWaiting)
+linRegression <- lm(waiting ~ eruptions, data = faithful)
+abline(linRegression)
+
+plot(faithLow$eruptions, faithLow$waiting, main = "Eruption time < 3 min",
+     xlab = stEruption, ylab = stWaiting,
+     xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
+linRegression <- lm(waiting ~ eruptions, data = faithLow)
+abline(linRegression)
+
+plot(faithHigh$eruptions, faithHigh$waiting, main = "Eruption time > 3 min",
+     xlab = stEruption, ylab = stWaiting,
+     xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
+linRegression <- lm(waiting ~ eruptions, data = faithHigh)
+abline(linRegression)
+
+# x: waiting, y: eruption
+
+plot(faithful$waiting, faithful$eruptions, main = "All eruption times",
+     xlab = stWaiting, ylab = stEruption)
+linRegression <- lm(eruptions ~ waiting, data = faithful)
+abline(linRegression)
+
+plot(faithLow$waiting, faithLow$eruptions, main = "Eruption time < 3 min",
+     xlab = stWaiting, ylab = stEruption,
+     xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
+linRegression <- lm(eruptions ~ waiting, data = faithLow)
+abline(linRegression)
+
+plot(faithHigh$waiting, faithHigh$eruptions, main = "Eruption time > 3 min",
+     xlab = stWaiting, ylab = stEruption,
+     xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
+linRegression <- lm(eruptions ~ waiting, data = faithHigh)
+abline(linRegression)
+```
+
+## Schätzung
+
+Zuletzt kann eine Schätzung des erwarteten nächsten Ausbruchs erfolgen. Als Schätzer des Ewartungswerts wird einfachheitshalber der Mittelwert verwendet, welcher sich im Falle der Normalverteilung aus dem Maximum-Likelihood-Ansatz und auch aus dem Kleinste-Quadrate-Ansatz ergibt. Zusätzlich wird der Standard-Fehler bestimmt, also die Varianz des Schätzers.
+
+Zunächst wird der nächste zu erwartende Ausbruch (Wartezeit) für alle Daten geschätzt.
+
+```{r estimation 1}
+# for all eruption times
+paste("mean of waiting time:", round(mean(faithful$waiting), 3), "min")
+paste("standard error of estimator:",
+            round(sqrt(var(faithful$waiting)/length(faithful$waiting)), 3), "min")
+```
+
+Im nächsten Schritt wird der nächste erwartete Ausbruch für Ausbrüche welche weniger als 3 Minuten dauern geschätzt.
+
+```{r estimation 2}
+# for low eruption times
+paste("mean of waiting time:", round(mean(faithLow$waiting), 3), "min")
+paste("standard error of estimator:",
+            round(sqrt(var(faithLow$waiting)/length(faithLow$waiting)), 3), "min")
+```
+
+Zuletzt wird der nächste ewartete Ausbruch für Ausbrüche mit mehr als 3 Minuten Wartezeit geschätzt.
+
+
+```{r estimation 3}
+# for high eruption times
+paste("mean of waiting time:", round(mean(faithHigh$waiting), 3), "min")
+paste("standard error of estimator:",
+            round(sqrt(var(faithHigh$waiting)/length(faithHigh$waiting)), 3), "min")
+```
+
+Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass die Ausbrüche getrennt betrachtet werden sollten.
 
 \newpage
 
