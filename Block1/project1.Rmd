@@ -6,12 +6,11 @@ documentclass: article
 fontsize: 10pt
 header-includes:
   - \usepackage{amsthm}
+  - \usepackage{amssymb}
   - \usepackage{MnSymbol}
   - \usepackage{bbm}
   - \usepackage{theoremref}
   - \newtheorem{satz}{Satz}
-  - \usepackage{amssymb}
-  - \usepackage{bbm}
 output: 
   pdf_document:
     latex_engine: pdflatex
