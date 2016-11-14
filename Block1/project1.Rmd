@@ -9,6 +9,7 @@ header-includes:
   - \usepackage{amssymb}
   - \usepackage{MnSymbol}
   - \usepackage{bbm}
+  - \usepackage{subfig}
   - \usepackage{theoremref}
   - \newtheorem{satz}{Satz}
 output: 
@@ -23,6 +24,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r,echo=FALSE}
+# load libraries
+library(xtable)
+```
 
 # Infinite-Monkey-Theorem
 
@@ -334,7 +339,7 @@ Durch Umstellung folgt damit direkt:
 \pi = 4\,\mathbb{E}[\mathbbm{1}_S(X)] = 4\,\mathbb{E}[\mathbbm{1}_S(X_1,X_2)]
 \end{equation*}
 
-Im Folgenden Code ist die Berechnung mittels `R` dargestellt. Die Funktion `fnErrorEstimation` ist hier auf Grund ihrer Länge nicht explizit aufgeführt, sie ist in der Datei `2.R` zu finden.
+Im folgenden Code ist die Berechnung mittels `R` dargestellt:
 
 ```{r Näherung Pi, fig.height=4, fig.cap="Simulation result (left) and error estimation (right).\\label{fig:plotPi}"}
 fnPiRandom <- function(n) {
@@ -419,7 +424,7 @@ P(X > 20) &= 1-F(20) = \mathbb{E}[\mathbbm{1}_{(X > 20)}]\\
 
 wobei $F$ die Verteilungsfunktion der Standardnormalverteilung bezeichne.
 
-Um Zufallszahlen generieren zu können, müssen die Grenzen endlich sein, daher verwenden wir die Transformation $Y = \frac{1}{X} \,\Leftrightarrow\, X = \frac{1}{Y}$ und damit $\frac{dx}{dy} = -\frac{1}{y^2}$. Damit folgt im Weiteren:
+Um Zufallszahlen generieren zu können, müssen die Grenzen endlich sein, daher verwenden wir die Transformation $Y = \frac{1}{X} \,\Leftrightarrow\, X = \frac{1}{Y}$ und damit $\frac{dx}{dy} = -\frac{1}{y^2}$. Es folgt im Weiteren:
 
 \begin{align*}
 P(X > 20) &= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\right)}\,dx\\
@@ -660,7 +665,7 @@ Für die naive Datenanalyse am Beispieldatensatz `faithful` wurden verschiedene 
 
 Ein Histogramm stellt die Häufigkeit von Daten dar. Dabei werden Daten in Klassen (bins) eingeteilt und die jeweilige Häufigkeit von auftretenden Elementen innerhalb dieser Klasse auf der y-Achse aufgetragen. Ein Histogramm ermöglicht damit eine erste grobe Einschätzung der möglichen Verteilung der Daten.
 
-Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{fig:histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich unter Umständen um zwei normalverteilte Teilmengen handelt. Es könnte also z.B. sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Ein Blick auf getrennte Daten (Eruptionszeit größer bzw. kleiner als 3 Minuten), dargestellt in Abbilung \ref{fig:histoSep}, scheint diese Vermutung zu unterstützen. Ob es sich jedoch wirklich um normalverteilte Daten handelt kann erst it dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
+Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{fig:histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich unter Umständen um zwei normalverteilte Teilmengen handelt. Es könnte also z.B. sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Zur Darstellung der Wartezeiten wurde demnach gleich eine Trennung der Daten vorgenommen (Eruptionszeit größer bzw. kleiner als 3 Minuten), welche in Abbilung \ref{fig:histoSep} dargestellt sind. Die getrennte Darstellung unterstützt die Vermutung. Ob es sich jedoch wirklich um normalverteilte Daten handelt kann erst it dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
 
 ```{r histogram 1, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with all eruption data.\\label{fig:histoAll}"}
 # Create subsets of faithful
@@ -710,7 +715,7 @@ boxplot(faithLow$waiting, faithHigh$waiting,
 
 Ein QQ-Plot vergleicht die empirischen Quantile (eine Achse) mit den theoretischen Quantilen (andere Achse). Wenn die Daten einer theoretischen Verteilung exakt folgen, liegen alle Punkte somit auf einer Linie. Mit Hilfe eines QQ-Plots ist es bereits sehr gut möglich eine Einschätzung darüber zu bekommen, welche konkrete Verteilung den Daten vermutlich zu Grunde liegt.
 
-In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils vermutlich einzeln normalverteilt sind, die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam vermutlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Gaysirs nach zwei unterschiedlichen Prozessablaufen.
+In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils annähernd normalverteilt sind (bis auf Schwankungen in den Tails). Die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam recht offensichtlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Geysirs nach zwei unterschiedlichen Prozessen ablaufen.
 
 ```{r qq-plots, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="QQ-Plots in different data-combination.\\label{fig:qq}"}
 par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
@@ -750,8 +755,6 @@ qqline(faithHigh$waiting)
 
 Ein Scatter-Plot stellt alle Punkte zweier (oder mehrerer Variablen) dar. Dabei ist das Ziel Abhängigkeiten zwischen den Variablen einschätzen können.
 
-In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen von Daten zu geben scheint. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 5\%$) gibt. Die Auswertung der Regressionsanalysen ist hier aus Platzgründen nicht ausgegeben und ist der Datei `3.R` zu entnehmen.
-
 ```{r scatter, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="Scatter plots and regression lines in different data combinations.\\label{fig:scat}"}
 # Define some variables for scaling
 vecMinmaxEruption <- c(min(faithful$eruptions), max(faithful$eruptions))
@@ -765,74 +768,91 @@ par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 plot(faithful$eruptions, faithful$waiting, main = "All eruption times",
      xlab = stEruption, ylab = stWaiting)
-linRegression <- lm(waiting ~ eruptions, data = faithful)
-abline(linRegression)
+linRegression1 <- lm(waiting ~ eruptions, data = faithful)
+abline(linRegression1)
 
 plot(faithLow$eruptions, faithLow$waiting, main = "Eruption time < 3 min",
      xlab = stEruption, ylab = stWaiting,
      xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
-linRegression <- lm(waiting ~ eruptions, data = faithLow)
-abline(linRegression)
+linRegression2 <- lm(waiting ~ eruptions, data = faithLow)
+abline(linRegression2)
 
 plot(faithHigh$eruptions, faithHigh$waiting, main = "Eruption time > 3 min",
      xlab = stEruption, ylab = stWaiting,
      xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
-linRegression <- lm(waiting ~ eruptions, data = faithHigh)
-abline(linRegression)
+linRegression3 <- lm(waiting ~ eruptions, data = faithHigh)
+abline(linRegression3)
 
 # x: waiting, y: eruption
 
 plot(faithful$waiting, faithful$eruptions, main = "All eruption times",
      xlab = stWaiting, ylab = stEruption)
-linRegression <- lm(eruptions ~ waiting, data = faithful)
-abline(linRegression)
+linRegression4 <- lm(eruptions ~ waiting, data = faithful)
+abline(linRegression4)
 
 plot(faithLow$waiting, faithLow$eruptions, main = "Eruption time < 3 min",
      xlab = stWaiting, ylab = stEruption,
      xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
-linRegression <- lm(eruptions ~ waiting, data = faithLow)
-abline(linRegression)
+linRegression5 <- lm(eruptions ~ waiting, data = faithLow)
+abline(linRegression5)
 
 plot(faithHigh$waiting, faithHigh$eruptions, main = "Eruption time > 3 min",
      xlab = stWaiting, ylab = stEruption,
      xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
-linRegression <- lm(eruptions ~ waiting, data = faithHigh)
-abline(linRegression)
+linRegression6 <- lm(eruptions ~ waiting, data = faithHigh)
+abline(linRegression6)
 ```
+
+In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen von Daten zu geben scheint. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 5\%$) gibt. Die Auswertungen, d.h. die Koeffizienten, die t-Werte und die p-Werte der Regressionsanalysen, sind in den Tabelle \ref{tab:regs} zusammengefasst.
+
+```{r table1, echo=FALSE, results="asis"}
+print(xtable(summary(linRegression1)$coefficients),
+      file="tables/reg1.tex", floating = FALSE)
+print(xtable(summary(linRegression2)$coefficients),
+      file="tables/reg2.tex", floating = FALSE)
+print(xtable(summary(linRegression3)$coefficients),
+      file="tables/reg3.tex", floating = FALSE)
+print(xtable(summary(linRegression4)$coefficients),
+      file="tables/reg4.tex", floating = FALSE)
+print(xtable(summary(linRegression5)$coefficients),
+      file="tables/reg5.tex", floating = FALSE)
+print(xtable(summary(linRegression6)$coefficients),
+      file="tables/reg6.tex", floating = FALSE)
+```
+
+\begin{table}[ht]
+  \centering
+  \subfloat[Regression: waiting $\sim$ eruptions (all)]{\label{tab:reg1}\scalebox{.8}{\input{tables/reg1.tex}}}\quad
+  \subfloat[Regression: eruptions $\sim$ waiting (all)]{\label{tab:reg4}\scalebox{.8}{\input{tables/reg4.tex}}}\\
+  \subfloat[Regression: waiting $\sim$ eruptions (<3 min)]{\label{tab:reg2}\scalebox{.8}{\input{tables/reg2.tex}}}\quad
+  \subfloat[Regression: eruptions $\sim$ waiting (<3 min)]{\label{tab:reg5}\scalebox{.8}{\input{tables/reg5.tex}}}\\
+  \subfloat[Regression: waiting $\sim$ eruptions (>3 min)]{\label{tab:reg3}\scalebox{.8}{\input{tables/reg3.tex}}}\quad
+  \subfloat[Regression: eruptions $\sim$ waiting (>3 min)]{\label{tab:reg6}\scalebox{.8}{\input{tables/reg6.tex}}}
+  \caption{Regression coefficients, standard error, t values and p values}
+  \label{tab:regs}
+\end{table}
 
 ## Schätzung
 
-Zuletzt kann eine Schätzung des erwarteten nächsten Ausbruchs erfolgen. Als Schätzer des Ewartungswerts wird einfachheitshalber der Mittelwert verwendet, welcher sich im Falle der Normalverteilung aus dem Maximum-Likelihood-Ansatz und auch aus dem Kleinste-Quadrate-Ansatz ergibt. Zusätzlich wird der Standard-Fehler bestimmt, also die Varianz des Schätzers.
+Zuletzt kann eine Schätzung des erwarteten nächsten Ausbruchs erfolgen. Als Schätzer des Ewartungswerts wird der Mittelwert der Daten verwendet, welcher sich im Falle der Normalverteilung aus dem Maximum-Likelihood-Ansatz und auch aus dem Kleinste-Quadrate-Ansatz ergibt. Zusätzlich wird der Standard-Fehler bestimmt, also die Varianz des Schätzers.
 
-Zunächst wird der nächste zu erwartende Ausbruch (Wartezeit) für alle Daten geschätzt.
+```{r estimation, results="asis"}
+estAll <- mean(faithful$waiting)
+stdAll <- sqrt(var(faithful$waiting)/length(faithful$waiting))
+estLow <- mean(faithLow$waiting)
+stdLow <- sqrt(var(faithLow$waiting)/length(faithLow$waiting))
+estHigh <- mean(faithHigh$waiting)
+stdHigh <- sqrt(var(faithHigh$waiting)/length(faithHigh$waiting))
 
-```{r estimation 1}
-# for all eruption times
-paste("mean of waiting time:", round(mean(faithful$waiting), 3), "min")
-paste("standard error of estimator:",
-            round(sqrt(var(faithful$waiting)/length(faithful$waiting)), 3), "min")
+print(xtable(matrix(c(estAll, estLow, estHigh, stdAll, stdLow, stdHigh),
+                    ncol = 2, dimnames = list(
+                      c("all", "<3 min", ">3 min"),
+                      c("estimator", "standard error"))
+                    ),
+             caption = "Estimators and standard errors"), comment = FALSE)
 ```
 
-Im nächsten Schritt wird der nächste erwartete Ausbruch für Ausbrüche, welche weniger als 3 Minuten dauern, geschätzt.
-
-```{r estimation 2}
-# for low eruption times
-paste("mean of waiting time:", round(mean(faithLow$waiting), 3), "min")
-paste("standard error of estimator:",
-            round(sqrt(var(faithLow$waiting)/length(faithLow$waiting)), 3), "min")
-```
-
-Zuletzt wird der nächste ewartete Ausbruch für Ausbrüche mit mehr als 3 Minuten Wartezeit geschätzt.
-
-
-```{r estimation 3}
-# for high eruption times
-paste("mean of waiting time:", round(mean(faithHigh$waiting), 3), "min")
-paste("standard error of estimator:",
-            round(sqrt(var(faithHigh$waiting)/length(faithHigh$waiting)), 3), "min")
-```
-
-Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass eine getrennt Betrachtung Sinn hat.
+Die Schätzer wurden für die drei Fälle (alle Daten, Eruptionszeit größer und kleiner 3 Minuten) berechnet und mit ihren Standard-Fehlern in Tabelle 2 dargestellt. Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass eine getrennt Betrachtung Sinn hat.
 
 \newpage
 
@@ -855,9 +875,7 @@ fnCheckNormality <- function(vecSample) {
   #   -
   
   # Split plot panel
-  par(mfrow = c(1,2), ps = 9,
-      cex.axis = 0.9,
-      cex.lab = 0.9)
+  par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
   
   # Plot histogram
   hist(vecSample,
@@ -971,7 +989,7 @@ F^{-1}_{\alpha}(u) = \begin{cases}
 \end{cases}
 $$
 
-Um Zufallszahlen einer Zielverteilung mit Dichte $f$ zu erzeugen, muss für die Kandidatendichte $g_{\alpha}$ und eine Konstante $M$ gelten, dass $\frac{f(x)}{g(x)} \leq M$ für alle $x \in \mathbb{R}$. Da die Akzeptanzwahrscheinlichkeit im Accept-Reject-Sampling durch $\frac{1}{M}$ gegeben ist, macht es Sinn $M$ möglichst „scharf“ (d.h.\ klein) zu wählen, sodass weniger Samples abgelehnt werden. Definiere
+Um Zufallszahlen einer Zielverteilung mit Dichte $f$ zu erzeugen, muss für die Kandidatendichte $g_{\alpha}$ und eine Konstante $M$ gelten, dass $\frac{f(x)}{g(x)} \leq M$ für alle $x \in \mathbb{R}$. Da die Akzeptanzwahrscheinlichkeit im Accept-Reject-Sampling durch $\frac{1}{M}$ gegeben ist, hat es Sinn $M$ möglichst „scharf“ (d.h.\ klein) zu wählen, sodass weniger Samples abgelehnt werden. Definiere
 
 $$
 h_{\alpha}(x) := \frac{f(x)}{g_{\alpha}(x)} = \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\alpha |x| - \frac{x^2}{2}\right), \quad x \in \mathbb{R},

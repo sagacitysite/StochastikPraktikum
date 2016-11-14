@@ -82,47 +82,51 @@ vecMinmaxWaiting  <- c(min(faithful$waiting), max(faithful$waiting))
 
 plot(faithful$eruptions, faithful$waiting, main = "All eruption times",
      xlab = stEruption, ylab = stWaiting)
-linRegression <- lm(waiting ~ eruptions, data = faithful)
-abline(linRegression)
-summary(linRegression)
+linRegression1 <- lm(waiting ~ eruptions, data = faithful)
+abline(linRegression1)
+
+cat("a")
+paste("a", summary(linRegression)$coefficients)
+
+print(xtable(summary(linRegression)$coefficients))
 
 plot(faithLow$eruptions, faithLow$waiting, main = "Eruption time < 3 min",
      xlab = stEruption, ylab = stWaiting,
      xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
-linRegression <- lm(waiting ~ eruptions, data = faithLow)
-abline(linRegression)
-summary(linRegression)
+linRegression2 <- lm(waiting ~ eruptions, data = faithLow)
+abline(linRegression2)
 
 plot(faithHigh$eruptions, faithHigh$waiting, main = "Eruption time > 3 min",
      xlab = stEruption, ylab = stWaiting,
      xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
-linRegression <- lm(waiting ~ eruptions, data = faithHigh)
-abline(linRegression)
-summary(linRegression)
+linRegression3 <- lm(waiting ~ eruptions, data = faithHigh)
+abline(linRegression3)
 
 # x: waiting, y: eruption
 
 plot(faithful$waiting, faithful$eruptions, main = "All eruption times",
      xlab = stWaiting, ylab = stEruption)
-linRegression <- lm(eruptions ~ waiting, data = faithful)
-abline(linRegression)
-summary(linRegression)
+linRegression4 <- lm(eruptions ~ waiting, data = faithful)
+abline(linRegression4)
 
 plot(faithLow$waiting, faithLow$eruptions, main = "Eruption time < 3 min",
      xlab = stWaiting, ylab = stEruption,
      xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
-linRegression <- lm(eruptions ~ waiting, data = faithLow)
-abline(linRegression)
-summary(linRegression)
+linRegression5 <- lm(eruptions ~ waiting, data = faithLow)
+abline(linRegression5)
 
 plot(faithHigh$waiting, faithHigh$eruptions, main = "Eruption time > 3 min",
      xlab = stWaiting, ylab = stEruption,
      xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
-linRegression <- lm(eruptions ~ waiting, data = faithHigh)
-abline(linRegression)
-summary(linRegression)
+linRegression6 <- lm(eruptions ~ waiting, data = faithHigh)
+abline(linRegression6)
 
-# -> In all three cases significant slope, seems like there is a connection
+summary(linRegression1)$coefficients
+summary(linRegression2)$coefficients
+summary(linRegression3)$coefficients
+summary(linRegression4)$coefficients
+summary(linRegression5)$coefficients
+summary(linRegression6)$coefficients
 
 ##### Mean, Median and Variance #####
 
@@ -143,4 +147,3 @@ print(paste("mean of waiting time:", round(mean(faithHigh$waiting), 3), "min"))
 print(paste("standard error of estimator:",
             round(sqrt(var(faithHigh$waiting)/length(faithHigh$waiting)), 3), "min"))
 
-# -> std error is lower in seperate case
