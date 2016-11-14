@@ -892,7 +892,8 @@ Als Benchmark überprüfen wir zunächst die in R mit der Funktion `rnorm` stand
 ```{r rnormTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated with `rnorm`.\\label{fig:plotNormRnorm}"}
 # Test with rnorm-function
 set.seed(42)
-fnCheckNormality(rnorm(5000))
+vecNorm <- rnorm(5000)
+fnCheckNormality(vecNorm)
 ```
 
 Wir können sehen, dass Histogramm und Dichtefunktion der Standard-Normalverteilung sowie die theoretischen mit den empirischen Quantile sehr gut übereinstimmen. Dieser optische Eindruck wird durch die beiden statistischen Tests unterstützt: in beiden Tests liegen die p-Werte deutlich über den gewöhnlichen Signifikanzniveaus $\alpha$ von 0.05 oder 0.01. D.h.\ in beiden Tests kann die Nullhypothese, dass die Zufallszahlen normalverteilt sind, nicht abgelehnt werden.
@@ -1080,9 +1081,46 @@ fAcceptRatio <- length(vecZ3) / nSamples
 fnCheckNormality(vecZ3)
 ```
 
-Die Akzeptanzrate liegt bei `r fAcceptRatio`. D.h.\ es müssen im Schnitt etwa vier Zufallszahlen bzgl.\ $g_1$ erzeugt werden um drei standard-normalverteilte Zufallszahlen zu erhalten.
+Die Akzeptanzrate `fAcceptRatio` liegt bei `r fAcceptRatio`. D.h.\ es müssen im Schnitt etwa vier Zufallszahlen bzgl.\ $g_1$ erzeugt werden um drei standard-normalverteilte Zufallszahlen zu erhalten.
 
 Wir sehen wiederum, dass Histogramm und Dichtefunktion sowie die theoretischen und empirischen Quantile sehr gut übereinstimmen. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte größer sind.
+
+## Vergleich der Methoden
+
+Wir haben gesehen, dass für alle drei Methoden sowohl die Kolmogorov-Smirnov-Tests als auch die Shapiro-Wilk-Tests zu üblichen Signifikanzniveaus ($\alpha = 0.05$ oder $\alpha = 0.01$) nicht abgelehnt werden können. D.h.\ es gibt für keine der Methoden statistisch signifikante Evidenz die gegen standard-normalverteilte Zufallszahlen sprechen würde.
+
+Abschließend wollen wir noch die Tails der durch die drei verschiedenen Methoden sowie der durch `rnorm` erzeugten Samples vergleichen. Abbildung \ref{fig:plotTails} zeigt QQ-Norm-Plots für Werte außerhalb von $[-2, 2]$. Wir können sehen, dass im Falle von Methode 2 (Summe von $m = 12$ unabhängigen und identisch-verteilten $U([-1/2, 1/2])$ Zufallsvariablen) die Tails systematisch kürzer zu sein scheinen. Das liegt daran, dass es sich hierbei nicht um eine transformative (wie beispielsweise Box-Muller), sondern eine approximative Methode handelt, welcher der zentrale Grenzwertsatz zugrunde liegt. Die Werte für Methode 2 sind auf $[-m/2, m/2] = [-6,6]$ beschränkt, was eine „Stauchung“ der Verteilung bewirkt.
+
+```{r TailPlots, echo=FALSE, fig.height=4, fig.cap="QQ-Norm-Plots for lower and upper tails of the different random number generation methods.\\label{fig:plotTails}"}
+# Set plot parameters
+par(mfrow = c(2,4), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Plot lower tails
+qqnorm(vecNorm, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75, main = "rnorm")
+qqline(vecNorm)
+qqnorm(vecZ1, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75,
+       main = "Box-Muller")
+qqline(vecZ1)
+qqnorm(vecZ2, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75, 
+       main = "Sum of uniforms")
+qqline(vecZ2)
+qqnorm(vecZ3, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75, 
+       main = "Accept-Reject-Algorithm")
+qqline(vecZ3)
+
+# Plot upper tails
+qqnorm(vecNorm, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75, main = "rnorm")
+qqline(vecNorm)
+qqnorm(vecZ1, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75,
+       main = "Box-Muller")
+qqline(vecZ1)
+qqnorm(vecZ2, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75, 
+       main = "Sum of uniforms")
+qqline(vecZ2)
+qqnorm(vecZ3, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75, 
+       main = "Accept-Reject-Algorithm")
+qqline(vecZ3)
+```
 
 
 <!--Footnotes-->
