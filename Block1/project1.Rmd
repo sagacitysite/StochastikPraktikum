@@ -203,7 +203,7 @@ fnEvaluateMonkey <- function(strTarget, nSamples) {
 # Set seed
 set.seed(7)
 # Simulate
-numMCMean <- fnEvaluateMonkey("ab", 10^2)
+numMCMean <- fnEvaluateMonkey("ab", 10^4)
 ```
 
 In Figure \ref{fig:plotMonkey} haben wir ein Histogramm der simulierten Anzahlen von Zeichen und die durchschnittliche Anzahl von Zeichen, bis die Zeichenkette `'ab'` vollständig erschienen ist, für $10^4$ Samples geplottet. Wir können sehen, dass die Anzahl von Zeichen $X$ einer rechtsschiefen Verteilung folgt. Die durch das starke Gesetz der großen Zahlen motivierte Monte-Carlo-Approximation von $\mathbb{E}[X]$ liegt bei `r numMCMean`. 
@@ -430,7 +430,7 @@ P(X > 20) &= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\
 Dabei ist $Y \sim Uni[0,\frac{1}{20}]$ mit Dichtefunktion $f_Y(y) = 20\,\mathbbm{1}_{[0,\frac{1}{20}]}(y)$, wodurch auch der Vorfaktor $\frac{1}{20}$ vor dem Erwartungswert begründet ist. Um das deutlich zu machen, kann folgende Rück-Umformung bzgl. der Gleichverteilung betrachtet werden:
 
 \begin{align*}
-\frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] &= \frac{1}{20}\,\int_{-\infty}^{\infty} \tilde{g}(y)\cdot 20\,f(y) \,dy\\
+\frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] &= \frac{1}{20}\,\int_{-\infty}^{\infty} \tilde{g}(y)\cdot f(y) \,dy\\
 &= \int_{-\infty}^{\infty} \tilde{g}(y)\cdot \mathbbm{1}_{[0,\frac{1}{20}]}(y) \,dy\\
 &= \int_{0}^{\frac{1}{20}} \tilde{g}(y) \,dy
 \end{align*}
@@ -513,7 +513,7 @@ Im Gegensatz zu den obigen naiven Ansätzen ist mittels der Transformation in gl
 Die Integrale in den Grenzen zwischen $0$ und $1$ zweiter Funktionen $h_1(x)$ und $h_2(x)$ sollen mit Hilfe einer Monte-Carlo Approximation bestimmt werden.
 
 \begin{equation*}
-h_1(x) = (\cos(50x) + \sin(20x))^2 \qquad h_2(x) = \sin(\frac{1}{x})
+h_1(x) = [\cos(50x) + \sin(20x)]^2 \qquad h_2(x) = \sin\left(\frac{1}{x}\right)
 \end{equation*}
 
 Die Implementierung in `R` efolgt über zwei Funktionen:
@@ -588,7 +588,7 @@ fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH1)
 title(paste("h1: ", length(u), " samples, result: ",
             round(mean(h1), 3), sep = ""))
 fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH2)
-title(paste("h2: ", length(u), "samples, result ",
+title(paste("h2: ", length(u), " samples, result ",
             round(mean(h2), 3), sep = ""))
 ```
 
@@ -654,13 +654,13 @@ Die Ergebniss und die Fehlerauswertung sind in Abbildung \ref{fig:plotTri} darge
 
 # Eine (naive) Datenanalyse
 
-Für die naive Datenanalyse am Beispieldatensatz `faithful` wurden verschiedene Diagramme erstellt, die eine intuitive Auswertung der Daten ermöglichen können. Der Datensatz bezieht sich auf erhobene Daten der Ausstoßzeiten und der Ausstoßdauer des Geysirs "Old Faithful Geyser" in den USA.
+Für die naive Datenanalyse am Beispieldatensatz `faithful` wurden verschiedene Diagramme erstellt, die eine intuitive Auswertung der Daten ermöglichen können. Der Datensatz bezieht sich auf erhobene Daten der Wartezeiten zwischen den Ausstößen und den Eruptionszeiten des Geysirs "Old Faithful Geyser" in den USA.
 
 ## Histogramm
 
 Ein Histogramm stellt die Häufigkeit von Daten dar. Dabei werden Daten in Klassen (bins) eingeteilt und die jeweilige Häufigkeit von auftretenden Elementen innerhalb dieser Klasse auf der y-Achse aufgetragen. Ein Histogramm ermöglicht damit eine erste grobe Einschätzung der möglichen Verteilung der Daten.
 
-Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich unter Umständen um zwei normalverteilte Teilmengen handelt. Es könnte also z.B. sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Ein Blick auf getrennte Daten (Eruptionszeit größer bzw. kleiner als 3 Minuten), dargestellt in Abbilung \ref{fig:histoSep}, scheint diese Vermutung zu unterstützen. Ob es sich jedoch wirklich um normalverteilte Daten handelt kann erst it dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
+Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{fig:histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich unter Umständen um zwei normalverteilte Teilmengen handelt. Es könnte also z.B. sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Ein Blick auf getrennte Daten (Eruptionszeit größer bzw. kleiner als 3 Minuten), dargestellt in Abbilung \ref{fig:histoSep}, scheint diese Vermutung zu unterstützen. Ob es sich jedoch wirklich um normalverteilte Daten handelt kann erst it dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
 
 ```{r histogram 1, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with all eruption data.\\label{fig:histoAll}"}
 # Create subsets of faithful
@@ -693,11 +693,11 @@ hist(faithHigh$waiting,  xlab = stWaiting,
 
 ## Boxplot
 
-Auch ein Boxplot soll dabei helfen die Verteilung der Daten einschätzen zu können. Der Boxplot besteht dabei aus drei oder vier Elementen. Es wird eine Box ausgegeben, deren Kanten den Bereich des unteren und oberen Quartils abdecken. Innerhalb der Box wird der Median als Linie eingezeichnet. Zusätzlich werden so genannte Whisker (ebenfalls oben und unten) eingezeichnet, die sich aus dem $1,5$-fachen des Interquartilsabstands ergeben. Optional können extreme Ausreißer als Punkte mit dargestellt werden. Der Boxplot gibt damit eine optische Einschätzung der empirischen Verteilung der Daten.
+Auch ein Boxplot soll dabei helfen die Verteilung der Daten einschätzen zu können. Der Boxplot besteht dabei aus drei oder vier Elementen. Es wird eine Box ausgegeben, deren Kanten den Bereich des unteren und oberen Quartils abgrenzt. Innerhalb der Box wird der Median als Linie eingezeichnet. Zusätzlich werden so genannte Whisker (ebenfalls oben und unten) eingezeichnet, die sich aus dem $1,5$-fachen des Interquartilsabstands ergeben. Optional können extreme Ausreißer als Punkte mit dargestellt werden. Der Boxplot gibt damit eine optische Einschätzung der empirischen Verteilung der Daten.
 
-In Abbildung \ref{fig:box} sind die Wartezeiten für die zwei Untermengen mit Eruptionszeiten über und unter 3 Minuten dargestellt.
+In Abbildung \ref{fig:box} sind die Wartezeiten für die zwei Untermengen mit Eruptionszeiten über und unter 3 Minuten dargestellt. Auch hier wird deutlich, dass es sich um zwei getrennte Verteilungen zu handeln scheint. Die empirischen Verteilungen scheinen sich nur wenig zu überschneiden.
 
-```{r boxplot, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Boxplot with waiting data, separated in two categories.\\label{fig:box}"}
+```{r boxplot, echo=FALSE, cache=TRUE, fig.height=6, fig.cap="Boxplot with waiting data, separated in two categories.\\label{fig:box}"}
 par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 # Boxplot with waiting time, one for low/hogh eruption time
@@ -712,7 +712,7 @@ Ein QQ-Plot vergleicht die empirischen Quantile (eine Achse) mit den theoretisch
 
 In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils vermutlich einzeln normalverteilt sind, die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam vermutlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Gaysirs nach zwei unterschiedlichen Prozessablaufen.
 
-```{r qq-plots, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="QQ-Plots in different data-combination.\\label{fig:qq}"}
+```{r qq-plots, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="QQ-Plots in different data-combination.\\label{fig:qq}"}
 par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 # QQ-Plot and QQ-Line for eruption time
@@ -750,9 +750,9 @@ qqline(faithHigh$waiting)
 
 Ein Scatter-Plot stellt alle Punkte zweier (oder mehrerer Variablen) dar. Dabei ist das Ziel Abhängigkeiten zwischen den Variablen einschätzen können.
 
-In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen on Daten gibt. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 5\%$) gibt. Die Auswertung der Regressionsanalysen ist hier aus Platzgründen nicht ausgegeben und ist der Datei `3.R` zu entnehmen.
+In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen von Daten zu geben scheint. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 5\%$) gibt. Die Auswertung der Regressionsanalysen ist hier aus Platzgründen nicht ausgegeben und ist der Datei `3.R` zu entnehmen.
 
-```{r scatter, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Scatter plots and regression lines in different data combinations.\\label{fig:scat}"}
+```{r scatter, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="Scatter plots and regression lines in different data combinations.\\label{fig:scat}"}
 # Define some variables for scaling
 vecMinmaxEruption <- c(min(faithful$eruptions), max(faithful$eruptions))
 vecMinmaxWaiting  <- c(min(faithful$waiting), max(faithful$waiting))
@@ -813,7 +813,7 @@ paste("standard error of estimator:",
             round(sqrt(var(faithful$waiting)/length(faithful$waiting)), 3), "min")
 ```
 
-Im nächsten Schritt wird der nächste erwartete Ausbruch für Ausbrüche welche weniger als 3 Minuten dauern geschätzt.
+Im nächsten Schritt wird der nächste erwartete Ausbruch für Ausbrüche, welche weniger als 3 Minuten dauern, geschätzt.
 
 ```{r estimation 2}
 # for low eruption times
@@ -832,7 +832,7 @@ paste("standard error of estimator:",
             round(sqrt(var(faithHigh$waiting)/length(faithHigh$waiting)), 3), "min")
 ```
 
-Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass die Ausbrüche getrennt betrachtet werden sollten.
+Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass eine getrennt Betrachtung Sinn hat.
 
 \newpage
 

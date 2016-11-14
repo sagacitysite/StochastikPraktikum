@@ -260,7 +260,7 @@ fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH1)
 title(paste("h1: ", length(u), " samples, result: ",
             round(mean(h1), 3), sep = ""))
 fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH2)
-title(paste("h2: ", length(u), "samples, result ",
+title(paste("h2: ", length(u), " samples, result ",
             round(mean(h2), 3), sep = ""))
 
 ## TODO: Compare errors of integrate function with monte carlo
