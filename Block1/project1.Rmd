@@ -108,7 +108,7 @@ $$
 X(\omega) = \min\{k+m-1 \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \text{ für } k \in \mathbb{N} \}
 $$
 
-Wir haben die Funktion wie folgt in R implementiert:[^1]
+Wir haben die Funktion wie folgt in `R` implementiert:[^1]
 
 \newpage
 ```{r Infinite-Monkey}
@@ -211,7 +211,7 @@ set.seed(7)
 numMCMean <- fnEvaluateMonkey("ab", 10^4)
 ```
 
-In Figure \ref{fig:plotMonkey} haben wir ein Histogramm der simulierten Anzahlen von Zeichen und die durchschnittliche Anzahl von Zeichen, bis die Zeichenkette `'ab'` vollständig erschienen ist, für $10^4$ Samples geplottet. Wir können sehen, dass die Anzahl von Zeichen $X$ einer rechtsschiefen Verteilung folgt. Die durch das starke Gesetz der großen Zahlen motivierte Monte-Carlo-Approximation von $\mathbb{E}[X]$ liegt bei `r numMCMean`. 
+In Abbildung \ref{fig:plotMonkey} haben wir ein Histogramm der simulierten Anzahlen von Zeichen und die durchschnittliche Anzahl von Zeichen, bis die Zeichenkette `'ab'` vollständig erschienen ist, für $10^4$ Samples geplottet. Wir können sehen, dass die Anzahl von Zeichen $X$ einer rechtsschiefen Verteilung folgt. Die durch das starke Gesetz der großen Zahlen motivierte Monte-Carlo-Approximation von $\mathbb{E}[X]$ liegt bei `r numMCMean`. 
 
 Zur Simulation von Infinite-Monkey Experimenten wollen wir abschließend noch folgende Überlegung durchführen: würden wir anstatt einer fortlaufenden Zeichenfolge, bei welcher je Schleife nur ein weiterer Letter generiert wird, je Schleifendurchlauf einen Zeichen-Block der Länge $m$ generieren und mit $s$ vergleichen, so entspräche jeder Schleifendurchlauf einem Bernoulli-Experiment mit Erfolgswahrscheinlichkeit $p = \left( \frac{1}{n} \right)^m$. In diesem Fall wäre die Anzahl der Blöcke, die notwendig sind um eine Übereinstimmung mit $s$ zu erhalten, gerade geometrisch-verteilt mit Erfolgswahrscheinlichkeit $p = \left( \frac{1}{n} \right)^m$. Diese Zerlegung in Blöcke der Länge $m$ entspricht genau der Folge unabhängiger Ereignisse aus dem Beweis des Theorems.
 
@@ -294,7 +294,7 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
   lines(mConf[2,], col = "green")
   
   # Add legend for all lines
-  legend("topright", c("Approximation of pi", "Error estimation (CLT)",
+  legend("topright", c("Monte-Carlo approximation", "Error estimation (CLT)",
                        "Error estimation (Simulation)"), 
          lty = 1, col=c("red", "blue", "green"), bty="n", cex=.75)
 }
@@ -305,7 +305,7 @@ fnErrorEstimation <- function(X, fnRandom, m = 100,
 Um eine Nährerung für $\pi$ zu erreichen, können in einem Quadrat zufällige Punkt erzeugt werden. Derjenige Anteil der Punkte, der innerhalb des Kreises liegt, ergibt $\pi$. Zunächst definieren wir die Zufallsvariablen, aus denen die Koordinaten gezogen werden:
 
 \begin{equation*}
-X \sim Uni[-1,1]\quad\text{, d.h}\quad X_1 \sim Uni[-1,1] \quad \text{und} \quad X_2 \sim Uni[-1,1]
+X \sim U([-1,1]^2)\quad\text{, d.h}\quad X_1 \sim U([-1,1]) \quad \text{und} \quad X_2 \sim U([-1,1])
 \end{equation*}
 
 Dabei sind $X_{1}$und $X_{2}$ unabhängig. Die gemeinsame Dichtefunktion ergibt sich aus den einzelnen Dichten und kann wie folgt beschrieben werden:
@@ -316,7 +316,7 @@ f(x_1, x_2) &= \frac{1}{4}\,\mathbbm{1}_{[-1,1]}(x_1)\,\mathbbm{1}_{[-1,1]}(x_2)
 &= f(x_1)f(x_2)
 \end{align*}
 
-$\pi$ kann allgemein definiert werden als:
+Wir können $\pi$ wie folgt als Integral darstellen:
 
 \begin{equation}
 \label{eq:def_pi}
@@ -339,7 +339,7 @@ Durch Umstellung folgt damit direkt:
 \pi = 4\,\mathbb{E}[\mathbbm{1}_S(X)] = 4\,\mathbb{E}[\mathbbm{1}_S(X_1,X_2)]
 \end{equation*}
 
-Im folgenden Code ist die Berechnung mittels `R` dargestellt:
+Im folgenden Code ist die Monte-Carlo Approximation mittels `R` dargestellt:
 
 ```{r Näherung Pi, fig.height=4, fig.cap="Simulation result (left) and error estimation (right).\\label{fig:plotPi}"}
 fnPiRandom <- function(n) {
@@ -396,6 +396,7 @@ fnPiPlotCircle <- function(x1, x2) {
 par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 # Create random values
+set.seed(42)
 X <- fnPiRandom(2000)
 
 # Plot random values and circle
@@ -432,7 +433,7 @@ P(X > 20) &= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\
 &= \int_{0}^{\frac{1}{20}} \tilde{g}(y)\,dy = \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)]
 \end{align*}
 
-Dabei ist $Y \sim Uni[0,\frac{1}{20}]$ mit Dichtefunktion $f_Y(y) = 20\,\mathbbm{1}_{[0,\frac{1}{20}]}(y)$, wodurch auch der Vorfaktor $\frac{1}{20}$ vor dem Erwartungswert begründet ist. Um das deutlich zu machen, kann folgende Rück-Umformung bzgl. der Gleichverteilung betrachtet werden:
+Dabei ist $Y \sim U([0,\frac{1}{20}])$ mit Dichtefunktion $f_Y(y) = 20\,\mathbbm{1}_{[0,\frac{1}{20}]}(y)$, wodurch auch der Vorfaktor $\frac{1}{20}$ vor dem Erwartungswert begründet ist. Um das deutlich zu machen, kann folgende Rück-Umformung bzgl.\ der Gleichverteilung betrachtet werden:
 
 \begin{align*}
 \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] &= \frac{1}{20}\,\int_{-\infty}^{\infty} \tilde{g}(y)\cdot f(y) \,dy\\
@@ -446,7 +447,7 @@ Definieren wir uns nun eine Funktion $g(y) = \frac{1}{20} \tilde{g}(y)$, dann gi
 P(X > 20) = \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] = \mathbb{E}[g(Y)] \approx \frac{1}{n}\sum_{i=1}^n g(y)
 \end{equation*}
 
-Der letzte Schritt entspricht der Monte-Carlo-Approximation und wird durch das Gesetz der großen Zahlen bzw. den Satz von Glivenko-Cantelli ermöglicht.
+Der letzte Schritt entspricht der Monte-Carlo-Approximation und wird durch das Gesetz der großen Zahlen bzw.\ den Satz von Glivenko-Cantelli motiviert.
 
 Zunächst soll versucht werden die Wahrscheinlichkeit  mittels der `R`-Funktion `pnorm` zu bestimmen.
 
@@ -497,6 +498,7 @@ fnProbG <- function(u) {
 par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 # Generate random values
+set.seed(42)
 u <- fnProbRandom(10000)
 
 # Calculate values with function g
@@ -515,7 +517,7 @@ Im Gegensatz zu den obigen naiven Ansätzen ist mittels der Transformation in gl
 
 ## Approximation eines Integrals
 
-Die Integrale in den Grenzen zwischen $0$ und $1$ zweiter Funktionen $h_1(x)$ und $h_2(x)$ sollen mit Hilfe einer Monte-Carlo Approximation bestimmt werden.
+Die Integrale in den Grenzen zwischen $0$ und $1$ zweier Funktionen $h_1$ und $h_2$ sollen mit Hilfe einer Monte-Carlo Approximation bestimmt werden.
 
 \begin{equation*}
 h_1(x) = [\cos(50x) + \sin(20x)]^2 \qquad h_2(x) = \sin\left(\frac{1}{x}\right)
@@ -555,7 +557,7 @@ h1Int <- integrate(fnIntH1, 0, 1)
 h1Int
 ```
 
-Für die Funktion $h_1(x)$ funktioniert die Bestimmung des Integrals ohne Probleme. Für die zweite Funktion $h_2(x)$, kommt es jedoch zu einem Fehler bei der Berechnung.
+Für die Funktion $h_1$ funktioniert die Bestimmung des Integrals ohne Probleme. Für die zweite Funktion $h_2$, kommt es jedoch zu einem Fehler bei der Berechnung.
 
 ``` {r naiv 2}
 # Using R's integrate function to integrate h2
@@ -584,6 +586,7 @@ fnIntRandom <- function(n) {
 par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 # Using Monte-Carlo integration
+set.seed(42)
 u <- fnIntRandom(10000)
 h1 <- fnIntH1(u)
 h2 <- fnIntH2(u)
@@ -597,18 +600,19 @@ title(paste("h2: ", length(u), " samples, result ",
             round(mean(h2), 3), sep = ""))
 ```
 
-In Abbildung \ref{fig:plotInt} sind die Ergebnisse und Fehlerauswertungen der Integral-Approximationen mittels Monte-Carlo dargestellt. Ein Vergleich der Ergbnisse ist nur für $h_1(x)$ möglich, da nur hier die `integrate`-Funktion von `R` ein Ergebnis liefert.
+In Abbildung \ref{fig:plotInt} sind die Ergebnisse und Fehlerauswertungen der Integral-Approximationen mittels Monte-Carlo dargestellt. Ein Vergleich der Ergbnisse ist nur für $h_1$ möglich, da nur hier die `integrate`-Funktion von `R` ein Ergebnis liefert.
 
 ```{r integral comparison error}
 # Calculate percentage error
-round(abs(h1Int$value - mean(h1))/h1Int$value, 5)
+err <- round(abs(h1Int$value - mean(h1))/h1Int$value, 5)
+print(err)
 ```
 
-Es ergibt sich als eine Abweichung von $\sim 1,924\%$ zwischen der `integrate`-Funktion und der Monte-Carlo-Approximation.
+Es ergibt sich als eine relative Abweichung von $\sim$ `r err*100`% zwischen der `integrate`-Funktion und der Monte-Carlo-Approximation.
 
 ## Erwartungswert der Fläche eines zufälligen Dreiecks
 
-Zur einfachen Bestimmung des Erwartungswertes eines zufälligen Dreiecks kann genutzt werden, dass die Fläche des Dreiecks durch folgende Formel gegeben ist:
+Zur einfachen Bestimmung des Erwartungswertes eines zufälligen Dreiecks, wobei die drei Eckpunkte unabhängig auf dem Einheitsquadrat gleichverteilt sind (d.h.\ $(X_1, Y_1), (X_2, Y_2), (X_3, Y_3) \overset{iid}{\sim} U([0,1]^2)$), kann genutzt werden, dass die Fläche des Dreiecks durch folgende Formel gegeben ist:
 
 \begin{equation*}
 \frac{1}{2}|\text{Det}\,A|,\quad\text{wobei } A = \begin{pmatrix}x_1 & y_1 & 1\\ x_2 & y_2 & 1\\ x_2 & y_2 & 1\\\end{pmatrix}
@@ -633,7 +637,7 @@ fnAreaRandom <- function(n) {
     # Generate random values for x- and y-axis
     x <- runif(3)
     y <- runif(3)
-    # Calculate area of trinangle and add to vector
+    # Calculate area of triangle and add to vector
     areas[i] <- abs(0.5 * det(matrix(c(x, y, c(1, 1, 1)), nrow = 3, ncol = 3)))
   }
   
@@ -645,6 +649,7 @@ fnAreaRandom <- function(n) {
 par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
 
 # Generate random triangle area values
+set.seed(42)
 A <- fnAreaRandom(1000)
 
 # Run error estimation
@@ -653,7 +658,7 @@ title(paste("Monte-Carlo simulation with sample size of ", length(A),
             " results in area of ", round(mean(A), 4), sep = ""))
 ```
 
-Die Ergebniss und die Fehlerauswertung sind in Abbildung \ref{fig:plotTri} dargestellt.
+Das Ergebnis und die Fehlerauswertung sind in Abbildung \ref{fig:plotTri} dargestellt. Wir können sehen, dass die Monte-Carlo Approximation etwa $11/144 \approx$ `r round(11/144,4)` entspricht.
 
 \newpage
 
@@ -665,7 +670,7 @@ Für die naive Datenanalyse am Beispieldatensatz `faithful` wurden verschiedene 
 
 Ein Histogramm stellt die Häufigkeit von Daten dar. Dabei werden Daten in Klassen (bins) eingeteilt und die jeweilige Häufigkeit von auftretenden Elementen innerhalb dieser Klasse auf der y-Achse aufgetragen. Ein Histogramm ermöglicht damit eine erste grobe Einschätzung der möglichen Verteilung der Daten.
 
-Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{fig:histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich unter Umständen um zwei normalverteilte Teilmengen handelt. Es könnte also z.B. sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Zur Darstellung der Wartezeiten wurde demnach gleich eine Trennung der Daten vorgenommen (Eruptionszeit größer bzw. kleiner als 3 Minuten), welche in Abbilung \ref{fig:histoSep} dargestellt sind. Die getrennte Darstellung unterstützt die Vermutung. Ob es sich jedoch wirklich um normalverteilte Daten handelt kann erst it dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
+Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{fig:histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich um eine bimodale Verteilung handelt. Es könnte also z.B.\ sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Zur Darstellung der Wartezeiten wurde demnach gleich eine Trennung der Daten vorgenommen (Eruptionszeit größer bzw. kleiner als 3 Minuten), welche in Abbilung \ref{fig:histoSep} dargestellt sind. Die getrennte Darstellung unterstützt die Vermutung. Ob es sich um normalverteilte Daten handelt kann erst mit dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
 
 ```{r histogram 1, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with all eruption data.\\label{fig:histoAll}"}
 # Create subsets of faithful
@@ -715,7 +720,7 @@ boxplot(faithLow$waiting, faithHigh$waiting,
 
 Ein QQ-Plot vergleicht die empirischen Quantile (eine Achse) mit den theoretischen Quantilen (andere Achse). Wenn die Daten einer theoretischen Verteilung exakt folgen, liegen alle Punkte somit auf einer Linie. Mit Hilfe eines QQ-Plots ist es bereits sehr gut möglich eine Einschätzung darüber zu bekommen, welche konkrete Verteilung den Daten vermutlich zu Grunde liegt.
 
-In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils annähernd normalverteilt sind (bis auf Schwankungen in den Tails). Die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam recht offensichtlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Geysirs nach zwei unterschiedlichen Prozessen ablaufen.
+In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils annähernd normalverteilt sind (bis auf Schwankungen in den Tails). Die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam offensichtlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Geysirs nach zwei unterschiedlichen Prozessen ablaufen.
 
 ```{r qq-plots, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="QQ-Plots in different data-combination.\\label{fig:qq}"}
 par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
@@ -803,21 +808,22 @@ linRegression6 <- lm(eruptions ~ waiting, data = faithHigh)
 abline(linRegression6)
 ```
 
-In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen von Daten zu geben scheint. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 5\%$) gibt. Die Auswertungen, d.h. die Koeffizienten, die t-Werte und die p-Werte der Regressionsanalysen, sind in den Tabelle \ref{tab:regs} zusammengefasst.
+In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen von Daten zu geben scheint. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 0.05$ oder auch $\alpha = 0.01$) gibt. Die Auswertungen, d.h. die Koeffizienten, die t-Werte und die p-Werte der Regressionsanalysen, sind in den Tabelle \ref{tab:regs} zusammengefasst.
 
 ```{r table1, echo=FALSE, results="asis"}
+dir.create("./tables", showWarnings = FALSE)
 print(xtable(summary(linRegression1)$coefficients),
-      file="tables/reg1.tex", floating = FALSE)
+      file="./tables/reg1.tex", floating = FALSE)
 print(xtable(summary(linRegression2)$coefficients),
-      file="tables/reg2.tex", floating = FALSE)
+      file="./tables/reg2.tex", floating = FALSE)
 print(xtable(summary(linRegression3)$coefficients),
-      file="tables/reg3.tex", floating = FALSE)
+      file="./tables/reg3.tex", floating = FALSE)
 print(xtable(summary(linRegression4)$coefficients),
-      file="tables/reg4.tex", floating = FALSE)
+      file="./tables/reg4.tex", floating = FALSE)
 print(xtable(summary(linRegression5)$coefficients),
-      file="tables/reg5.tex", floating = FALSE)
+      file="./tables/reg5.tex", floating = FALSE)
 print(xtable(summary(linRegression6)$coefficients),
-      file="tables/reg6.tex", floating = FALSE)
+      file="./tables/reg6.tex", floating = FALSE)
 ```
 
 \begin{table}[ht]
@@ -834,25 +840,26 @@ print(xtable(summary(linRegression6)$coefficients),
 
 ## Schätzung
 
-Zuletzt kann eine Schätzung des erwarteten nächsten Ausbruchs erfolgen. Als Schätzer des Ewartungswerts wird der Mittelwert der Daten verwendet, welcher sich im Falle der Normalverteilung aus dem Maximum-Likelihood-Ansatz und auch aus dem Kleinste-Quadrate-Ansatz ergibt. Zusätzlich wird der Standard-Fehler bestimmt, also die Varianz des Schätzers.
+Zuletzt kann eine Schätzung des erwarteten nächsten Ausbruchs erfolgen. Als Schätzer des Ewartungswerts wird der Mittelwert der Daten verwendet, welcher sich im Falle der Normalverteilung aus dem Maximum-Likelihood-Ansatz oder auch aus dem Kleinste-Quadrate-Ansatz ergibt. Zusätzlich wird der Standard-Fehler bestimmt, d.h.\ die geschätzte Standardabweichung des Schätzers. `R` wendet in der Funktion `var` den unverzerrten Schätzer der Varianz an, welcher durch $n-1$ teilt.
 
 ```{r estimation, results="asis"}
 estAll <- mean(faithful$waiting)
-stdAll <- sqrt(var(faithful$waiting)/length(faithful$waiting))
+stdAll <- sqrt(var(faithful$waiting))
 estLow <- mean(faithLow$waiting)
-stdLow <- sqrt(var(faithLow$waiting)/length(faithLow$waiting))
+stdLow <- sqrt(var(faithLow$waiting))
 estHigh <- mean(faithHigh$waiting)
-stdHigh <- sqrt(var(faithHigh$waiting)/length(faithHigh$waiting))
+stdHigh <- sqrt(var(faithHigh$waiting))
 
 print(xtable(matrix(c(estAll, estLow, estHigh, stdAll, stdLow, stdHigh),
                     ncol = 2, dimnames = list(
                       c("all", "<3 min", ">3 min"),
-                      c("estimator", "standard error"))
+                      c("mean", "standard error"))
                     ),
-             caption = "Estimators and standard errors"), comment = FALSE)
+             caption = "Mean estimates and standard errors of waiting time"),
+      comment = FALSE)
 ```
 
-Die Schätzer wurden für die drei Fälle (alle Daten, Eruptionszeit größer und kleiner 3 Minuten) berechnet und mit ihren Standard-Fehlern in Tabelle 2 dargestellt. Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass eine getrennt Betrachtung Sinn hat.
+Die Schätzer wurden für die drei Fälle (alle Daten, Eruptionszeit größer und kleiner 3 Minuten) berechnet und mit ihren Standard-Fehlern in Tabelle 2 dargestellt. Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass eine getrennte Betrachtung Sinn hat.
 
 \newpage
 
