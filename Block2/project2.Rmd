@@ -1,0 +1,39 @@
+---
+title: "Projektaufgaben Block 2"
+author: "Carlo Michaelis, 573479; David Hinrichs, 572347; Lukas Ruff, 572521"
+date: "06 Dezember 2016"
+documentclass: article
+fontsize: 10pt
+header-includes:
+  - \usepackage{amsthm}
+  - \usepackage{amssymb}
+  - \usepackage{MnSymbol}
+  - \usepackage{bbm}
+  - \usepackage{subfig}
+  - \usepackage{theoremref}
+  - \newtheorem{satz}{Satz}
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    keep_tex: true
+    fig_caption: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE}
+# load libraries
+library(xtable)
+```
+
+# Nichtparametrisches Testen
+
+# Dichteschätzung
+
+# Bildentrauschen
+
+
+<!--Footnotes-->
