@@ -279,10 +279,10 @@ fnG <- function(x, X, K, h) {
   return(G/n)
 }
 
-fnJ <- function(h) {
+fnJ <- function(x, X, h) {
   # Calculates J for given bandwidth
-  G <- fnG(x, data, fnGaussianKernel, h)
-  f <- fnKernelDensityEst(x, data, fnGaussianKernel, h)
+  G <- fnG(x, X, fnGaussianKernel, h)
+  f <- fnKernelDensityEst(x, X, fnGaussianKernel, h)
   return(sum(f^2) - (2*G))
 }
 
@@ -290,7 +290,7 @@ vech <- c(seq(0.1,0.9,0.1), seq(1,10,1))
 
 vecJ <- NULL
 for(h in vech) {
-  vecJ <- c(vecJ, fnJ(h))
+  vecJ <- c(vecJ, fnJ(x, X, h))
 }
 vech[which.min(vecJ)]
 ```
