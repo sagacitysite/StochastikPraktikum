@@ -132,7 +132,7 @@ fnKernelDensityEst <- function(x, X, K, h) {
   nPts <- length(x)
   n <- length(X)
   
-  # Compute and return the estimated kernel density values for every bandwidth
+  # Compute the estimated kernel density values for every bandwidth
   kernels <- list()
   for(i in 1:length(h)) {
     matKernel <- K((matrix(rep(X, nPts), ncol = n, byrow = TRUE) - x) / h[i])
@@ -240,7 +240,7 @@ fnKernelPlot(fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h),
 data <- faithful$eruptions
 x <- seq(min(data), max(data), 0.01)
 
-fnKernelPlot(fnKernelDensityEst(x, faithful$eruptions, K = fnGaussianKernel, h),
+fnKernelPlot(fnKernelDensityEst(x, data, K = fnGaussianKernel, h),
              title = "Gaussian Kernel Density Estimation for faithful eruption data",
              data = data)
 ```
@@ -249,6 +249,51 @@ fnKernelPlot(fnKernelDensityEst(x, faithful$eruptions, K = fnGaussianKernel, h),
 
 <!-- (a) LR: Erwartungstreue hätte ich auf Papier bereits gezeigt. -->
 
+```{r Kernel density estimation cross validation}
+fnG <- function(x, X, K, h) {
+  # This function computes the function G for given bandwidth
+  # 
+  # Args:
+  #   x: Points for which the kernel density estimates are computed
+  #   X: Data sample on which the kernel density estimation is fitted
+  #   K: Kernel function to be used for smoothing
+  #   h: Smoothing Bandwidth
+  #   
+  # Returns:
+  #   Result of function G
+  
+  # Get number of points and sample size
+  nPts <- length(x)
+  n <- length(X)
+  
+  G <- 0
+  for(j in 1:n) {
+    fj <- 0
+    for(k in 1:n) {
+      if(k != j) {
+        fj <- fj + K((X[k] - X[j]) / h)
+      }
+    }
+    G <- G + fj/((n-1)*h)
+  }
+  return(G/n)
+}
+
+fnJ <- function(h) {
+  # Calculates J for given bandwidth
+  G <- fnG(x, data, fnGaussianKernel, h)
+  f <- fnKernelDensityEst(x, data, fnGaussianKernel, h)
+  return(sum(f^2) - (2*G))
+}
+
+vech <- c(seq(0.1,0.9,0.1), seq(1,10,1))
+
+vecJ <- NULL
+for(h in vech) {
+  vecJ <- c(vecJ, fnJ(h))
+}
+vech[which.min(vecJ)]
+```
 
 # Bildentrauschen
 
