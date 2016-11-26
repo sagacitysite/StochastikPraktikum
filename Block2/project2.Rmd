@@ -24,6 +24,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r load_packages, include=FALSE}
+library(EBImage)
+```
+
 # Nichtparametrisches Testen
 
 ## Zwillingsstudie
@@ -286,6 +290,8 @@ fnJ <- function(x, X, h) {
   return(sum(f^2) - (2*G))
 }
 
+X <- rnorm(30)
+x <- seq(-4, 4, 0.01)
 vech <- c(seq(0.1,0.9,0.1), seq(1,10,1))
 
 vecJ <- NULL
@@ -297,5 +303,31 @@ vech[which.min(vecJ)]
 
 # Bildentrauschen
 
+```{r "Image noise preparation", eval=FALSE}
+# Load image
+imgColor = readImage("Block2/lena.png")
+
+# Display colored image
+par(mfrow = c(1,2))
+display(imgColor, method="raster")
+
+# Change image to grayscale
+img<- channel(imgColor, "gray")
+
+# Display grayscaled image
+display(img, method="raster")
+
+# Add noise to image
+sigma <- 0.25
+imgNoise <- img + rnorm(512*512, 0, sigma)
+
+# Adjust values below 0 and above 1
+imgNoise[imgNoise < 0] = 0
+imgNoise[imgNoise > 1] = 1
+
+# Display image with noise
+par(mfrow = c(1,1))
+display(imgNoise, method="raster")
+```
 
 <!--Footnotes-->
