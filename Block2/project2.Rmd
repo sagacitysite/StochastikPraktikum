@@ -46,7 +46,7 @@ wilcox.test(x, y, alternative = "two.sided", mu = 0, conf.level = 0.95,
 #             conf.int = TRUE)  # alternative
 ```
 
-Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt und somit einen signifikanten Einfluss feststellt. Der Wilcoxon-Vorzeichen-Test verwirft die Nullhypothese dagegen nicht. Durch die Normalverteilungsannahme $X_i - Y_i \sim N(0,\sigma^2)$, die für gegebenes Sample in Frage gestellt werden kann, besitzt der $t$-Test eine größere Power. Der nichtparametrische Wilcoxon-Vorzeichen-Test benötigt hingegen keine Verteilungsannahme, besitzt jedoch eine kleinere Power.
+Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < 0.05 = \alpha$) und somit einen signifikanten Einfluss feststellt. Der Wilcoxon-Vorzeichen-Test verwirft die Nullhypothese dagegen nicht ($p = 0.05469 > 0.05 = \alpha$). Durch die Normalverteilungsannahme $X_i - Y_i \sim N(0,\sigma^2)$, die für gegebenes Sample in Frage gestellt werden kann, besitzt der $t$-Test eine größere Power. Der nichtparametrische Wilcoxon-Vorzeichen-Test benötigt hingegen keine Verteilungsannahme, besitzt jedoch eine kleinere Power.
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
@@ -132,9 +132,59 @@ fnKernelDensityEst <- function(x, X, K, h) {
   nPts <- length(x)
   n <- length(X)
   
-  # Compute and return the estimated kernel density values
-  matKernel <- K((matrix(rep(X, nPts), ncol = n, byrow = TRUE) - x) / h)
-  return((1/(n*h)) * apply(matKernel, 1, sum))
+  # Compute and return the estimated kernel density values for every bandwidth
+  kernels <- list()
+  for(i in 1:length(h)) {
+    matKernel <- K((matrix(rep(X, nPts), ncol = n, byrow = TRUE) - x) / h[i])
+    kernels <- append(kernels, list((1/(n*h[i])) * apply(matKernel, 1, sum)))
+  }
+  
+  # If h is scalar return just a matrix with the kernels
+  # If h is a vector return a list with multiple kernels, their x and h values
+  if(length(h) == 1) {
+    return(kernels[[1]])
+  } else {
+    return(list(x = x, h = h, kernels = kernels))
+  }
+}
+```
+
+```{r Kernel density plot}
+fnKernelPlot <- function(listKernels, title = NULL, data = NULL) {
+  # This function plots the kernel density estimates for a given kernel list
+  # 
+  # Args:
+  #   listKernels: list of kernels calculated with fnKernelDensityEst
+  #   title: main title of plot
+  #   
+  # Returns:
+  #   -
+  
+  # Save number of kernels (each with a different bandwidth)
+  nKernels <- length(listKernels$kernels)
+  
+  # Create palette depending on size of list
+  cols <- rainbow(nKernels, alpha = 1)
+  
+  # Plot theoretical density of histogram (if data is available)
+  if(is.null(data)) {
+    plot(listKernels$x, dnorm(listKernels$x), type = "l",
+         main = title, xlab = "x", ylab = "Density", ylim = c(0,0.6))
+  } else {
+    plot(density(data), main = title, xlab = "x",
+         ylab = "Density", ylim = c(0,0.6))
+  }
+  
+  # Print kernels
+  for(i in 1:nKernels) {
+    lines(listKernels$x, listKernels$kernels[[i]], col = cols[i])
+  }
+  
+  # Create and add legend
+  dlegend <- ifelse(is.null(data), "True density", "R density()")
+  hlegend <- sapply(listKernels$h, function(x) {x <- paste("h = ", x)})
+  legend("topright", legend = c(dlegend, hlegend),
+         col = c("black", cols), lty = 1, cex = 0.75)
 }
 ```
 
@@ -154,8 +204,9 @@ fnEpanechnikovKernel <- function(x) {
 }
 ```
 
+### Anwendung auf standardnormalverteilte Daten
+
 ```{r Test Kernel density estimation}
-# Test 1: Standard Normal ######################################################
 
 # Sample size and generate sample
 set.seed(42)
@@ -166,41 +217,32 @@ X <- rnorm(n)
 x <- seq(-4, 4, 0.01)
 
 # Set different bandwidths
-h <- c(0.1, 1, 10)
+#h <- c(0.1, 1, 10)
+h <- c(0.1, 0.25, 0.5, 0.75, 1, 2.5, 5)
 
 # Rectangular kernel density estimation
-plot(x, dnorm(x), type = "l", main = "Rectangular Kernel Density Estimation",
-     xlab = "x", ylab = "Density")
-lines(x, fnKernelDensityEst(x, X, K = fnRectangularKernel, h[1]), col = "green")
-lines(x, fnKernelDensityEst(x, X, K = fnRectangularKernel, h[2]), col = "blue")
-lines(x, fnKernelDensityEst(x, X, K = fnRectangularKernel, h[3]), col = "red")
-legend("topright", legend = c("True density", paste("h = ", h[1]), 
-                              paste("h = ", h[2]), paste("h = ", h[3])),
-       col = c("black", "green", "blue", "red"), lty = 1, cex = 0.75)
+fnKernelPlot(fnKernelDensityEst(x, X, K = fnRectangularKernel, h),
+             title = "Rectangular Kernel Density Estimation")
 
 # Gaussian kernel density estimation
-plot(x, dnorm(x), type = "l", main = "Gaussian Kernel Density Estimation",
-     xlab = "x", ylab = "Density")
-lines(x, fnKernelDensityEst(x, X, K = fnGaussianKernel, h[1]), col = "green")
-lines(x, fnKernelDensityEst(x, X, K = fnGaussianKernel, h[2]), col = "blue")
-lines(x, fnKernelDensityEst(x, X, K = fnGaussianKernel, h[3]), col = "red")
-legend("topright", legend = c("True density", paste("h = ", h[1]), 
-                              paste("h = ", h[2]), paste("h = ", h[3])),
-       col = c("black", "green", "blue", "red"), lty = 1, cex = 0.75)
+fnKernelPlot(fnKernelDensityEst(x, X, K = fnGaussianKernel, h),
+             title = "Gaussian Kernel Density Estimation")
 
 # Epanechnikov kernel density estimation
-plot(x, dnorm(x), type = "l", main = "Epanechnikov Kernel Density Estimation",
-     xlab = "x", ylab = "Density")
-lines(x, fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h[1]), col = "green")
-lines(x, fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h[2]), col = "blue")
-lines(x, fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h[3]), col = "red")
-legend("topright", legend = c("True density", paste("h = ", h[1]), 
-                              paste("h = ", h[2]), paste("h = ", h[3])),
-       col = c("black", "green", "blue", "red"), lty = 1, cex = 0.75)
+fnKernelPlot(fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h),
+             title = "Epanechnikov Kernel Density Estimation")
 ```
 
-```{r faithful Kernel density estimation}
+### Anwendung auf faitful Datensatz
 
+```{r faithful kernel density estimation}
+# Faithful kernel density estimation
+data <- faithful$eruptions
+x <- seq(min(data), max(data), 0.01)
+
+fnKernelPlot(fnKernelDensityEst(x, faithful$eruptions, K = fnGaussianKernel, h),
+             title = "Gaussian Kernel Density Estimation for faithful eruption data",
+             data = data)
 ```
 
 ## Kreuzvalidierung zur Bandweitenwahl
