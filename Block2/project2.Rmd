@@ -319,9 +319,9 @@ vech[which.min(vecJ)]
 
 # Bildentrauschen
 
-```{r "Image noise preparation", eval=FALSE}
+```{r "Image noise preparation", cache = TRUE}
 # Load image
-imgColor = readImage("Block2/lena.png")
+imgColor = readImage("lena.png")
 
 # Display colored image
 par(mfrow = c(1,2))
