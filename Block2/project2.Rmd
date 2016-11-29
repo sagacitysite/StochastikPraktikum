@@ -336,30 +336,42 @@ vech[which.min(vecJ)]
 # Bildentrauschen
 
 ```{r "Image noise preparation", cache = TRUE}
-# Load image
-imgColor = readImage("lena.png")
+# Load packages
+library(EBImage)
+
+# Load image from parent directory
+imgLenaColor = readImage("../lena.png")
 
 # Display colored image
 par(mfrow = c(1,2))
-display(imgColor, method="raster")
+display(imgLenaColor, method="raster")
 
 # Change image to grayscale
-img<- channel(imgColor, "gray")
+imgLenaGrey <- channel(imgLenaColor, "gray")
 
 # Display grayscaled image
-display(img, method="raster")
+display(imgLenaGrey, method="raster")
 
 # Add noise to image
 sigma <- 0.25
-imgNoise <- img + rnorm(512*512, 0, sigma)
+dimImg <- dim(imgLenaGrey)
+imgLenaNoise <- imgLenaGrey + rnorm(dimImg[1]*dimImg[2], 0, sigma)
 
 # Adjust values below 0 and above 1
-imgNoise[imgNoise < 0] = 0
-imgNoise[imgNoise > 1] = 1
+imgLenaNoise[imgLenaNoise < 0] = 0
+imgLenaNoise[imgLenaNoise > 1] = 1
 
 # Display image with noise
 par(mfrow = c(1,1))
-display(imgNoise, method="raster")
+display(imgLenaNoise, method="raster")
+
+# Take a slice of the image
+imgLenaSlice <- imgLenaNoise[200:300,200:300]
+display(imgLenaSlice, method="raster")
 ```
 
 <!--Footnotes-->
+```{r}
+
+```
+
