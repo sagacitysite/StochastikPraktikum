@@ -339,39 +339,64 @@ vech[which.min(vecJ)]
 # Load packages
 library(EBImage)
 
-# Load image from parent directory
-imgLenaColor = readImage("../lena.png")
-
-# Display colored image
+# Load image from parent directory and display
 par(mfrow = c(1,2))
+imgLenaColor = readImage("../lena.png")
+imgPorscheColor = readImage("../porsche.jpeg")
 display(imgLenaColor, method="raster")
+display(imgPorscheColor, method="raster")
 
-# Change image to grayscale
+# Change image to grayscale and display
+par(mfrow = c(1,2))
 imgLenaGrey <- channel(imgLenaColor, "gray")
-
-# Display grayscaled image
+imgPorscheGrey <- channel(imgPorscheColor, "gray")
 display(imgLenaGrey, method="raster")
+display(imgPorscheGrey, method="raster")
 
 # Add noise to image
 sigma <- 0.25
-dimImg <- dim(imgLenaGrey)
-imgLenaNoise <- imgLenaGrey + rnorm(dimImg[1]*dimImg[2], 0, sigma)
+dimImgLena <- dim(imgLenaGrey)
+dimImgPorsche <-dim(imgPorscheGrey)
+imgLenaNoise <- imgLenaGrey + rnorm(dimImgLena[1]*dimImgLena[2], 0, sigma)
+imgPorscheNoise <- imgPorscheGrey + rnorm(dimImgPorsche[1]*dimImgPorsche[2], 0, sigma)
 
 # Adjust values below 0 and above 1
 imgLenaNoise[imgLenaNoise < 0] = 0
 imgLenaNoise[imgLenaNoise > 1] = 1
+imgPorscheNoise[imgPorscheNoise < 0] = 0
+imgPorscheNoise[imgPorscheNoise > 1] = 1
 
 # Display image with noise
-par(mfrow = c(1,1))
+par(mfrow = c(1,2))
 display(imgLenaNoise, method="raster")
+display(imgPorscheNoise, method="raster")
 
 # Take a slice of the image
+par(mfrow = c(1,2))
 imgLenaSlice <- imgLenaNoise[200:300,200:300]
+imgPorscheSlice <- imgPorscheNoise[275:375,100:200]
 display(imgLenaSlice, method="raster")
+display(imgPorscheSlice, method="raster")
+
+# Define Nadaraya-Watson-Schätzer:
+fnNadaWatson <- function(K, xy, img) {
+  # This function returns the Nadaraya Watson estimator for a given Kernel
+  #
+  # Args:
+  # K: The Kernel, call as K(x,y,h) for K((x-y/h)
+  # h: bandwith
+  # xy: point in image, coordinates
+  # img: Image for smoothing
+  
+  return(0)
+  }
+
+# Implement
 ```
 
 <!--Footnotes-->
 ```{r}
-
+# Bonusaufgabe:
+# Recherchiere andere Methoden zum Bildentrauschen und erkläre kurz die Hauptideen, eventuell auch mit Beispielcode
 ```
 
