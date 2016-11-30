@@ -154,63 +154,58 @@ fnKernelDensityEst <- function(x, X, K, h) {
   # Returns:
   #   A vector of the kernel density estimates at points x
   
-  # Get number of points and sample size
-  nPts <- length(x)
+  # Compute kernel density estimation values using outer
   n <- length(X)
-  
-  # Compute the estimated kernel density values for every bandwidth
-  kernels <- list()
-  for(i in 1:length(h)) {
-    matKernel <- K((matrix(rep(X, nPts), ncol = n, byrow = TRUE) - x) / h[i])
-    kernels <- append(kernels, list((1/(n*h[i])) * apply(matKernel, 1, sum)))
-  }
-  
-  # If h is scalar return just a matrix with the kernels
-  # If h is a vector return a list with multiple kernels, their x and h values
-  if(length(h) == 1) {
-    return(kernels[[1]])
-  } else {
-    return(list(x = x, h = h, kernels = kernels))
-  }
+  mKernels <- K((1/h) * outer(X, x, FUN = "-"))
+  return((1/(n*h)) * colSums(mKernels))
 }
 ```
 
 ```{r Kernel density plot}
-fnKernelPlot <- function(listKernels, title = NULL, data = NULL) {
-  # This function plots the kernel density estimates for a given kernel list
+fnKernelPlot <- function(x, X, K, vh, title = NULL, trueDensity = NULL, ...) {
+  # This function plots the kernel density estimates for different bandwidths.
+  # If trueDensity is specified, the true density will be plotted as well.
   # 
   # Args:
-  #   listKernels: list of kernels calculated with fnKernelDensityEst
-  #   title: main title of plot
+  #   x:            Points for which the kernel density estimates are computed
+  #   X:            Data sample on which the kernel density estimation is fitted
+  #   K:            Kernel function to be used for smoothing
+  #   vh:           Vector of smoothing bandwidths
+  #   title:        Main title of the plot
+  #   trueDensity:  True density to be plotted (e.g. dnorm)
+  #   ...:          Further arguments passed to or from other methods
   #   
   # Returns:
   #   -
   
-  # Save number of kernels (each with a different bandwidth)
-  nKernels <- length(listKernels$kernels)
+  nh <- length(vh)
   
-  # Create palette depending on size of list
-  cols <- rainbow(nKernels, alpha = 1)
+  # Create color palette for number of bandwidths
+  cols <- rainbow(nh, alpha = 1)
   
-  # Plot theoretical density of histogram (if data is available)
-  if(is.null(data)) {
-    plot(listKernels$x, dnorm(listKernels$x), type = "l",
-         main = title, xlab = "x", ylab = "Density", ylim = c(0,0.6))
-  } else {
-    plot(density(data), main = title, xlab = "x",
-         ylab = "Density", ylim = c(0,0.6))
+  # Initialize plot with first kernel density
+  plot(x, fnKernelDensityEst(x, X, K, vh[1]), type = "l", col = cols[1], 
+       main = title, xlab = "x", ylab = "Density", ...)
+  
+  # Add kernel density for each additional bandwidth
+  if (nh > 1) {
+    for (i in 2:nh) {
+      lines(x, fnKernelDensityEst(x, X, K, vh[i]), col = cols[i])
+    }
   }
   
-  # Print kernels
-  for(i in 1:nKernels) {
-    lines(listKernels$x, listKernels$kernels[[i]], col = cols[i])
+  # Create legend
+  legend <- sapply(vh, function(h) {h <- paste("h = ", round(h, 4))})
+  
+  # Plot true density if specified
+  if (!is.null(trueDensity)) {
+    lines(x, trueDensity(x), col = "black")
+    legend <- c("True density", legend)
+    cols <- c("black", cols)
   }
   
-  # Create and add legend
-  dlegend <- ifelse(is.null(data), "True density", "R density()")
-  hlegend <- sapply(listKernels$h, function(x) {x <- paste("h = ", x)})
-  legend("topright", legend = c(dlegend, hlegend),
-         col = c("black", cols), lty = 1, cex = 0.75)
+  # Plot legend
+  legend("topright", legend = legend, col = cols, lty = 1, cex = 0.75)
 }
 ```
 
@@ -230,55 +225,120 @@ fnEpanechnikovKernel <- function(x) {
 }
 ```
 
-### Anwendung auf standardnormalverteilte Daten
+### Anwendung auf standardnormalverteilte Zufallszahlen
 
-```{r Test Kernel density estimation}
-
-# Sample size and generate sample
+```{r Kernel density estimation for standard normal}
+# Generate sample
 set.seed(42)
-n <- 30
+n <- 50
 X <- rnorm(n)
 
 # Define points to estimate kernel density on
 x <- seq(-4, 4, 0.01)
 
 # Set different bandwidths
-#h <- c(0.1, 1, 10)
-h <- c(0.1, 0.25, 0.5, 0.75, 1, 2.5, 5)
+h <- c(0.1, bw.ucv(X), 1, 4)
 
 # Rectangular kernel density estimation
-fnKernelPlot(fnKernelDensityEst(x, X, K = fnRectangularKernel, h),
-             title = "Rectangular Kernel Density Estimation")
+fnKernelPlot(x, X, fnRectangularKernel, h, 
+             title = "Rectangular Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
 
 # Gaussian kernel density estimation
-fnKernelPlot(fnKernelDensityEst(x, X, K = fnGaussianKernel, h),
-             title = "Gaussian Kernel Density Estimation")
+fnKernelPlot(x, X, fnGaussianKernel, h, 
+             title = "Gaussian Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h),
-             title = "Epanechnikov Kernel Density Estimation")
+fnKernelPlot(x, X, fnGaussianKernel, h, 
+             title = "Epanechnikov Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
+```
+
+### Anwendung auf gleichverteilte Zufallszahlen
+
+```{r Kernel density estimation for uniform}
+# Generate sample
+set.seed(42)
+n <- 50
+X <- runif(n)
+
+# Define points to estimate kernel density on
+x <- seq(0, 1, 0.01)
+
+# Set different bandwidths
+h <- c(bw.ucv(X), 0.1, 0.5)
+
+# Rectangular kernel density estimation
+fnKernelPlot(x, X, fnRectangularKernel, h, 
+             title = "Rectangular Kernel Density Estimation",
+             trueDensity = dunif, ylim = c(0, 2))
+
+# Gaussian kernel density estimation
+fnKernelPlot(x, X, fnGaussianKernel, h, 
+             title = "Gaussian Kernel Density Estimation",
+             trueDensity = dunif, ylim = c(0, 2))
+
+# Epanechnikov kernel density estimation
+fnKernelPlot(x, X, fnGaussianKernel, h, 
+             title = "Epanechnikov Kernel Density Estimation",
+             trueDensity = dunif, ylim = c(0, 2))
+```
+
+### Anwendung auf Cauchy-verteilte Zufallszahlen
+
+```{r Kernel density estimation for Cauchy}
+# Generate sample
+set.seed(42)
+n <- 50
+X <- rt(n, df = 1)
+
+# Define points to estimate kernel density on
+x <- seq(-4, 4, 0.01)
+
+# Set different bandwidths
+h <- c(0.5, 1, 5, bw.ucv(X))
+
+# Define Cauchy density function
+dcauchy <- function(x) {y <- dt(x, df = 1)}
+
+# Rectangular kernel density estimation
+fnKernelPlot(x, X, fnRectangularKernel, h, 
+             title = "Rectangular Kernel Density Estimation",
+             trueDensity = dcauchy, ylim = c(0, 0.4))
+
+# Gaussian kernel density estimation
+fnKernelPlot(x, X, fnGaussianKernel, h, 
+             title = "Gaussian Kernel Density Estimation",
+             trueDensity = dcauchy, ylim = c(0, 0.4))
+
+# Epanechnikov kernel density estimation
+fnKernelPlot(x, X, fnGaussianKernel, h, 
+             title = "Epanechnikov Kernel Density Estimation",
+             trueDensity = dcauchy, ylim = c(0, 0.4))
 ```
 
 ### Anwendung auf faithful Datensatz
 
 ```{r faithful kernel density estimation}
 # Faithful kernel density estimation
-data <- faithful$eruptions
-x <- seq(min(data), max(data), 0.01)
+X <- faithful$eruptions
 
-fnKernelPlot(fnKernelDensityEst(x, data, K = fnGaussianKernel, h),
-             title = "Gaussian Kernel Density Estimation for faithful eruption data",
-             data = data)
+# Define points to estimate kernel density on
+x <- seq(min(X), max(X), 0.01)
+
+# Set different bandwidths
+h <- c(0.05, bw.ucv(X), 0.5, 1)
+
+# Gaussian kernel density estimation
+title <- "Gaussian Kernel Density Estimation for faithful eruption data"
+fnKernelPlot(x, X, fnGaussianKernel, h, title = title)
 ```
 
-<!-- TODO nochmal für folgende Verteilungen machen:
-  * Gleichverteilung
-  * Cauchy-Verteilung
--->
 
 ## Kreuzvalidierung zur Bandweitenwahl
 
-<!-- (a) LR: Erwartungstreue hätte ich auf Papier bereits gezeigt. -->
+<!-- (a) LR: Erwartungstreue habe ich auf Papier bereits gezeigt. -->
 
 ```{r Kernel density estimation cross validation}
 fnJ <- function(X, K, h) {
@@ -340,6 +400,8 @@ bw.ucv(faithful$eruptions)
 
 
 # Bildentrauschen
+
+<!-- 4. (a)-(c) LR: Habe ich ebenso auf Papier bereits gezeigt. -->
 
 ```{r Load and prepare images}
 # Load package
