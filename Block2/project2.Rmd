@@ -135,6 +135,7 @@ fnTestPowerMC(fnError = runif, nSim = 10^5, min = -1, max = 1)
   -> Tabelle erstellen
 -->
 
+
 # Dichteschätzung
 
 ## Kerndichteschätzer
@@ -148,10 +149,10 @@ fnKernelDensityEst <- function(x, X, K, h) {
   #   x: Points for which the kernel density estimates are computed
   #   X: Data sample on which the kernel density estimation is fitted
   #   K: Kernel function to be used for smoothing
-  #   h: Smoothing Bandwidth
+  #   h: Smoothing bandwidth
   #   
   # Returns:
-  #   A vector of the kernel density estimates at the points x
+  #   A vector of the kernel density estimates at points x
   
   # Get number of points and sample size
   nPts <- length(x)
@@ -258,7 +259,7 @@ fnKernelPlot(fnKernelDensityEst(x, X, K = fnEpanechnikovKernel, h),
              title = "Epanechnikov Kernel Density Estimation")
 ```
 
-### Anwendung auf faitful Datensatz
+### Anwendung auf faithful Datensatz
 
 ```{r faithful kernel density estimation}
 # Faithful kernel density estimation
@@ -279,55 +280,64 @@ fnKernelPlot(fnKernelDensityEst(x, data, K = fnGaussianKernel, h),
 
 <!-- (a) LR: Erwartungstreue hätte ich auf Papier bereits gezeigt. -->
 
-<!-- TODO do matrix magic -->
-
 ```{r Kernel density estimation cross validation}
-fnG <- function(x, X, K, h) {
-  # This function computes the function G for given bandwidth
+fnJ <- function(X, K, h) {
+  # This function computes the value of the unbiased cross validation criteria.
+  # The minimum of this function in h gives an estimated “optimal” (in the
+  # sense of mean integrated squared error) bandwidth.
   # 
   # Args:
-  #   x: Points for which the kernel density estimates are computed
   #   X: Data sample on which the kernel density estimation is fitted
   #   K: Kernel function to be used for smoothing
-  #   h: Smoothing Bandwidth
+  #   h: Smoothing bandwidth
   #   
   # Returns:
-  #   Result of function G
+  #   Function value
   
-  # Get number of points and sample size
-  nPts <- length(x)
   n <- length(X)
   
-  G <- 0
-  for(j in 1:n) {
-    fj <- 0
-    for(k in 1:n) {
-      if(k != j) {
-        fj <- fj + K((X[k] - X[j]) / h)
-      }
-    }
-    G <- G + fj/((n-1)*h)
-  }
-  return(G/n)
+  # Compute integral of squared kernel density estimator
+  integrand <- function(x) {return(fnKernelDensityEst(x, X, K, h)^2)}
+  SKDEInt <- integrate(integrand, -Inf, Inf)$value
+  
+  # Compute G
+  mKernels <- K((1/h) * outer(X, X, FUN = "-"))
+  diag(mKernels) <- 0
+  G <- (1/(n*(n-1)*h)) * sum(mKernels)
+  
+  # Return function value of J
+  return(SKDEInt - 2*G)
 }
 
-fnJ <- function(x, X, h) {
-  # Calculates J for given bandwidth
-  G <- fnG(x, X, fnGaussianKernel, h)
-  f <- fnKernelDensityEst(x, X, fnGaussianKernel, h)
-  return(sum(f^2)*0.001 - (2*G))
+fnUCV <- function(X, K, hmin, hmax, tol = 0.1 * hmin) {
+  # This function returns the minimum of the unbiased cross validation criteria
+  # in h which is “optimal” in the sense of mean integrated squared error.
+  # We use R's optimize function to find the minimum.
+  # 
+  # Args:
+  #   X:    Data sample on which the kernel density estimation is fitted
+  #   K:    Kernel function to be used for smoothing
+  #   hmin: Lower bound for optimal h
+  #   hmax: Upper bound for optimal h
+  #   tol:  The desired accuracy
+  #   
+  # Returns:
+  #   Optimal bandwidth h*
+  
+  # Find and return the minimum using optimize
+  fnTarget <- function(h) {return(fnJ(X, K, h))}
+  hOpt <- optimize(fnTarget, c(hmin, hmax), tol = tol)
+  return(hOpt$minimum)
 }
-
-X <- rnorm(500)
-x <- seq(-4, 4, 0.001)
-vech <- c(seq(0.1,0.9,0.1), seq(1,10,1))
-
-vecJ <- NULL
-for(h in vech) {
-  vecJ <- c(vecJ, fnJ(x, X, h))
-}
-vech[which.min(vecJ)]
 ```
+
+```{r Cross validation test}
+hmin <- 0.01
+hmax <- 10
+fnUCV(faithful$eruptions, fnGaussianKernel, hmin, hmax)
+bw.ucv(faithful$eruptions)
+```
+
 
 # Bildentrauschen
 
@@ -335,7 +345,6 @@ vech[which.min(vecJ)]
 # Load package
 library(EBImage)
 
-<<<<<<< HEAD
 # Load image from parent directory
 imgLenaColor <- readImage("../lena.png")
 
@@ -459,7 +468,6 @@ fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
 }
 ```
 
-
 ```{r Nadaraya-Watson-estimator Test}
 sigma <- c(0.1, 0.25, 0.5)
 h <- c(0.1, 1, 10)
@@ -472,73 +480,9 @@ imgPorsche <- readImage("../porsche.jpeg")
 fnEvalNWGaussianNoise(imgPorsche, sigma, h)
 ```
 
-
-
 ```{r Weighted Median}
 # 7. The weighted median is more robust than the mean
-=======
-# Load image from parent directory and display
-par(mfrow = c(1,2))
-imgLenaColor = readImage("../lena.png")
-imgPorscheColor = readImage("../porsche.jpeg")
-display(imgLenaColor, method="raster")
-display(imgPorscheColor, method="raster")
-
-# Change image to grayscale and display
-par(mfrow = c(1,2))
-imgLenaGrey <- channel(imgLenaColor, "gray")
-imgPorscheGrey <- channel(imgPorscheColor, "gray")
-display(imgLenaGrey, method="raster")
-display(imgPorscheGrey, method="raster")
-
-# Add noise to image
-sigma <- 0.25
-dimImgLena <- dim(imgLenaGrey)
-dimImgPorsche <-dim(imgPorscheGrey)
-imgLenaNoise <- imgLenaGrey + rnorm(dimImgLena[1]*dimImgLena[2], 0, sigma)
-imgPorscheNoise <- imgPorscheGrey + rnorm(dimImgPorsche[1]*dimImgPorsche[2], 0, sigma)
-
-# Adjust values below 0 and above 1
-imgLenaNoise[imgLenaNoise < 0] = 0
-imgLenaNoise[imgLenaNoise > 1] = 1
-imgPorscheNoise[imgPorscheNoise < 0] = 0
-imgPorscheNoise[imgPorscheNoise > 1] = 1
-
-# Display image with noise
-par(mfrow = c(1,2))
-display(imgLenaNoise, method="raster")
-display(imgPorscheNoise, method="raster")
-
-# Take a slice of the image
-par(mfrow = c(1,2))
-imgLenaSlice <- imgLenaNoise[200:300,200:300]
-imgPorscheSlice <- imgPorscheNoise[275:375,100:200]
-display(imgLenaSlice, method="raster")
-display(imgPorscheSlice, method="raster")
-
-# Define Nadaraya-Watson-Schätzer:
-fnNadaWatson <- function(K, xy, img) {
-  # This function returns the Nadaraya Watson estimator for a given Kernel
-  #
-  # Args:
-  # K: The Kernel, call as K(x,y,h) for K((x-y/h)
-  # h: bandwith
-  # xy: point in image, coordinates
-  # img: Image for smoothing
-  
-  return(0)
-  }
-
-# Implement
 ```
-
-<!--Footnotes-->
-```{r}
-# Bonusaufgabe:
-# Recherchiere andere Methoden zum Bildentrauschen und erkläre kurz die Hauptideen, eventuell auch mit Beispielcode
->>>>>>> 3f462bf30bf509c9dfe65f731b15a9e4a4ff2458
-```
-
 
 
 <!--Footnotes-->
