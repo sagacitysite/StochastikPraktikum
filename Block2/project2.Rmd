@@ -264,7 +264,7 @@ fnKernelPlot(x, X, fnGaussianKernel, h,
              trueDensity = dnorm, ylim = c(0, 0.6))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, h, 
+fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dnorm, ylim = c(0, 0.6))
 ```
@@ -294,7 +294,7 @@ fnKernelPlot(x, X, fnGaussianKernel, h,
              trueDensity = dunif, ylim = c(0, 2))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, h, 
+fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dunif, ylim = c(0, 2))
 ```
@@ -327,7 +327,7 @@ fnKernelPlot(x, X, fnGaussianKernel, h,
              trueDensity = dcauchy, ylim = c(0, 0.4))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, h, 
+fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dcauchy, ylim = c(0, 0.4))
 ```
@@ -416,13 +416,23 @@ bw.ucv(faithful$eruptions)
 
 ```{r m-nearest neighbors}
 fnMNearestNeighbors <- function(x, X, K, m) {
+  # This function computes the kernel density estimates for a given sample X and
+  # kernel K with vector bandwidths h for every point, which is estimated by
+  # nearest neighbor approach
+  # 
+  # Args:
+  #   x: Points for which the kernel density estimates are computed
+  #   X: Data sample on which the kernel density estimation is fitted
+  #   K: Kernel function to be used for smoothing
+  #   m: Neighbor position
+  #   
+  # Returns:
+  #   A vector of the nearest neighbor kernel density estimates at points x
+  
   n <- length(X)
   
-  h <- NULL
-  for(xi in x) {
-    dist <- abs(X - xi)
-    h <- c(h, abs(sort(X[which(dist %in% sort(dist)[1:m])])[m]))
-  }
+  # Compute bandwidth for every point x
+  h <- apply(abs(outer(X, x, "-")), 2, sort)[m,]
   
   # Compute kernel density estimation values using outer
   mKernels <- K((1/t(matrix(rep(h, n), ncol = n))) * outer(X, x, FUN = "-"))
@@ -437,18 +447,22 @@ X <- rnorm(n)
 # Define points to estimate kernel density on
 x <- seq(-4, 4, 0.01)
 
-plot(x, fnMNearestNeighbors(x, X, fnGaussianKernel, 5), type = "l", main = "title", xlab = "x", ylab = "Density")
-lines(density(X, bw = "ucv"))
+# Define vector of neighbor positions m
+m <- c(5,10,15,25,50)
 
-m <- c(2,5,10,25,50)
-
-fnKernelPlot(x, X, fnGaussianKernel, vm = m, fnEstimation = fnMNearestNeighbors,
-             title = "Nearest Neighbor Geaussian Kernel Density Estimation",
-             trueDensity = dnorm, ylim = c(0, 0.6))
-
-
+# Nearest Neighbor Rectangular kernel density estimation
 fnKernelPlot(x, X, fnRectangularKernel, vm = m, fnEstimation = fnMNearestNeighbors,
              title = "Nearest Neighbor Rectangular Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
+
+# Nearest Neighbor Gaussian kernel density estimation
+fnKernelPlot(x, X, fnGaussianKernel, vm = m, fnEstimation = fnMNearestNeighbors,
+             title = "Nearest Neighbor Gaussian Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
+
+# Nearest Neighbor Epanechnikov kernel density estimation
+fnKernelPlot(x, X, fnEpanechnikovKernel, vm = m, fnEstimation = fnMNearestNeighbors, 
+             title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dnorm, ylim = c(0, 0.6))
 ```
 
