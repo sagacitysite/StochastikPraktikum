@@ -224,7 +224,9 @@ fnKernelDensityEst <- function(x, X, K, h) {
 ```
 
 ```{r Kernel density plot}
-fnKernelPlot <- function(x, X, K, vh, title = NULL, trueDensity = NULL, ...) {
+fnKernelPlot <- function(x, X, K, vh = NULL, vm = NULL,
+                         fnEstimation = fnKernelDensityEst,
+                         title = NULL, trueDensity = NULL, ...) {
   # This function plots the kernel density estimates for different bandwidths.
   # If trueDensity is specified, the true density will be plotted as well.
   # 
@@ -233,6 +235,8 @@ fnKernelPlot <- function(x, X, K, vh, title = NULL, trueDensity = NULL, ...) {
   #   X:            Data sample on which the kernel density estimation is fitted
   #   K:            Kernel function to be used for smoothing
   #   vh:           Vector of smoothing bandwidths
+  #   vm:           Vector of nearest neigbor positions
+  #   fnEstimation: Type of Estimation used
   #   title:        Main title of the plot
   #   trueDensity:  True density to be plotted (e.g. dnorm)
   #   ...:          Further arguments passed to or from other methods
@@ -240,24 +244,34 @@ fnKernelPlot <- function(x, X, K, vh, title = NULL, trueDensity = NULL, ...) {
   # Returns:
   #   -
   
-  nh <- length(vh)
+  if(!is.null(vh)) {
+    vPar <- vh
+    parString <- "h"
+  } else if(!is.null(vm)) {
+    vPar <-  vm
+    parString <- "m"
+  } else {
+    stop("You need to set the bandwith vh OR the neighbor vm")
+  }
+  
+  nh <- length(vPar)
   
   # Create color palette for number of bandwidths
   cols <- rainbow(nh, alpha = 1)
   
   # Initialize plot with first kernel density
-  plot(x, fnKernelDensityEst(x, X, K, vh[1]), type = "l", col = cols[1], 
+  plot(x, fnEstimation(x, X, K, vPar[1]), type = "l", col = cols[1], 
        main = title, xlab = "x", ylab = "Density", ...)
   
   # Add kernel density for each additional bandwidth
   if (nh > 1) {
     for (i in 2:nh) {
-      lines(x, fnKernelDensityEst(x, X, K, vh[i]), col = cols[i])
+      lines(x, fnEstimation(x, X, K, vPar[i]), col = cols[i])
     }
   }
   
   # Create legend
-  legend <- sapply(vh, function(h) {h <- paste("h = ", round(h, 4))})
+  legend <- sapply(vPar, function(par) {par <- paste(parString, " = ", round(par, 4))})
   
   # Plot true density if specified
   if (!is.null(trueDensity)) {
@@ -312,7 +326,7 @@ fnKernelPlot(x, X, fnGaussianKernel, h,
              trueDensity = dnorm, ylim = c(0, 0.6))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, h, 
+fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dnorm, ylim = c(0, 0.6))
 ```
@@ -342,7 +356,7 @@ fnKernelPlot(x, X, fnGaussianKernel, h,
              trueDensity = dunif, ylim = c(0, 2))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, h, 
+fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dunif, ylim = c(0, 2))
 ```
@@ -375,7 +389,7 @@ fnKernelPlot(x, X, fnGaussianKernel, h,
              trueDensity = dcauchy, ylim = c(0, 0.4))
 
 # Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, h, 
+fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
              trueDensity = dcauchy, ylim = c(0, 0.4))
 ```
@@ -460,6 +474,59 @@ fnUCV(faithful$eruptions, fnGaussianKernel, hmin, hmax)
 bw.ucv(faithful$eruptions)
 ```
 
+## m-nächste Nachbarn
+
+```{r m-nearest neighbors}
+fnMNearestNeighbors <- function(x, X, K, m) {
+  # This function computes the kernel density estimates for a given sample X and
+  # kernel K with vector bandwidths h for every point, which is estimated by
+  # nearest neighbor approach
+  # 
+  # Args:
+  #   x: Points for which the kernel density estimates are computed
+  #   X: Data sample on which the kernel density estimation is fitted
+  #   K: Kernel function to be used for smoothing
+  #   m: Neighbor position
+  #   
+  # Returns:
+  #   A vector of the nearest neighbor kernel density estimates at points x
+  
+  n <- length(X)
+  
+  # Compute bandwidth for every point x
+  h <- apply(abs(outer(X, x, "-")), 2, sort)[m,]
+  
+  # Compute kernel density estimation values using outer
+  mKernels <- K((1/t(matrix(rep(h, n), ncol = n))) * outer(X, x, FUN = "-"))
+  return((1/(n*h)) * colSums(mKernels))
+}
+
+# Generate sample
+set.seed(42)
+n <- 50
+X <- rnorm(n)
+
+# Define points to estimate kernel density on
+x <- seq(-4, 4, 0.01)
+
+# Define vector of neighbor positions m
+m <- c(5,10,15,25,50)
+
+# Nearest Neighbor Rectangular kernel density estimation
+fnKernelPlot(x, X, fnRectangularKernel, vm = m, fnEstimation = fnMNearestNeighbors,
+             title = "Nearest Neighbor Rectangular Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
+
+# Nearest Neighbor Gaussian kernel density estimation
+fnKernelPlot(x, X, fnGaussianKernel, vm = m, fnEstimation = fnMNearestNeighbors,
+             title = "Nearest Neighbor Gaussian Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
+
+# Nearest Neighbor Epanechnikov kernel density estimation
+fnKernelPlot(x, X, fnEpanechnikovKernel, vm = m, fnEstimation = fnMNearestNeighbors, 
+             title = "Epanechnikov Kernel Density Estimation",
+             trueDensity = dnorm, ylim = c(0, 0.6))
+```
 
 # 3. Bildentrauschen
 
@@ -569,24 +636,47 @@ fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
   # Returns:
   #   -
   
-  par(mfrow = c(length(vsigma), 1+2*length(vh)))
+  # Define helper function for label implementation
+  fnLabel <- function(label) {
+    text(x = 20, y = 20, adj = c(0,1), col = "red", cex = 1.5, label = label)
+  }
   
-  for (sd in vsigma) {
-    
+  # Set size of frame
+  par(mfrow = c(1, length(vsigma)))
+  
+  # Initalize noise image list
+  imagesNoise <- list()
+  
+  for (i in 1:length(vsigma)) {
     # Add noise to image and plot
-    imgNoise <- fnAddNoise(img, rnorm, sd = sd)
+    imgNoise <- fnAddNoise(img, rnorm, sd = vsigma[i])
+    imagesNoise[i] <- list(imgNoise)
     display(imgNoise, method = "raster")
-    
+    fnLabel(substitute(paste(sigma, "=", sd), list(sd=vsigma[i])))
+  }
+  
+  # Set size of frame for plots below
+  par(mfrow = c(length(vh), length(vsigma)))
+  
+  cat('Gaussian kernel')
+  for (h in vh) {
     # NW-Denoising with Gaussian kernel
-    for (h in vh) {
-      display(fnNadarayaWatson(imgNoise, fnGaussianKernel, h), 
+    for (i in 1:length(vsigma)) {
+      display(fnNadarayaWatson(imagesNoise[[i]], fnGaussianKernel, h),
               method = "raster")
+      fnLabel(substitute(paste(sigma, "=", sd, ", h=", h),
+                         list(sd=vsigma[i], h=h)))
     }
-    
+  }
+  
+  cat('Rectangular kernel')
+  for (h in vh) { 
     # NW-Denoising with rectangular kernel
-    for (h in vh) {
-      display(fnNadarayaWatson(imgNoise, fnRectangularKernel, h), 
+    for (i in 1:length(vsigma)) {
+      display(fnNadarayaWatson(imagesNoise[[i]], fnRectangularKernel, h), 
               method = "raster")
+      fnLabel(substitute(paste(sigma, "=", sd, ", h=", h),
+                         list(sd=vsigma[i], h=h)))
     }
   }
 }
@@ -607,6 +697,20 @@ fnEvalNWGaussianNoise(imgPorsche, sigma, h)
 ```{r Weighted Median}
 # 7. The weighted median is more robust than the mean
 ```
+
+## Weitere Methoden zur Bildentrauschung
+
+### Rangordnungsfilter
+
+Bei Rangordnungsfilter wird eine bestimmte Anzahl von Grauwerten in einer Umgebung eines Pixels betrachtet. Die so erfassten Grauwerte werden dem Rang nach in einer Liste sortiert, also nach Größe des Grauwertes. Der aktuell betrachtete Pixel wird durch einen Grauwert aus der Liste ersetzt. Dabei kann für die Wahl der Position ein beliebiges Verfahren eingesetzt werden, z.B. Minimumfilter (minimaler Wert aus der Liste), Maximumfilter (maximaler Wert aus der Liste), Medianfilter (der Grauwert in der Mitte der Liste), etc.
+
+Rangordnungsfilter eignen sich für Bilder mit Ausreißern, also z.B. Kratzer oder einzelne deutlich abweichende Pixel.
+
+### Frequenzraumfilter
+
+Ein Bild kann sowohl im Ortsraum, als auch im Freuqenzraum beschrieben werden. Zur Transformation aus dem Ortsraum in den Frequenzraum wird eine diskrete Fouriertransformation durchgeführt. Anschließend können verschiedene Filter verwendet werden, z.B. Hochpass- oder Tiefpassfilter. Zufälliges Rauschen kann als hochfrequent angenommen werden, weshalb sich hier ein Tiefpassfilter eignen würde (die niedrigen Frequenzen bleiben unverändert). Dabei kann der Filter "hart" abschneiden oder einen Übergangsbereich definieren. Nach der Filterung werden die Daten wieder in den Ortsraum zurück transformiert.
+
+Anwednungsfälle für den Frequenzraumfilter ergeben sich je nach Fragestellung. Für verschiedene Fälle eignen sich entsprechende Filter im Frequenzraum.
 
 
 <!--Footnotes-->
