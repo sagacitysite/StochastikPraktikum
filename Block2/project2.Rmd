@@ -30,48 +30,60 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Zwillingsstudie
 
-Um zu testen, ob der Kindergartenbesuch einen signifikanten Einfluss auf die sozialen Fähigkeiten eines Kindes hat, führen wir einen zweiseitigen $t$-Test und einen zweiseitigen Wilcoxon-Vorzeichen-Test, jeweils zum Signifikanzniveau $\alpha = 0.05$, durch. Die Entscheidung fiel dabei auf einen zweiseitigen Test, da zuvor keine begründete Vermutung über einseitige Effekte angenommen wurde.
+Um zu testen, ob der Kindergartenbesuch einen signifikanten Einfluss auf die sozialen Fähigkeiten eines Kindes hat, führen wir einen zweiseitigen/einseitigen $t$-Test und einen zweiseitigen/einseitigen Wilcoxon-Vorzeichen-Test, jeweils zum Signifikanzniveau $\alpha = 0.05$, durch.
 
 ```{r Twins}
 # Enter data
 x <- c(82,69,73,43,58,56,76,65)
 y <- c(63,42,74,37,51,43,80,62)
+testType <- c('two-sided', 'one-sided')
+pValueT <- c(0,0); pValueWilcox <- c(0,0)
 
-# Two-sided t-test
-t.test(x, y, alternative = "two.sided", mu = 0, conf.level = 0.95, paired = TRUE)
-# t.test(x-y, alternative = "two.sided", mu = 0, conf.level = 0.95)  # alternative
+# t-test
+pValueT[1] <- t.test(x, y, alternative = "two.sided", mu = 0, conf.level = 0.95, paired = TRUE)$p.value
+pValueT[2] <- t.test(x, y, alternative = "greater", mu = 0, conf.level = 0.95, paired = TRUE)$p.value
 
-# Two-sided Wilcoxon signed rank test
-wilcox.test(x, y, alternative = "two.sided", mu = 0, conf.level = 0.95, 
-            paired = TRUE, conf.int = TRUE)
-# wilcox.test(x-y, alternative = "two.sided", mu = 0, conf.level = 0.95, 
-#             conf.int = TRUE)  # alternative
+# Wilcoxon signed rank test
+pValueWilcox[1] <- wilcox.test(x, y, alternative = "two.sided", mu = 0, conf.level = 0.95, 
+            paired = TRUE, conf.int = TRUE)$p.value
+pValueWilcox[2] <- wilcox.test(x, y, alternative = "greater", mu = 0, conf.level = 0.95, 
+            paired = TRUE, conf.int = TRUE)$p.value
+
+
+knitr::kable(data.frame(testType, pValueT, pValueWilcox), caption = 'p-Werte')
+
 ```
 
-Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < 0.05 = \alpha$) und somit einen signifikanten Einfluss feststellt. Der Wilcoxon-Vorzeichen-Test verwirft die Nullhypothese dagegen nicht ($p = 0.05469 > 0.05 = \alpha$). Durch die Normalverteilungsannahme $X_i - Y_i \sim N(0,\sigma^2)$, die für gegebenes Sample in Frage gestellt werden kann, besitzt der $t$-Test eine größere Power. Der nichtparametrische Wilcoxon-Vorzeichen-Test benötigt hingegen keine Verteilungsannahme, besitzt jedoch eine kleinere Power.
+#### Zweiseitige Tests
+Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \alpha$) und somit einen signifikanten Einfluss feststellt.
+Der Wilcoxon-Vorzeichen-Test hingegen ($p = `r pValueWilcox[1]` > \alpha$) lehnt die Nullhypothese nicht zum gegebenen Signifikanzniveau nicht ab.
 
-Wenn statt dem zweiseitigen ein einseitiger Test durchgeführt wird, mit der Annahme, dass die sozialen Fähigkeiten durch den Kindergartenbesuch signifikant höher sind, erhalten wir folgende Ergebnisse:
 
-```{r Twins one sided}
-# Two-sided t-test
-t.test(x, y, alternative = "greater", mu = 0, conf.level = 0.95, paired = TRUE)
-# t.test(x-y, alternative = "greater", mu = 0, conf.level = 0.95)  # alternative
+#### Einseitige Tests
+Im Fall zweiseitger Tests unter der gleichen Nullhypothese, und der Alternative dass die sozialen Fähigkeiten signifikant höher sind, lehnen nun beide Tests die Nullhypothese ab.
+Der Grund liegt darin, dass hier die $p$-Werte nur eine Ablehnregion in die Richtung "größer" abdecken müssen und aufgrund der Symmetrie der Tests deshalb nur halb so groß sind wie bei den zweiseitigen Tests. Beide Tests indizieren nun einen signifikanten Anstieg der sozialen Fähigkeiten durch den Kindergartenbesuch.
 
-# Two-sided Wilcoxon signed rank test
-wilcox.test(x, y, alternative = "greater", mu = 0, conf.level = 0.95, 
-            paired = TRUE, conf.int = TRUE)
-# wilcox.test(x-y, alternative = "greater", mu = 0, conf.level = 0.95, 
-#             conf.int = TRUE)  # alternative
+
+#### Testannahmen
+Schließlich lohnt es, einen Blick auf die Testannahmen zu richten. Während der Wilcoxon-Test lediglich eine symmetrische Verteilung voraussetzt, nimmt der t-Test konkret die Normalverteilung, $X_i - Y_i \sim N(0,\sigma^2)$, der Daten an. Da diese stärkere Annahme ihm auch zu seiner größeren Power verhilft, sollte man ihre Validität überprüfen, hier geschieht dies mit Hilfe eines QQ-Plot:
+```{r Normalverteilungsannahme, echo=FALSE}
+qqnorm(((x-y)-mean(x-y))/sd(x-y)); qqline(((x-y)-mean(x-y))/sd(x-y))
+skewness = mean(x-y) - median(x-y)
 ```
+Wie besonders am rechten Tail zu erkennen, kann die Normalverteilungsannahme durchaus in Frage gestellt werden.
 
-<!--
-  * TODO p Wert ist nur die Hälft bei symmetrischer Verteilung, ist Wilcox symmetrisch?
-  * Evtl. Beschreibung von p-Wert genauer ausführen (nicht zu Spezialfall für symmetrische Verteilungen)
--->
+Doch auch die Annahme symmetrischer Daten ist angesichts der "Schiefe" (`r skewness`) der Daten anzuzweifeln, aber sie ist deutlich schwächer als die zusätzliche Annahme einer (bis auf Paramter) exakten Verteilung.
 
-Die $p$-Werte werden nur an einer Seite bestimmt und entsprechen daher nun exakt der Hälfte der $p$-Werte des zweiseitigen Tests. Beide Tests indizieren nun einen signifikanten Anstieg der sozialen Fähigkeiten durch den Kindergartenbesuch. Der einseitige $t$-Test hat eine stärkere Annahme, da eine Änderung des Wertes von vorne herein nur in eine Richtung angenommen wird. Es kommt daher bei gleichem Niveau $\alpha$ schneller zu sinifikanten Ergebnissen, als bei einem zweiseitigen $t$-Test.
+Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, jedwede Art von Statistik besitzt nur sehr geringe Aussagekraft.
+
+
+
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
+
+Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1] $ mit Fehlern verrauscht, die der Normal-/Cauchy-/ und Gleichverteilung folgen.
+
+Blablabla
 
 ```{r fnTestPowerMC}
 fnTestPowerMC <- function(fnError, n = 30, alpha = 0.05, nSim = 10^4, ...) {
@@ -118,29 +130,79 @@ fnTestPowerMC <- function(fnError, n = 30, alpha = 0.05, nSim = 10^4, ...) {
 
 ```{r Perform MC simulations, cache = TRUE}
 # Set seed
-set.seed(42)
+set.seed(432)
 
 # Normal errors
-fnTestPowerMC(fnError = rnorm, nSim = 10^5, mean = 0)
+normalMean = c(0, 0.5, 1)
+normalSD = c(1, 1, 1)
+normalPowerT <- list()
+normalPowerW <- list()
 
+for (i in 1:3) {
+  res <- fnTestPowerMC(fnError = rnorm, nSim = 10^4,
+                       mean = normalMean[i], sd=normalSD[i])
+  normalPowerT[i] <- res[1]
+  normalPowerW[i] <- res[2]
+}
 # Cauchy errors (t-distribution with df = 1)
-fnTestPowerMC(fnError = rt, nSim = 10^5, df = 1)
+cauchyPowerT <- list()
+cauchyPowerW <- list()
+cauchyLoc = c(0, 0.5, 1)
+cauchyScale = c(1,1,1)
+for (i in 1:3) {
+  res <- fnTestPowerMC(fnError = rcauchy, nSim = 10^4,
+                       location = cauchyLoc[i], scale=cauchyScale[i])
+  cauchyPowerT[i] <- res[1]
+  cauchyPowerW[i] <- res[2]
+}
 
 # Uniform errors
-fnTestPowerMC(fnError = runif, nSim = 10^5, min = -1, max = 1)
+uniMin <- c(-1, -0.5, 0)
+uniMax <- c(1, 1.5, 2)
+uniPowerT <- list()
+uniPowerW <- list()
+
+for (i in 1:3) {
+  res <- fnTestPowerMC(fnError = runif, nSim = 10^4,
+                       min = uniMin[i], max = uniMax[i])
+  uniPowerT[i] <- res[1]
+  uniPowerW[i] <- res[2]
+}
+
 ```
 
-<!-- TODO
-  * Normamverteilung mit: mean = 0, 0.5, 1
-  * Gleicverteilung mit: min/max: -1/1, 0/1, 0/2
-  * Cauchy-Verteilung nur in der Form, Erwartungswert lässt sich nicht ändern
-  -> Tabelle erstellen
--->
+```{r echo=FALSE, results='asis'}
+
+dfNormal <- data.frame(normalMean, normalSD, unlist(normalPowerT), unlist(normalPowerW))
+colnames(dfNormal) <- c("mean", "sd", "power T-test", "power Wilcox-test")
+
+dfCauchy <- data.frame(cauchyLoc, cauchyScale, unlist(cauchyPowerT), unlist(cauchyPowerW))
+colnames(dfCauchy) <- c("location", "scale", "power T-test", "power Wilcox-test")
+
+dfUni <- data.frame((uniMax+uniMin)/2, (uniMax-uniMin)/2, unlist(uniPowerT), unlist(uniPowerW))
+colnames(dfUni) <- c("mean", "+- interval", "power T-test", "power Wilcox-test")
+
+knitr::kable(dfNormal, caption = "normalverteiltes Rasuchen")
+knitr::kable(dfUni, caption = "uniformes Rauschen")
+knitr::kable(dfCauchy, caption = "cauchyverteiltes Rauschen")
+```
+
+#### Normalverteiltes Rauschen
+Wie zu erwarten gibt es beim normalverteilten Rauschen kaum merkliche Unterschiede.
+
+
+#### Uniformes Rauschen
+t-test Überraschend gut im Vergleich zu Normal, quasi identisch. Liegt vermutlich an der ...
+
+
+#### Cauchy-Rauschen
+Deutlich schlechter als Wilcox, Cauchy-Verteilung stärker konzentriert als Normalverteilung, t-Test überschätzt Tails.
 
 
 # Dichteschätzung
 
 In dieser Aufgabe ist es unser Ziel eine unbekannte Dichte $f$ mittels Sample $X_1, \ldots, X_n \overset{iid}{\sim} \mathbb{P}_f$ zu approximieren. Für die Schätzung untersuchen und verwenden wir eine nichtparametrische Methode - den Kerndichteschätzer. Wir werden sehen, dass die „Güte“ der Approximation von der Wahl des Kerns $K$ sowie von der Bandweitenwahl $h$ abhängt und werden versuchen zu gegebenem Kern $K$ mittels Kreuzvalidierung eine „optimale“ Bandweite zu wählen.
+
 
 ## Kerndichteschätzer
 
