@@ -7,6 +7,8 @@ fontsize: 10pt
 header-includes:
   - \usepackage{amsthm}
   - \usepackage{amssymb}
+  - \usepackage{amsmath}
+  - \DeclareMathOperator*{\argmin}{argmin}
   - \usepackage{MnSymbol}
   - \usepackage{bbm}
   - \usepackage{subfig}
@@ -138,7 +140,11 @@ fnTestPowerMC(fnError = runif, nSim = 10^5, min = -1, max = 1)
 
 # Dichteschätzung
 
+In dieser Aufgabe ist es unser Ziel eine unbekannte Dichte $f$ mittels Sample $X_1, \ldots, X_n \overset{iid}{\sim} \mathbb{P}_f$ zu approximieren. Für die Schätzung untersuchen und verwenden wir eine nichtparametrische Methode - den Kerndichteschätzer. Wir werden sehen, dass die „Güte“ der Approximation von der Wahl des Kerns $K$ sowie von der Bandweitenwahl $h$ abhängt und werden versuchen zu gegebenem Kern $K$ mittels Kreuzvalidierung eine „optimale“ Bandweite zu wählen.
+
 ## Kerndichteschätzer
+
+Für gegebene Daten $X_1, \ldots, X_n$ können wir einen allgemeinen Kerndichteschätzer $\hat{f}_n$ für einen Kern $K$ und Bandweite $h$ wie folgt für einen Vektor von Stellen `x` implementieren:
 
 ```{r Kernel density estimation}
 fnKernelDensityEst <- function(x, X, K, h) {
@@ -161,67 +167,7 @@ fnKernelDensityEst <- function(x, X, K, h) {
 }
 ```
 
-```{r Kernel density plot}
-fnKernelPlot <- function(x, X, K, vh = NULL, vm = NULL,
-                         fnEstimation = fnKernelDensityEst,
-                         title = NULL, trueDensity = NULL, ...) {
-  # This function plots the kernel density estimates for different bandwidths.
-  # If trueDensity is specified, the true density will be plotted as well.
-  # 
-  # Args:
-  #   x:            Points for which the kernel density estimates are computed
-  #   X:            Data sample on which the kernel density estimation is fitted
-  #   K:            Kernel function to be used for smoothing
-  #   vh:           Vector of smoothing bandwidths
-  #   vm:           Vector of nearest neigbor positions
-  #   fnEstimation: Type of Estimation used
-  #   title:        Main title of the plot
-  #   trueDensity:  True density to be plotted (e.g. dnorm)
-  #   ...:          Further arguments passed to or from other methods
-  #   
-  # Returns:
-  #   -
-  
-  if(!is.null(vh)) {
-    vPar <- vh
-    parString <- "h"
-  } else if(!is.null(vm)) {
-    vPar <-  vm
-    parString <- "m"
-  } else {
-    stop("You need to set the bandwith vh OR the neighbor vm")
-  }
-  
-  nh <- length(vPar)
-  
-  # Create color palette for number of bandwidths
-  cols <- rainbow(nh, alpha = 1)
-  
-  # Initialize plot with first kernel density
-  plot(x, fnEstimation(x, X, K, vPar[1]), type = "l", col = cols[1], 
-       main = title, xlab = "x", ylab = "Density", ...)
-  
-  # Add kernel density for each additional bandwidth
-  if (nh > 1) {
-    for (i in 2:nh) {
-      lines(x, fnEstimation(x, X, K, vPar[i]), col = cols[i])
-    }
-  }
-  
-  # Create legend
-  legend <- sapply(vPar, function(par) {par <- paste(parString, " = ", round(par, 4))})
-  
-  # Plot true density if specified
-  if (!is.null(trueDensity)) {
-    lines(x, trueDensity(x), col = "black")
-    legend <- c("True density", legend)
-    cols <- c("black", cols)
-  }
-  
-  # Plot legend
-  legend("topright", legend = legend, col = cols, lty = 1, cex = 0.75)
-}
-```
+Bevor wir die Methode für Zufallszahlen verschiedener Verteilungen testen, implementieren wir noch drei Kerne (Rechtseckskern, Gaußkern, Epanechnikov-Kern) und schreiben eine allgemeine Funktion zur Erstellung von Plots (welche bereits für die spätere Anwendung der $m$-nächste Nachbarn Methode angepasst wurde):
 
 ```{r Smoothing Kernels}
 # Define different smoothing kernels
@@ -239,9 +185,72 @@ fnEpanechnikovKernel <- function(x) {
 }
 ```
 
+```{r Kernel density plot}
+fnKernelPlot <- function(x, X, K, vh = NULL, vm = NULL,
+                         fnEstimation = fnKernelDensityEst,
+                         title = NULL, trueDensity = NULL, ...) {
+  # This function plots the kernel density estimates for different bandwidths.
+  # If trueDensity is specified, the true density will be plotted as well.
+  # 
+  # Args:
+  #   x:            Points for which the kernel density estimates are computed
+  #   X:            Data sample on which the kernel density estimation is fitted
+  #   K:            Kernel function to be used for smoothing
+  #   vh:           Vector of smoothing bandwidths
+  #   vm:           Vector of nearest neighbor positions
+  #   fnEstimation: Type of estimation used (kernel density or knn)
+  #   title:        Main title of the plot
+  #   trueDensity:  True density to be plotted (e.g. dnorm)
+  #   ...:          Further arguments passed to or from other methods
+  #   
+  # Returns:
+  #   -
+  
+  if(!is.null(vh)) {
+    vPar <- vh
+    strPar <- "h"
+  } else if(!is.null(vm)) {
+    vPar <-  vm
+    strPar <- "m"
+  } else {
+    stop("You need to set bandwiths vh OR neighbor ranks vm")
+  }
+  
+  nPar <- length(vPar)
+  
+  # Create color palette for number of hyperparameters
+  cols <- rainbow(nPar, alpha = 1)
+  
+  # Initialize plot with first kernel density
+  plot(x, fnEstimation(x, X, K, vPar[1]), type = "l", col = cols[1], 
+       main = title, xlab = "x", ylab = "Density", ...)
+  
+  # Add kernel density for each additional bandwidth
+  if (nPar > 1) {
+    for (i in 2:nPar) {
+      lines(x, fnEstimation(x, X, K, vPar[i]), col = cols[i])
+    }
+  }
+  
+  # Create legend
+  legend <- sapply(vPar, function(par) {paste(strPar, " = ", round(par, 4))})
+  
+  # Plot true density if specified
+  if (!is.null(trueDensity)) {
+    lines(x, trueDensity(x), col = "black")
+    legend <- c("True density", legend)
+    cols <- c("black", cols)
+  }
+  
+  # Plot legend
+  legend("topright", legend = legend, col = cols, lty = 1, cex = 0.75)
+}
+```
+
+
 ### Anwendung auf standardnormalverteilte Zufallszahlen
 
-```{r Kernel density estimation for standard normal}
+```{r Kernel density estimation for standard normal, warning = FALSE}
 # Generate sample
 set.seed(42)
 n <- 50
@@ -269,35 +278,44 @@ fnKernelPlot(x, X, fnEpanechnikovKernel, h,
              trueDensity = dnorm, ylim = c(0, 0.6))
 ```
 
-### Anwendung auf gleichverteilte Zufallszahlen
+Wir können sehen, dass die Wahl des Kerns die Glattheit der geschätzten Dichtefunktion beeinflusst. Da der Rechteckskern sowie der Epanechnikov-Kern den Träger $[-1,1]$ (bzw. $(-1,1)$) besitzen, finden sich Sprünge in den geschätzten Dichten. Da (mit $h$ skalierte) Differenzen in $[-1,1]$ für den Rechtseckskern gleich gewichtet werden sind die geschätzten Dichten nochmals sprunghafter im Vergleich zum Epanechnikov-Kern welcher symmetrisch um 0 monoton abfällt, was eine Glättung zur Folge hat.
+Im Vergleich dazu hat der Gaußkern ganz $\mathbb{R}$ als Träger und ist ebenso symmetrisch um 0 monoton fallend. D.h.\ für die Schätzung $\hat{f}_n(x)$ an der Stelle x hat jeder Datenpunkt $X_i$, $i = 1, \ldots,n$, einen (mit wachsendem Abstand geringeren) Einfluss auf die Schätzung. Dadurch resultieren glatte Kerndichteschätzer $\hat{f}_n$.
 
-```{r Kernel density estimation for uniform}
+Weiter können wir in den Beispielen schön das Bias-Varianz-Dilemma der Bandweitenwahl beobachten. Für kleineres $h$ wird die lokale Umgebung, die für die Schätzung an der Stelle $x$ herangezogen wird, ebenso kleiner. Dies hat eine stärkere Oszillation der Schätzung $\hat{f}_n$ zur Folge. In diesem Fall ist der Bias klein (lokale Schätzung), die Varianz jedoch hoch und das Resultat eine Unterglättung. Umgekehrt folgt für eine größere Bandweite $h$ ein größerer Bias (globale Schätzung), jedoch eine geringere Varianz. In diesem Fall sprechen wir von Überglättung. Die Aufgabe einer optimalen Bandweitenwahl ist es also einen Ausgleich zwischen Bias und Varianz zu finden, so dass der insgesamt resultierende Fehler möglichst minimal wird.
+
+
+### Anwendung auf exponentialverteilte Zufallszahlen
+
+```{r Kernel density estimation for the exponential}
 # Generate sample
 set.seed(42)
 n <- 50
-X <- runif(n)
+X <- rexp(n)
 
 # Define points to estimate kernel density on
-x <- seq(0, 1, 0.01)
+x <- seq(0, 6, 0.01)
 
 # Set different bandwidths
-h <- c(bw.ucv(X), 0.1, 0.5)
+h <- c(0.1, 0.5, 1)
 
 # Rectangular kernel density estimation
 fnKernelPlot(x, X, fnRectangularKernel, h, 
              title = "Rectangular Kernel Density Estimation",
-             trueDensity = dunif, ylim = c(0, 2))
+             trueDensity = dexp, ylim = c(0, 2))
 
 # Gaussian kernel density estimation
 fnKernelPlot(x, X, fnGaussianKernel, h, 
              title = "Gaussian Kernel Density Estimation",
-             trueDensity = dunif, ylim = c(0, 2))
+             trueDensity = dexp, ylim = c(0, 2))
 
 # Epanechnikov kernel density estimation
 fnKernelPlot(x, X, fnEpanechnikovKernel, h, 
              title = "Epanechnikov Kernel Density Estimation",
-             trueDensity = dunif, ylim = c(0, 2))
+             trueDensity = dexp, ylim = c(0, 2))
 ```
+
+Bei den Kerndichteschätzungen für exponentialverteilte Zufallszahlen können wir ebenso den Einfluss der unterschiedlichen Kerne auf die Glattheit der Schätzungen sowie das Bias-Varianz-Dilemma beobachten. Insgesamt deuten die Kerndichteschätzungen auf eine rechtsschiefe Verteilung hin, was in der Anwendung rechtsschiefe parametrische Likelihood-Modelle (Exponentialverteilung, Log-Normalverteilung, Chi-Quadrat-Verteilung, etc.) für die weitere Modellierung motivieren könnte.
+
 
 ### Anwendung auf Cauchy-verteilte Zufallszahlen
 
@@ -308,10 +326,10 @@ n <- 50
 X <- rt(n, df = 1)
 
 # Define points to estimate kernel density on
-x <- seq(-4, 4, 0.01)
+x <- seq(-5, 5, 0.01)
 
 # Set different bandwidths
-h <- c(0.5, 1, 5, bw.ucv(X))
+h <- c(0.5, 1, 5)
 
 # Define Cauchy density function
 dcauchy <- function(x) {y <- dt(x, df = 1)}
@@ -332,6 +350,9 @@ fnKernelPlot(x, X, fnEpanechnikovKernel, h,
              trueDensity = dcauchy, ylim = c(0, 0.4))
 ```
 
+Auch hier können wir den Einfluss der unterschiedlichen Kerne auf die Glattheit der Schätzungen sowie das Bias-Varianz-Dilemma beobachten.
+
+
 ### Anwendung auf faithful Datensatz
 
 ```{r faithful kernel density estimation}
@@ -349,10 +370,83 @@ title <- "Gaussian Kernel Density Estimation for faithful eruption data"
 fnKernelPlot(x, X, fnGaussianKernel, h, title = title)
 ```
 
+Wir können sehen, dass die Anwendung des Kerndichteschätzers mit Gaußkern für verschiedene Bandweiten eine bimodale Verteilung der Eruptionsdauern im Datensatz `faithful` aufzeigt, was auf zwei unterschiedliche Gruppen von Ausstößen hindeutet.
+
 
 ## Kreuzvalidierung zur Bandweitenwahl
 
-<!-- (a) LR: Erwartungstreue habe ich auf Papier bereits gezeigt. -->
+Die Idee der Kreuzvalidierung ist es die Bandweite $h$ so zu wählen, dass der Mean Integrated Squared Error (MISE) minimal wird. Es gilt:
+
+$$
+\begin{aligned}
+\argmin_h \text{MISE}(h) &= \argmin_h \mathbb{E} \left[ \int (\hat{f}_n(x) - f(x))^2 \, dx \right] \\
+&= \argmin_h \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \int \hat{f}_n(x) f(x) \, dx \right] + \int f^2(x) \, dx \\
+&= \argmin_h \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \int \hat{f}_n(x) f(x) \, dx \right] = \argmin_h J(h)
+\end{aligned}
+$$
+mit $J$ definiert durch
+$$
+J(h) := \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \int \hat{f}_n(x) f(x) \, dx \right] , \quad h >0.
+$$
+
+
+### Erwartungstreue des Kreuzvalidierungskriteriums $\hat{J}(h)$
+
+Wir zeigen nun, dass das Kreuzvalidierungskriterium $\hat{J}(h)$ definiert durch
+$$
+\hat{J}(h) := \int \hat{f}_n^2(x) \, dx - 2 \hat{G}, \quad h >0,
+$$
+mit
+$$
+\hat{G} := \frac{1}{n} \sum_{j=1}^n \hat{f}_{n,-j}(X_j), \quad \hat{f}_{n,-j}(x) := \frac{1}{(n-1)h} \sum_{k\not=j} K\left( \frac{X_k-x}{h} \right)
+$$
+ein erwartungstreuer Schätzer für $J(h)$ ist.
+
+Seien $X_1, \ldots, X_n \overset{iid}{\sim} \mathbb{P}_f$ und betrachte für $h>0$ und $j \in \{1, \ldots,n\}$
+$$
+\begin{aligned}
+\mathbb{E}\left[ \hat{f}_{n,-j}(X_j) \right] &= \mathbb{E}\left[ \frac{1}{(n-1)h} \sum_{k\not=j} K\left( \frac{X_k-X_j}{h} \right) \right] \\
+&\overset{iid}{=} \frac{1}{(n-1)h} \sum_{k\not=j} \int \int K\left( \frac{y-x}{h} \right) f(y) \, dy \, f(x) \, dx \\
+&= \frac{1}{h} \int \int K\left( \frac{y-x}{h} \right) f(y) \, dy \, f(x) \, dx \\
+&= \int \int K(y) f(x+hy) \, dy \, f(x) \, dx.
+\end{aligned}
+$$
+Ebenso gilt
+$$
+\begin{aligned}
+\mathbb{E} \left[ \int \hat{f}_n(x) f(x) \, dx \right] &= \mathbb{E} \left[ \int \frac{1}{nh} \left( \sum_{k=1}^n K\left( \frac{X_k-x}{h} \right) \right) f(x) \, dx \right] \\
+&\overset{\text{Fubini}}{=} \frac{1}{nh} \sum_{k=1}^n \int \mathbb{E} \left[ K\left( \frac{X_k-x}{h} \right) \right] f(x) \, dx \\
+&\overset{iid}{=} \frac{1}{h} \int \mathbb{E} \left[ K\left( \frac{X_1-x}{h} \right) \right] f(x) \, dx \\
+&= \int \int K(y) f(x+hy) \, dy \, f(x) \, dx.
+\end{aligned}
+$$
+
+Somit folgt also
+$$
+\begin{aligned}
+\mathbb{E} [\hat{J}(h)] &= \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \hat{G} \right] \\
+&= \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx \right] - 2 \mathbb{E}[\hat{G}] \\
+&= \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx \right] - 2 \mathbb{E}\left[ \frac{1}{n} \sum_{j=1}^n \hat{f}_{n,-j}(X_j) \right] \\
+&\overset{iid}{=} \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx \right] - 2 \mathbb{E}\left[ \hat{f}_{n,-1}(X_1) \right] \\
+&= \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \int \hat{f}_n(x) f(x) \, dx \right] = J(h).
+\end{aligned}
+$$
+Aus dieser Herleitung sind auch die notwendigen Integrationsbedingungen an $K$ und $f$ erkennbar. Damit $\mathbb{E}[\hat{G}] < \infty$, muss für $h>0$ also $y \mapsto K(y)f(x+hy) \in \mathcal{L}^1(\mathbb{R}, \mathcal{B}(\mathbb{R}), \lambda)$ für jedes $x \in \mathbb{R}$ gelten. Betrachten wir
+$$
+\begin{aligned}
+\mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx \right] &= \mathbb{E} \left[ \frac{1}{(nh)^2} \int \left( \sum_{k=1}^n K\left( \frac{X_k-x}{h} \right) \right)^2 \, dx \right] \\
+&\overset{\text{Fubini}}{=} \frac{1}{(nh)^2} \int \mathbb{E} \left[ \left( \sum_{k=1}^n K\left( \frac{X_k-x}{h} \right) \right)^2 \right] \, dx \\
+&= \frac{1}{(nh)^2} \left\{ \sum_{k=1}^n \int \mathbb{E} \left[ K^2\left( \frac{X_k-x}{h} \right) \right] \, dx + 2 \sum_{k \not= j} \int \mathbb{E} \left[ K\left( \frac{X_k-x}{h} \right) K\left( \frac{X_j-x}{h} \right) \right] \, dx \right\} \\
+&\overset{iid}{=} \frac{1}{nh} \int K^2(y) f(x+hy) \, dy \, dx + \frac{2(n-1)}{n^2} \int \left( \int K(y) f(x+hy) \, dy \right)^2 \, dx
+\end{aligned}
+$$
+so können wir weiter sehen, dass die quadratische Integrationsannahme $y \mapsto K^2(y) f(x+hy) \in \mathcal{L}^1(\mathbb{R}, \mathcal{B}(\mathbb{R}), \lambda)$ für alle $x \in \mathbb{R}$ ebenso erfüllt sein muss, damit $\mathbb{E}[\hat{J}(h)]$ für $h>0$ existiert.
+
+
+### Implementierung der Kreuzvalidierung zur Bandweitenwahl
+
+Wir implementieren die Kreuzvalidierung in zwei Schritten: wir schreiben erstens eine Funktion `fnJ` die das Kreuzvalidierungskriterium $\hat{J}(h)$ berechnet und zweitens eine Funktion `fnUCV` die dann das Kreuzvalidierungskriterium minimiert.
+Um das Integral über den quadratischen Kerndichteschätzer zu berechnen nutzen wir die R-Methode `integrate`. Für die Minimierung in `fnUCV` bedinen wir uns der R-Methode `optimize`.
 
 ```{r Kernel density estimation cross validation}
 fnJ <- function(X, K, h) {
@@ -405,20 +499,32 @@ fnUCV <- function(X, K, hmin, hmax, tol = 0.1 * hmin) {
 }
 ```
 
-```{r Cross validation test}
+Wir berechnen nun mit unserer Implementierung der Kreuzvalidierung die optimale Bandweite $h^*$ für die bereits zuvor betrachteten Eruptionsdauern im Datensatz `faithful`. Für den Kerndichteschätzer wählen wir einen Gaußkern:
+
+```{r CV test 1}
 hmin <- 0.01
 hmax <- 10
 fnUCV(faithful$eruptions, fnGaussianKernel, hmin, hmax)
+```
+
+Vergleichen wir dieses Ergebnis mit der optimalen Bandweite gemäß der R-Methode `bw.ucv` (bandwidth unbiased cross validation), so erhalten wir ein sehr ähnliches Ergebnis:
+
+```{r CV test 2}
 bw.ucv(faithful$eruptions)
 ```
 
-## m-nächste Nachbarn
+Es ist anzunehmen, dass die Implementierung der erwartungstreuen Kreuzvalidierung in `bw.ucv` effizienter ist als unsere, da die R-Methode nur für einen Gaußkern implementiert ist, d.h.\ hierfür ggf.\ analytische Möglichkeiten ausgenutzt wurden. Im Vergleich dazu besteht in unserer Implementierung die Möglichkeit weitere Kerne anzuwenden.
 
-```{r m-nearest neighbors}
+
+## $m$-nächste Nachbarn
+
+Zusätzlich zur Kerndichteschätzung mit fixer Bandweite $h > 0$ wollen wir die $m$-nächste Nachbarn Methode mit variabler Bandweite implementieren. Für eine Stelle $x \in \mathbb{R}$ ist die Bandweite $h(x,m)$ bei der $knn(m)$-Methode durch den Abstand von $x$ zum $m$-nächsten Nachbarn definiert.
+
+```{r fnMNearestNeighbors}
 fnMNearestNeighbors <- function(x, X, K, m) {
   # This function computes the kernel density estimates for a given sample X and
-  # kernel K with vector bandwidths h for every point, which is estimated by
-  # nearest neighbor approach
+  # kernel K with variable bandwidths h for every point, which are determined by
+  # the m-nearest neighbor approach
   # 
   # Args:
   #   x: Points for which the kernel density estimates are computed
@@ -438,7 +544,11 @@ fnMNearestNeighbors <- function(x, X, K, m) {
   mKernels <- K((1/t(matrix(rep(h, n), ncol = n))) * outer(X, x, FUN = "-"))
   return((1/(n*h)) * colSums(mKernels))
 }
+```
 
+Betrachten wir die $knn(m)$-Schätzungen für standard-normalverteilte Daten wiederum für den Rechteckskern, Gaußkern sowie Epanechnikov-Kern für verschiedene $m$:
+
+```{r m-nearest neighbors test}
 # Generate sample
 set.seed(42)
 n <- 50
@@ -448,23 +558,32 @@ X <- rnorm(n)
 x <- seq(-4, 4, 0.01)
 
 # Define vector of neighbor positions m
-m <- c(5,10,15,25,50)
+m <- c(5,10,25,40,50)
 
 # Nearest Neighbor Rectangular kernel density estimation
-fnKernelPlot(x, X, fnRectangularKernel, vm = m, fnEstimation = fnMNearestNeighbors,
+fnKernelPlot(x, X, fnRectangularKernel, vm = m,
+             fnEstimation = fnMNearestNeighbors,
              title = "Nearest Neighbor Rectangular Kernel Density Estimation",
              trueDensity = dnorm, ylim = c(0, 0.6))
 
 # Nearest Neighbor Gaussian kernel density estimation
-fnKernelPlot(x, X, fnGaussianKernel, vm = m, fnEstimation = fnMNearestNeighbors,
+fnKernelPlot(x, X, fnGaussianKernel, vm = m, 
+             fnEstimation = fnMNearestNeighbors,
              title = "Nearest Neighbor Gaussian Kernel Density Estimation",
              trueDensity = dnorm, ylim = c(0, 0.6))
 
 # Nearest Neighbor Epanechnikov kernel density estimation
-fnKernelPlot(x, X, fnEpanechnikovKernel, vm = m, fnEstimation = fnMNearestNeighbors, 
-             title = "Epanechnikov Kernel Density Estimation",
+fnKernelPlot(x, X, fnEpanechnikovKernel, vm = m, 
+             fnEstimation = fnMNearestNeighbors, 
+             title = "Nearest Neighbor Epanechnikov Kernel Density Estimation",
              trueDensity = dnorm, ylim = c(0, 0.6))
 ```
+
+Im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ passt die $knn(m)$-Methode die Bandweite in Abhängigkeit des Abstands der Stelle $x$ zu den $m$-nächsten Datenpunkten aus $X_1, \ldots, X_n$ variabel an. Dies hat zur Folge, dass die Bandweiten zu $x$ in Umgebungen, in welchen sich Datenpunkte häufen, kleiner gewählt werden und somit lokaler geschätzt wird. Dagegen wird für Stellen $x$, für welche die Umgebung zum $m$-nächsten Nachbarn groß ist eine größere Bandweite gewählt, was eine globalere Schätzung zur Folge hat.
+Diese Überlegung wird in den Plots bestätigt. In kleineren Umgebungen um 0, in welchen sich die standard-normalverteilten Zufallszahlen häufen, oszillieren die $knn(m)$-Schätzungen stärker als in den Tails. Damit wird tendenziell in kleineren Umgebungen um 0 unterglättet und in den Tails überglättet. Weiter lässt sich wie zu erwarten erkennen, dass mit größerem $m$ die Schätzungen glatter werden, da für größeres $m$ die Bandweiten $h(x,m)$ für alle Stellen $x$ größer werden.
+
+Insgesamt ist im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ tendenziell eine stärkere Oszillation der Schätzungen festzustellen.
+
 
 # Bildentrauschen
 
