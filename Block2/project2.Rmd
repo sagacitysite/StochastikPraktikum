@@ -342,7 +342,7 @@ fnKernelPlot(x, X, fnEpanechnikovKernel, h,
              trueDensity = dnorm, ylim = c(0, 0.6))
 ```
 
-Wir können sehen, dass die Wahl des Kerns die Glattheit der geschätzten Dichtefunktion beeinflusst. Da der Rechteckskern sowie der Epanechnikov-Kern den Träger $[-1,1]$ (bzw. $(-1,1)$) besitzen, finden sich Sprünge in den geschätzten Dichten. Da (mit $h$ skalierte) Differenzen in $[-1,1]$ für den Rechtseckskern gleich gewichtet werden sind die geschätzten Dichten nochmals sprunghafter im Vergleich zum Epanechnikov-Kern welcher symmetrisch um 0 monoton abfällt, was eine Glättung zur Folge hat.
+Wir können sehen, dass die Wahl des Kerns die Glattheit der geschätzten Dichtefunktion beeinflusst. Da der Rechteckskern sowie der Epanechnikov-Kern den Träger $[-1,1]$ (bzw. $(-1,1)$) besitzen, finden sich Sprünge in den geschätzten Dichten. Da (mit $h$ skalierte) Differenzen in $[-1,1]$ für den Rechtseckskern gleich gewichtet werden, sind die geschätzten Dichten nochmals sprunghafter im Vergleich zum Epanechnikov-Kern, welcher symmetrisch um 0 monoton abfällt, was eine Glättung zur Folge hat. Dabei nimmt die Sprunghöhe beim Rechtseckskern mit steigender Bandbreite $h$ ab.
 Im Vergleich dazu hat der Gaußkern ganz $\mathbb{R}$ als Träger und ist ebenso symmetrisch um 0 monoton fallend. D.h.\ für die Schätzung $\hat{f}_n(x)$ an der Stelle x hat jeder Datenpunkt $X_i$, $i = 1, \ldots,n$, einen (mit wachsendem Abstand geringeren) Einfluss auf die Schätzung. Dadurch resultieren glatte Kerndichteschätzer $\hat{f}_n$.
 
 Weiter können wir in den Beispielen schön das Bias-Varianz-Dilemma der Bandweitenwahl beobachten. Für kleineres $h$ wird die lokale Umgebung, die für die Schätzung an der Stelle $x$ herangezogen wird, ebenso kleiner. Dies hat eine stärkere Oszillation der Schätzung $\hat{f}_n$ zur Folge. In diesem Fall ist der Bias klein (lokale Schätzung), die Varianz jedoch hoch und das Resultat eine Unterglättung. Umgekehrt folgt für eine größere Bandweite $h$ ein größerer Bias (globale Schätzung), jedoch eine geringere Varianz. In diesem Fall sprechen wir von Überglättung. Die Aufgabe einer optimalen Bandweitenwahl ist es also einen Ausgleich zwischen Bias und Varianz zu finden, so dass der insgesamt resultierende Fehler möglichst minimal wird.
@@ -448,11 +448,12 @@ $$
 &= \argmin_h \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \int \hat{f}_n(x) f(x) \, dx \right] = \argmin_h J(h)
 \end{aligned}
 $$
+
 mit $J$ definiert durch
+
 $$
 J(h) := \mathbb{E} \left[ \int \hat{f}_n^2(x) \, dx - 2 \int \hat{f}_n(x) f(x) \, dx \right] , \quad h >0.
 $$
-
 
 ### Erwartungstreue des Kreuzvalidierungskriteriums $\hat{J}(h)$
 
@@ -644,7 +645,7 @@ fnKernelPlot(x, X, fnEpanechnikovKernel, vm = m,
 ```
 
 Im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ passt die $knn(m)$-Methode die Bandweite in Abhängigkeit des Abstands der Stelle $x$ zu den $m$-nächsten Datenpunkten aus $X_1, \ldots, X_n$ variabel an. Dies hat zur Folge, dass die Bandweiten zu $x$ in Umgebungen, in welchen sich Datenpunkte häufen, kleiner gewählt werden und somit lokaler geschätzt wird. Dagegen wird für Stellen $x$, für welche die Umgebung zum $m$-nächsten Nachbarn groß ist eine größere Bandweite gewählt, was eine globalere Schätzung zur Folge hat.
-Diese Überlegung wird in den Plots bestätigt. In kleineren Umgebungen um 0, in welchen sich die standard-normalverteilten Zufallszahlen häufen, oszillieren die $knn(m)$-Schätzungen stärker als in den Tails. Damit wird tendenziell in kleineren Umgebungen um 0 unterglättet und in den Tails überglättet. Weiter lässt sich wie zu erwarten erkennen, dass mit größerem $m$ die Schätzungen glatter werden, da für größeres $m$ die Bandweiten $h(x,m)$ für alle Stellen $x$ größer werden.
+Diese Überlegung wird in den Plots bestätigt. In kleineren Umgebungen um 0, in welchen sich die standard-normalverteilten Zufallszahlen häufen, oszillieren die $knn(m)$-Schätzungen stärker als in den Tails. Damit wird tendenziell in kleineren Umgebungen um 0 unterglättet und in den Tails überglättet. Weiter lässt sich wie zu erwarten erkennen, dass mit größerem $m$ die Schätzungen glatter werden, da für größeres $m$ die Bandweiten $h(x,m)$ für alle Stellen $x$ verhältnismäßig größer werden.
 
 Insgesamt ist im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ tendenziell eine stärkere Oszillation der Schätzungen festzustellen.
 
@@ -653,12 +654,12 @@ Insgesamt ist im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ te
 
 In dieser Aufgabe wollen wir mit Hilfe des Nadaraya-Watson-Schätzers versuchen Bilder zu entrauschen. Zunächst laden wir das Bild `lena.png` und wandeln es in Graustufen um:
 
-```{r Load and prepare images}
+```{r Load and prepare images, cache = TRUE}
 # Load package
 library(EBImage)
 
 # Load image from parent directory
-imgLenaColor <- readImage("../lena.png")
+imgLenaColor <- readImage("lena.png")
 
 # Change image to grayscale
 imgLenaGray <- channel(imgLenaColor, "gray")
@@ -735,7 +736,7 @@ für alle $x,y \in \mathbb{R}$.
 
 Als nächstes geben wir einen geeigneten Nadaraya-Watson-Schätzer an, um die Pixel des ursprünglichen Bildes $(f(i,j))_{i=1,\ldots,m, \, j =1,\ldots,p}$ aus den Pixeln des verrauschten Bildes $(Y_{ij})_{i=1,\ldots,m, \, j =1,\ldots,p}$ mit $Y_{ij} = f(i,j) + \varepsilon_{ij}$ für $\varepsilon_{ij} \overset{iid}{\sim} N(0,\sigma^2)$ mit Rauschniveau $\sigma > 0$ zu schätzen.
 
-Die Idee der Entrauschung ist es den Pixel des urprünglichen Bildes mit Pixeln aus einer Umgebung des zu entrauschenden Pixels zu schätzen. Wir betrachten daher die Designpunkte $(i,j) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ als Regressoren in der nichtparametrischen Regression, d.h.\
+Die Idee der Entrauschung ist es, den Pixel des urprünglichen Bildes mit Pixeln aus einer Umgebung des zu entrauschenden Pixels zu schätzen. Wir betrachten daher die Designpunkte $(i,j) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ als Regressoren in der nichtparametrischen Regression, d.h.\
 $$
 \hat{f}_{mp} (i,j) := \argmin_{y \in [0,1]} \left( \sum_{k=1}^m \sum_{l=1}^p \| Y_{kl} - y \|^2 w_{kl}(i,j) \right) = \sum_{k=1}^m \sum_{l=1}^p w_{kl}(i,j) Y_{kl}.
 $$
@@ -743,7 +744,7 @@ Für den Nadaraya-Watson-Schätzer wählen wir nun den zuvor eingeführten zweid
 $$
 w_{kl}(i,j) = \frac{K_2\left( \frac{k-i}{h}, \frac{l-j}{h} \right)}{\sum_{s=1}^m \sum_{t=1}^p K_2\left( \frac{s-i}{h}, \frac{t-j}{h} \right)} = \frac{K\left( \frac{k-i}{h} \right) K \left( \frac{l-j}{h} \right)}{\left(\sum_{s=1}^m K\left( \frac{s-i}{h}\right) \right) \left( \sum_{t=1}^p K \left( \frac{t-j}{h} \right) \right)}
 $$
-für $(i,j), (k,l) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ und Bandweite $h>0$. Da der zweidimensionale Kern $K_2$ als Produkt eines eindimensionalen Kerns $K$ definiert ist bedeutet dies für Kerne $K$, die symmetrisch um 0 monoton fallen (z.B.\ Gaußkern), dass Pixel, die diagonal zum entrauschenden Pixel liegen, weniger für die Entrauschung gewichtet werden als Pixel, die horizontal oder vertikal zum entrauschenden Pixel liegen. Für den auf $[-1,1]$ konstanten Rechteckskern findet dagegen eine gleiche Gewichtung aller Pixel eines „angrenzenden Pixelringes“ statt, d.h.\ diagonale, horizontale und vertikale Abstände (gemessen in Pixeln) werden gleich gewichtet.
+für $(i,j), (k,l) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ und Bandweite $h>0$. Da der zweidimensionale Kern $K_2$ als Produkt eines eindimensionalen Kerns $K$ definiert ist, bedeutet dies für Kerne $K$, die symmetrisch um 0 monoton fallen (z.B.\ Gaußkern), dass Pixel, die diagonal zum entrauschenden Pixel liegen, weniger für die Entrauschung gewichtet werden als Pixel, die horizontal oder vertikal zum entrauschenden Pixel liegen, obwohl sie in beiden Fällen nur einen Pixel vom Zentrum entfernt sind. Für den auf $[-1,1]$ konstanten Rechteckskern findet dagegen eine gleiche Gewichtung aller Pixel eines „angrenzenden Pixelringes“ statt, d.h.\ diagonale, horizontale und vertikale Abstände (gemessen in Pixeln) werden gleich gewichtet.
 
 ```{r fnNadarayaWatson}
 fnNadarayaWatson <- function(img, K, h) {
@@ -847,7 +848,7 @@ h <- c(0.1, 1, 10)
 fnEvalNWGaussianNoise(imgLenaGray, sigma, h)
 
 # Porsche
-imgPorsche <- readImage("../porsche.jpeg")
+imgPorsche <- readImage("porsche.jpeg")
 fnEvalNWGaussianNoise(imgPorsche, sigma, h)
 ```
 
