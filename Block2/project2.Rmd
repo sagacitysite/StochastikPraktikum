@@ -134,7 +134,7 @@ fnTestPowerMC <- function(fnError, n = 30, alpha = 0.05, nSim = 10^4, ...) {
 }
 ```
 
-```{r Perform MC simulations, cache = TRUE}
+```{r Perform MC simulations}
 # Set seed
 set.seed(432)
 
@@ -664,7 +664,7 @@ Insgesamt ist im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ te
 
 In dieser Aufgabe wollen wir mit Hilfe des Nadaraya-Watson-Schätzers versuchen Bilder zu entrauschen. Zunächst laden wir das Bild `lena.png` und wandeln es in Graustufen um:
 
-```{r Load and prepare images, cache = TRUE}
+```{r Load and prepare images}
 # Load package
 library(EBImage)
 
@@ -713,7 +713,7 @@ fnAddNoise <- function(img, rnoise, ...) {
 
 Betrachten wir drei verrauschte Bilder mit Gaußschem Rauschen für unterschiedliche Rauschniveaus:
 
-```{r Noise Example, cache = TRUE}
+```{r Noise Example}
 imgLenaNoise1 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.1)
 imgLenaNoise2 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.25)
 imgLenaNoise3 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.5)
@@ -865,7 +865,7 @@ fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
 
 Betrachten wir die Ergebnisse für `lena.png`:
 
-```{r Nadaraya-Watson-estimator Lena, cache = TRUE}
+```{r Nadaraya-Watson-estimator Lena}
 sigma <- c(0.1, 0.25, 0.5)
 h <- c(1, 3, 5, 50)
 
@@ -877,7 +877,7 @@ Wir können sehen, dass natürlicherweise mit größerem Rauschniveau $\sigma$ d
 
 Wiederholen wir die Analyse für ein weiteres Bild `porsche.jpg`:
 
-```{r Nadaraya-Watson-estimator Porsche, cache = TRUE}
+```{r Nadaraya-Watson-estimator Porsche}
 sigma <- c(0.1, 0.25, 0.5)
 h <- c(1, 3, 5, 50)
 
@@ -954,7 +954,7 @@ fnEvalNWCauchyNoise <- function(img, vdf, vh) {
 
 Betrachten wir erneut die Ergebnisse für `lena.png`:
 
-```{r Nadaraya-Watson-estimator non-Gaussian Noise Lena, cache = TRUE}
+```{r Nadaraya-Watson-estimator non-Gaussian Noise Lena}
 df <- c(100, 50, 1)
 h <- c(1, 3, 5, 50)
 
