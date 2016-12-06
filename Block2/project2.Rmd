@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Zwillingsstudie
 
-Um zu testen, ob der Kindergartenbesuch einen signifikanten Einfluss auf die sozialen Fähigkeiten eines Kindes hat, führen wir einen zweiseitigen/einseitigen $t$-Test und einen zweiseitigen/einseitigen Wilcoxon-Vorzeichen-Test, jeweils zum Signifikanzniveau $\alpha = 0.05$, durch.
+Um zu testen, ob der Kindergartenbesuch einen signifikanten Einfluss auf die sozialen Fähigkeiten eines Kindes hat, führen wir einen zweiseitigen und einen einseitigen $t$-Test und einen zweiseitigen bzw. einseitigen Wilcoxon-Vorzeichen-Test durch; jeweils zum Signifikanzniveau $\alpha = 0.05$.
 
 ```{r Twins}
 # Enter data
@@ -54,19 +54,17 @@ knitr::kable(data.frame(testType, pValueT, pValueWilcox), caption = 'p-Werte')
 
 ```
 
-#### Zweiseitige Tests
+**Zweiseitige Tests**
 
-Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \alpha$) und somit einen signifikanten Einfluss feststellt.
+Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \alpha$) und somit einen signifikanten Einfluss des Kindergartenbesuchs auf die sozialen Fähigkeiten feststellt. Der Wilcoxon-Vorzeichen-Test hingegen ($p = 0.0546875 < \alpha$) lehnt die Nullhypothese hingegen nicht zum gegebenen Signifikanzniveau ab und spricht somit gegen einen entsprechenden Einfluss.
 
-Der Wilcoxon-Vorzeichen-Test hingegen ($p = 0.0546875 < \alpha$) lehnt die Nullhypothese nicht zum gegebenen Signifikanzniveau nicht ab.
+**Einseitige Tests**
 
-#### Einseitige Tests
-
-Im Fall zweiseitger Tests unter der gleichen Nullhypothese, und der Alternative dass die sozialen Fähigkeiten signifikant höher sind, lehnen nun beide Tests die Nullhypothese ab.
+Nehmen wir von vorne herein an, dass die sozialen Fähigkeiten signifikant höher sind, wenn die Kinder den Kindergarten besuchen, dann formulieren wir einen einseitigen Test. Unter dieser Annahme sprechen beide Tests gegen die Nullhypothese.
 
 Der Grund liegt darin, dass hier die $p$-Werte nur eine Ablehnregion in die Richtung "größer" abdecken müssen und aufgrund der Symmetrie der Tests deshalb nur halb so groß sind wie bei den zweiseitigen Tests. Beide Tests indizieren nun einen signifikanten Anstieg der sozialen Fähigkeiten durch den Kindergartenbesuch.
 
-#### Testannahmen
+**Testannahmen**
 
 Schließlich lohnt es, einen Blick auf die Testannahmen zu richten. Während der Wilcoxon-Test lediglich eine symmetrische Verteilung voraussetzt, nimmt der t-Test konkret die Normalverteilung, $X_i - Y_i \sim N(0,\sigma^2)$, der Daten an. Da diese stärkere Annahme ihm auch zu seiner größeren Power verhilft, sollte man ihre Validität überprüfen, hier geschieht dies mit Hilfe eines QQ-Plot:
 
@@ -79,13 +77,11 @@ Wie besonders am rechten Tail zu erkennen, kann die Normalverteilungsannahme dur
 
 Doch auch die Annahme symmetrischer Daten ist angesichts der "Schiefe" (`r skewness`) der Daten anzuzweifeln, aber sie ist deutlich schwächer als die zusätzliche Annahme einer (bis auf Paramter) exakten Verteilung.
 
-Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, jedwede Art von Statistik besitzt nur sehr geringe Aussagekraft.
+Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, jedwede Art von Statistik besitzt in diesem Fall nur sehr geringe Aussagekraft.
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
-Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-/Cauchy-/ und Gleichverteilung folgen.
-
-Blablabla
+Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-, Cauchy-, und Gleichverteilung folgen. Die Funktion, welche die entsprechend verteilten Daten erzeugt, wird mittels `fnError` übergeben. Die Erzeugung der Daten wird mehrfach durchgeführt und mit den beiden Tests getestet (Monte-Carlo-Simulation). Die Nullhypothese lautet dabei in jedem Fall, dass $\theta = 0$. Nach der Durchführung der Tests, werden jeweils die $p$-Werte bestimmt und gemittelt.
 
 ```{r fnTestPowerMC}
 fnTestPowerMC <- function(fnError, n = 30, alpha = 0.05, nSim = 10^4, ...) {
@@ -146,17 +142,6 @@ for (i in 1:3) {
   normalPowerT[i] <- res[1]
   normalPowerW[i] <- res[2]
 }
-# Cauchy errors (t-distribution with df = 1)
-cauchyPowerT <- list()
-cauchyPowerW <- list()
-cauchyLoc = c(0, 0.5, 1)
-cauchyScale = c(1,1,1)
-for (i in 1:3) {
-  res <- fnTestPowerMC(fnError = rcauchy, nSim = 10^4,
-                       location = cauchyLoc[i], scale=cauchyScale[i])
-  cauchyPowerT[i] <- res[1]
-  cauchyPowerW[i] <- res[2]
-}
 
 # Uniform errors
 uniMin <- c(-1, -0.5, 0)
@@ -171,6 +156,17 @@ for (i in 1:3) {
   uniPowerW[i] <- res[2]
 }
 
+# Cauchy errors (t-distribution with df = 1)
+cauchyPowerT <- list()
+cauchyPowerW <- list()
+cauchyLoc = c(0, 0.5, 1)
+cauchyScale = c(1,1,1)
+for (i in 1:3) {
+  res <- fnTestPowerMC(fnError = rcauchy, nSim = 10^4,
+                       location = cauchyLoc[i], scale=cauchyScale[i])
+  cauchyPowerT[i] <- res[1]
+  cauchyPowerW[i] <- res[2]
+}
 ```
 
 ```{r echo=FALSE, results='asis'}
@@ -184,21 +180,24 @@ colnames(dfCauchy) <- c("location", "scale", "power T-test", "power Wilcox-test"
 dfUni <- data.frame((uniMax+uniMin)/2, (uniMax-uniMin)/2, unlist(uniPowerT), unlist(uniPowerW))
 colnames(dfUni) <- c("mean", "+- interval", "power T-test", "power Wilcox-test")
 
-knitr::kable(dfNormal, caption = "normalverteiltes Rasuchen")
-knitr::kable(dfUni, caption = "uniformes Rauschen")
-knitr::kable(dfCauchy, caption = "cauchyverteiltes Rauschen")
+knitr::kable(dfNormal, caption = "Normalverteilte Daten")
+knitr::kable(dfUni, caption = "Gleichverteilte Daten")
+knitr::kable(dfCauchy, caption = "Cauchyverteilte Daten")
 ```
 
-#### Normalverteiltes Rauschen
-Wie zu erwarten gibt es beim normalverteilten Rauschen kaum merkliche Unterschiede.
+**Normalverteilte Daten**
+
+Wie bereits aus dem ersten Teil der Aufgabe zu erwarten, sind die Unterschiede der $p$-Werte nicht sehr groß. Gleichzeitig nehmen die $p$-Werte drastisch zu, wenn der Erwartungswert bei der Erzeugung der Daten verschoben wird. Die starke Zunahme lässt sich nur damit erklären, dass die Varianz der Teststatistik auf Grund der Stichprobengröße sehr klein wird.
 
 
-#### Uniformes Rauschen
-t-test Überraschend gut im Vergleich zu Normal, quasi identisch. Liegt vermutlich an der ...
+**Gleichverteilte Daten**
+
+Die $p$-Werte der gleichverteilten Daten für $t$-Test und Wilcox-Test sind relativ ähnlich. Obwohl also keine Normalverteilung der Zufallsvariable vorliegt, scheint der $t$-Test (der eigentlich auf dieser Annahme basiert) noch eine relativ gute Leitsung zu haben, zumindest verglichen mit dem Wilcox-Test. Dass die $p$-Werte mit zunehmender Verschiebung stark zunehmen, hat vermutlich zwei Ursachen. Neben der abnehmenden Varianz (wie oben), sind die Daten bei der Gleichverteilung beschränkt. Bspw. ist bei $\theta = 1$ und einer Gleichverteilung im Bereich $[0,2]$ (letzter Fall) intuitiv sehr deutlich zu erkennen, dass Werte mit Null nur sehr selten vorkommen. Wenn gleichzeitig die Varianz der Teststatistik mit zunehmender Stichprobengröße abnimmt (und im Fall $\theta = 0,5$ wird deutlich, dass sie sehr klein zu sein scheint), wird klar, warum wir diesem Fall $p = 1$ als Ergebnis erhalten.
 
 
-#### Cauchy-Rauschen
-Deutlich schlechter als Wilcox, Cauchy-Verteilung stärker konzentriert als Normalverteilung, t-Test überschätzt Tails.
+**Cauchyverteilte Daten**
+
+Die cauchyverteilten Daten führen zu starken Differenzen zwischen den $p$-Werten der beiden Tests. Die Verletzung der Normalverteilungs-Annahme hat hier offensichtlich deutlich größere Auswirkungen, als bspw. im Fall der Gleichverteilung. Auf Grund der massereichen Tails der Cauchyverteilung, kann die Varianz der Teststatistik durch die Stichprobengröße nicht effektiv genug verringert werden und es kommt auch im Bereich von $\theta = 0,5$ und $\theta = 1$ noch zu vergleichsweise kleinen $p$-Werten.
 
 
 # Dichteschätzung
