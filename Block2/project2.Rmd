@@ -56,7 +56,7 @@ knitr::kable(data.frame(testType, pValueT, pValueWilcox), caption = 'p-Werte')
 
 #### Zweiseitige Tests
 Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \alpha$) und somit einen signifikanten Einfluss feststellt.
-Der Wilcoxon-Vorzeichen-Test hingegen ($p = `r pValueWilcox[1]` > \alpha$) lehnt die Nullhypothese nicht zum gegebenen Signifikanzniveau nicht ab.
+Der Wilcoxon-Vorzeichen-Test hingegen ($p = $ `r pValueWilcox[1]` $ > \alpha$) lehnt die Nullhypothese nicht zum gegebenen Signifikanzniveau nicht ab.
 
 
 #### Einseitige Tests
@@ -81,7 +81,7 @@ Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, je
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
-Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1] $ mit Fehlern verrauscht, die der Normal-/Cauchy-/ und Gleichverteilung folgen.
+Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-/Cauchy-/ und Gleichverteilung folgen.
 
 Blablabla
 
@@ -649,7 +649,7 @@ Insgesamt ist im Vergleich zur Kerndichteschätzung mit fixer Bandweite $h>0$ te
 
 # Bildentrauschen
 
-<!-- 4. (a)-(c) LR: Habe ich ebenso auf Papier bereits gezeigt. -->
+In dieser Aufgabe wollen wir mit Hilfe des Nadaraya-Watson-Schätzers versuchen Bilder zu entrauschen. Zunächst laden wir das Bild `lena.png` und wandeln es in Graustufen um:
 
 ```{r Load and prepare images}
 # Load package
@@ -666,6 +666,8 @@ par(mfrow = c(1,2))
 display(imgLenaColor, method = "raster")
 display(imgLenaGray, method = "raster")
 ```
+
+Als nächstes implementieren wir eine Funktion die es uns ermöglicht ein verrauschtes Bild zu erzeugen, wobei die Verteilung des Rauschens sowie das Rauschniveau spezifiziert werden kann:
 
 ```{r fnAddNoise}
 fnAddNoise <- function(img, rnoise, ...) {
@@ -696,6 +698,8 @@ fnAddNoise <- function(img, rnoise, ...) {
 }
 ```
 
+Betrachten wir drei verrauschte Bilder mit Gaußschem Rauschen für unterschiedliche Rauschniveaus:
+
 ```{r Noise Example}
 imgLenaNoise1 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.1)
 imgLenaNoise2 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.25)
@@ -706,6 +710,40 @@ display(imgLenaNoise1, method = "raster")
 display(imgLenaNoise2, method = "raster")
 display(imgLenaNoise3, method = "raster")
 ```
+
+
+## Nadaraya-Watson-Schätzer
+
+In diesem Abschnitt wollen wir einen geeigneten Nadaraya-Watson-Schätzer zur Bildentrauschung angeben sowie effizient implementieren.
+
+Dazu zeigen wir zunächst, dass $K_2(x,y) := K(x)K(y), \, x,y, \in \mathbb{R}$ für einen eindimensionalen Kern $K$ einen zweidimensionalen Kern definiert: Da $K$ ein eindimensionaler Kern ist, ist $K$ eine nichtnegative, reelle Funktion mit 
+$$
+\int K(y) \, dy = 1 \quad \text{und} \quad K(x) = K(-x) \, \text{ für alle } x\in \mathbb{R}.
+$$
+
+Damit ist $K_2$ nichtnegative, reelle Funktion mit
+$$
+\int K_2(x,y) \, d(x,y) = \int \int K(x) K(y) \, dx \, dy = 1^2 = 1
+$$
+nach Fubini sowie
+$$
+K_2(x,y) = K(x) K(y) = K(-x) K(-y) = K_2(-x,-y)
+$$
+für alle $x,y \in \mathbb{R}$.
+
+Als nächstes geben wir einen geeigneten Nadaraya-Watson-Schätzer an, um die Pixel des ursprünglichen Bildes $(f(i,j))_{i=1,\ldots,m, \, j =1,\ldots,p}$ aus den Pixeln des verrauschten Bildes $(Y_{ij})_{i=1,\ldots,m, \, j =1,\ldots,p}$ mit $Y_{ij} = f(i,j) + \varepsilon_{ij}$ für $\varepsilon_{ij} \overset{iid}{\sim} N(0,\sigma^2)$ mit Rauschniveau $\sigma > 0$ zu schätzen.
+
+Die Idee der Entrauschung ist es den Pixel des urprünglichen Bildes mit Pixeln aus einer Umgebung des zu entrauschenden Pixels zu schätzen. Wir betrachten daher die Designpunkte $(i,j) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ als Regressoren in der nichtparametrischen Regression, d.h.\
+$$
+\hat{f}_{mp} (i,j) := \argmin_{y \in [0,1]} \left( \sum_{k=1}^m \sum_{l=1}^p \| Y_{kl} - y \|^2 w_{kl}(i,j) \right) = \sum_{k=1}^m \sum_{l=1}^p w_{kl}(i,j) Y_{kl}.
+$$
+Für den Nadaraya-Watson-Schätzer wählen wir nun den zuvor eingeführten zweidimensionalen Kern $K_2(i,j) = K(i)K(j)$ für einen Designpunkt $(i,j)$ und eindimensionalen Kern $K$. Damit erhalten wir folgende Gewichte:
+$$
+w_{kl}(i,j) = \frac{K_2\left( \frac{k-i}{h}, \frac{l-j}{h} \right)}{\sum_{s=1}^m \sum_{t=1}^p K_2\left( \frac{s-i}{h}, \frac{t-j}{h} \right)} = \frac{K\left( \frac{k-i}{h} \right) K \left( \frac{l-j}{h} \right)}{\left(\sum_{s=1}^m K\left( \frac{s-i}{h}\right) \right) \left( \sum_{t=1}^p K \left( \frac{t-j}{h} \right) \right)}
+$$
+für $(i,j), (k,l) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ und Bandweite $h>0$. Da der zweidimensionale Kern $K_2$ als Produkt eines eindimensionalen Kerns $K$ definiert ist bedeutet dies für Kerne $K$, die symmetrisch um 0 monoton fallen (z.B.\ Gaußkern), dass Pixel, die diagonal zum entrauschenden Pixel liegen, weniger für die Entrauschung gewichtet werden als Pixel, die horizontal oder vertikal zum entrauschenden Pixel liegen. Für den auf $[-1,1]$ konstanten Rechteckskern findet dagegen eine gleiche Gewichtung aller Pixel eines „angrenzenden Pixelringes“ statt, d.h.\ diagonale, horizontale und vertikale Abstände (gemessen in Pixeln) werden gleich gewichtet.
+
+
 
 ```{r fnNadarayaWatson}
 fnNadarayaWatson <- function(img, K, h) {
