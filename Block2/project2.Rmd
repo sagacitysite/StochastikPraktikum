@@ -66,7 +66,8 @@ Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \
 
 Nehmen wir von vorne herein an, dass die sozialen Fähigkeiten signifikant höher sind, wenn die Kinder den Kindergarten besuchen, dann formulieren wir einen einseitigen Test. Unter dieser Annahme sprechen beide Tests gegen die Nullhypothese.
 
-Der Grund liegt darin, dass hier die $p$-Werte nur eine Ablehnregion in die Richtung "größer" abdecken müssen und aufgrund der Symmetrie der Tests deshalb nur halb so groß sind wie bei den zweiseitigen Tests. Beide Tests indizieren nun einen signifikanten Anstieg der sozialen Fähigkeiten durch den Kindergartenbesuch.
+Der Grund liegt darin, dass hier die $p$-Werte nur eine Ablehnregion in die Richtung "größer" abdecken müssen und aufgrund der Symmetrie der Tests diese bei einseitigen Tests deshalb nur halb so groß ist wie bei den zweiseitigen Tests. Der $p$-Wert muss sozusagen nicht auf zwei Richtungen aufgeteilt werden.
+Beide Tests indizieren (einseitig) nun einen signifikanten Anstieg der sozialen Fähigkeiten durch den Kindergartenbesuch.
 
 **Testannahmen**
 
@@ -86,7 +87,7 @@ Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, je
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
 Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-, Cauchy-, und Gleichverteilung folgen. Die Funktion, welche die entsprechend verteilten Daten erzeugt, wird mittels `fnError` übergeben. Die Erzeugung der Daten wird mehrfach durchgeführt und mit den beiden Tests getestet (Monte-Carlo-Simulation). Die Nullhypothese lautet dabei in jedem Fall, dass $\theta = 0$. Nach der Durchführung der Tests werden jeweils die $p$-Werte bestimmt und gemittelt, und aufgrund der Form der Tests $\phi =1(p(X_1,...,X_n) < \alpha) = 1(p_i<\alpha)$ mit dem p-Wert des $p$,
-ergibt sich die mittlere Power für $m= nSim = 10⁴$ Monte-Carlo-Simulationen als $\beta_m  = \frac{1}{m}\sum_{i=1}^{m}{\phi_i} = \frac{1}{m}\sum_{i=1}^{m}{1(p_i<\alpha)}$.
+ergibt sich die mittlere Power für $m= nSim = 10.000$ Mote-Carlo-Simulationen als $\beta_m  = \frac{1}{m}\sum_{i=1}^{m}{\phi_i} = \frac{1}{m}\sum_{i=1}^{m}{1(p_i<\alpha)}$.
 
 
 
