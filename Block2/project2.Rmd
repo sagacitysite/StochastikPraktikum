@@ -85,7 +85,10 @@ Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, je
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
-Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-, Cauchy-, und Gleichverteilung folgen. Die Funktion, welche die entsprechend verteilten Daten erzeugt, wird mittels `fnError` übergeben. Die Erzeugung der Daten wird mehrfach durchgeführt und mit den beiden Tests getestet (Monte-Carlo-Simulation). Die Nullhypothese lautet dabei in jedem Fall, dass $\theta = 0$. Nach der Durchführung der Tests, werden jeweils die $p$-Werte bestimmt und gemittelt.
+Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-, Cauchy-, und Gleichverteilung folgen. Die Funktion, welche die entsprechend verteilten Daten erzeugt, wird mittels `fnError` übergeben. Die Erzeugung der Daten wird mehrfach durchgeführt und mit den beiden Tests getestet (Monte-Carlo-Simulation). Die Nullhypothese lautet dabei in jedem Fall, dass $\theta = 0$. Nach der Durchführung der Tests werden jeweils die $p$-Werte bestimmt und gemittelt, und aufgrund der Form der Tests $\phi =1(p(X_1,...,X_n) < \alpha) = 1(p_i<\alpha)$ mit dem p-Wert des $p$,
+ergibt sich die mittlere Power für $m= nSim = 10⁴$ Monte-Carlo-Simulationen als $\beta_m  = \frac{1}{m}\sum_{i=1}^{m}{\phi_i} = \frac{1}{m}\sum_{i=1}^{m}{1(p_i<\alpha)}$.
+
+
 
 ```{r fnTestPowerMC}
 fnTestPowerMC <- function(fnError, n = 30, alpha = 0.05, nSim = 10^4, ...) {
@@ -194,7 +197,7 @@ knitr::kable(dfCauchy, caption = "Cauchyverteilte Daten")
 
 **Normalverteilte Daten**
 
-Wie bereits aus dem ersten Teil der Aufgabe zu erwarten, sind die Unterschiede der $p$-Werte nicht sehr groß. Gleichzeitig nehmen die $p$-Werte drastisch zu, wenn der Erwartungswert bei der Erzeugung der Daten verschoben wird. Die starke Zunahme lässt sich nur damit erklären, dass die Varianz der Teststatistik auf Grund der Stichprobengröße sehr klein wird.
+Wie bereits aus dem ersten Teil der Aufgabe zu erwarten, sind die Unterschiede der $p$-Werte nicht sehr groß. Gleichzeitig nehmen die $p$-Werte drastisch zu, wenn der Erwartungswert bei der Erzeugung der Daten verschoben wird. Die starke Zunahme lässt sich vermutlich damit erklären, dass die Varianz der Teststatistik auf Grund der Stichprobengröße sehr klein wird.
 
 
 **Gleichverteilte Daten**
