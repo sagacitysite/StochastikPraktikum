@@ -55,29 +55,31 @@ knitr::kable(data.frame(testType, pValueT, pValueWilcox), caption = 'p-Werte')
 ```
 
 #### Zweiseitige Tests
-Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \alpha$) und somit einen signifikanten Einfluss feststellt.
-Der Wilcoxon-Vorzeichen-Test hingegen ($p = $ `r pValueWilcox[1]` $ > \alpha$) lehnt die Nullhypothese nicht zum gegebenen Signifikanzniveau nicht ab.
 
+Wir können sehen, dass der $t$-Test die Nullhypothese ablehnt ($p = 0.04895 < \alpha$) und somit einen signifikanten Einfluss feststellt.
+
+Der Wilcoxon-Vorzeichen-Test hingegen ($p = 0.0546875 < \alpha$) lehnt die Nullhypothese nicht zum gegebenen Signifikanzniveau nicht ab.
 
 #### Einseitige Tests
+
 Im Fall zweiseitger Tests unter der gleichen Nullhypothese, und der Alternative dass die sozialen Fähigkeiten signifikant höher sind, lehnen nun beide Tests die Nullhypothese ab.
+
 Der Grund liegt darin, dass hier die $p$-Werte nur eine Ablehnregion in die Richtung "größer" abdecken müssen und aufgrund der Symmetrie der Tests deshalb nur halb so groß sind wie bei den zweiseitigen Tests. Beide Tests indizieren nun einen signifikanten Anstieg der sozialen Fähigkeiten durch den Kindergartenbesuch.
 
-
 #### Testannahmen
+
 Schließlich lohnt es, einen Blick auf die Testannahmen zu richten. Während der Wilcoxon-Test lediglich eine symmetrische Verteilung voraussetzt, nimmt der t-Test konkret die Normalverteilung, $X_i - Y_i \sim N(0,\sigma^2)$, der Daten an. Da diese stärkere Annahme ihm auch zu seiner größeren Power verhilft, sollte man ihre Validität überprüfen, hier geschieht dies mit Hilfe eines QQ-Plot:
+
 ```{r Normalverteilungsannahme, echo=FALSE}
 qqnorm(((x-y)-mean(x-y))/sd(x-y)); qqline(((x-y)-mean(x-y))/sd(x-y))
 skewness = mean(x-y) - median(x-y)
 ```
+
 Wie besonders am rechten Tail zu erkennen, kann die Normalverteilungsannahme durchaus in Frage gestellt werden.
 
 Doch auch die Annahme symmetrischer Daten ist angesichts der "Schiefe" (`r skewness`) der Daten anzuzweifeln, aber sie ist deutlich schwächer als die zusätzliche Annahme einer (bis auf Paramter) exakten Verteilung.
 
 Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, jedwede Art von Statistik besitzt nur sehr geringe Aussagekraft.
-
-
-
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
@@ -700,7 +702,7 @@ fnAddNoise <- function(img, rnoise, ...) {
 
 Betrachten wir drei verrauschte Bilder mit Gaußschem Rauschen für unterschiedliche Rauschniveaus:
 
-```{r Noise Example}
+```{r Noise Example, cache = TRUE}
 imgLenaNoise1 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.1)
 imgLenaNoise2 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.25)
 imgLenaNoise3 <- fnAddNoise(imgLenaGray, rnorm, sd = 0.5)
@@ -742,8 +744,6 @@ $$
 w_{kl}(i,j) = \frac{K_2\left( \frac{k-i}{h}, \frac{l-j}{h} \right)}{\sum_{s=1}^m \sum_{t=1}^p K_2\left( \frac{s-i}{h}, \frac{t-j}{h} \right)} = \frac{K\left( \frac{k-i}{h} \right) K \left( \frac{l-j}{h} \right)}{\left(\sum_{s=1}^m K\left( \frac{s-i}{h}\right) \right) \left( \sum_{t=1}^p K \left( \frac{t-j}{h} \right) \right)}
 $$
 für $(i,j), (k,l) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ und Bandweite $h>0$. Da der zweidimensionale Kern $K_2$ als Produkt eines eindimensionalen Kerns $K$ definiert ist bedeutet dies für Kerne $K$, die symmetrisch um 0 monoton fallen (z.B.\ Gaußkern), dass Pixel, die diagonal zum entrauschenden Pixel liegen, weniger für die Entrauschung gewichtet werden als Pixel, die horizontal oder vertikal zum entrauschenden Pixel liegen. Für den auf $[-1,1]$ konstanten Rechteckskern findet dagegen eine gleiche Gewichtung aller Pixel eines „angrenzenden Pixelringes“ statt, d.h.\ diagonale, horizontale und vertikale Abstände (gemessen in Pixeln) werden gleich gewichtet.
-
-
 
 ```{r fnNadarayaWatson}
 fnNadarayaWatson <- function(img, K, h) {
@@ -839,7 +839,7 @@ fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
 }
 ```
 
-```{r Nadaraya-Watson-estimator Test}
+```{r Nadaraya-Watson-estimator Test, cache = TRUE}
 sigma <- c(0.1, 0.25, 0.5)
 h <- c(0.1, 1, 10)
 
