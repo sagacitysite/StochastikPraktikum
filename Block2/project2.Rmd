@@ -85,7 +85,7 @@ Das Hauptproblem dieser Stichprobe ist jedoch ihre geringe Größe von N = 8, je
 
 ## $t$-Test vs.\ Wilcoxon-Vorzeichen-Test
 
-Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-, Cauchy-, und Gleichverteilung folgen. Die Funktion, welche die entsprechend verteilten Daten erzeugt, wird mittels `fnError` übergeben. Die Erzeugung der Daten wird mehrfach durchgeführt und mit den beiden Tests getestet (Monte-Carlo-Simulation). Die Nullhypothese lautet dabei in jedem Fall, dass $\theta = 0$. Nach der Durchführung der Tests, werden jeweils die $p$-Werte bestimmt und gemittelt.
+Als nächstes schätzen wir die Power beider Tests in verschiedenen Settings ab. Dafür wird zunächst der wahre Wert $\theta \in [0, 0.5, 1]$ mit Fehlern verrauscht, die der Normal-, Cauchy-, und Gleichverteilung folgen. Die Funktion, welche die entsprechend verteilten Daten erzeugt, wird mittels `fnError` übergeben. Die Erzeugung der Daten wird mehrfach durchgeführt und mit den beiden Tests getestet (Monte-Carlo-Simulation). Die Nullhypothese lautet dabei in jedem Fall, dass $\theta = 0$. Nach der Durchführung der Tests werden jeweils die $p$-Werte bestimmt und gemittelt, und aufgrund der Form der Tests $\phi = \mathbb{1}(p(X_1,...,X_n) < \alpha) = 1(p<\alpha)$ mit dem p-Wert $p$ ergibt sich die mittlere Power für m Monte-Carlo-Simulationen als $\beta_m  = \frac{1}{m}\sum{\phi} = \frac{1}{m}\sum{1(p<\alpha)}$.
 
 ```{r fnTestPowerMC}
 fnTestPowerMC <- function(fnError, n = 30, alpha = 0.05, nSim = 10^4, ...) {
