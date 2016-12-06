@@ -740,7 +740,7 @@ K_2(x,y) = K(x) K(y) = K(-x) K(-y) = K_2(-x,-y)
 $$
 für alle $x,y \in \mathbb{R}$.
 
-Als nächstes geben wir einen geeigneten Nadaraya-Watson-Schätzer an, um die Pixel des ursprünglichen Bildes $(f(i,j))_{i=1,\ldots,m, \, j =1,\ldots,p}$ aus den Pixeln des verrauschten Bildes $(Y_{ij})_{i=1,\ldots,m, \, j =1,\ldots,p}$ mit $Y_{ij} = f(i,j) + \varepsilon_{ij}$ für $\varepsilon_{ij} \overset{iid}{\sim} N(0,\sigma^2)$ mit Rauschniveau $\sigma > 0$ zu schätzen.
+Als nächstes geben wir einen geeigneten Nadaraya-Watson-Schätzer an, um die Pixel des ursprünglichen Bildes $(f(i,j))_{i=1,\ldots,m, \, j =1,\ldots,p}$ aus den Pixeln des verrauschten Bildes $Y = (Y_{ij})_{i=1,\ldots,m, \, j =1,\ldots,p}$ mit $Y_{ij} = f(i,j) + \varepsilon_{ij}$ für $\varepsilon_{ij} \overset{iid}{\sim} N(0,\sigma^2)$ mit Rauschniveau $\sigma > 0$ zu schätzen.
 
 Die Idee der Entrauschung ist es, den Pixel des urprünglichen Bildes mit Pixeln aus einer Umgebung des zu entrauschenden Pixels zu schätzen. Wir betrachten daher die Designpunkte $(i,j) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ als Regressoren in der nichtparametrischen Regression, d.h.\
 $$
@@ -751,6 +751,17 @@ $$
 w_{kl}(i,j) = \frac{K_2\left( \frac{k-i}{h}, \frac{l-j}{h} \right)}{\sum_{s=1}^m \sum_{t=1}^p K_2\left( \frac{s-i}{h}, \frac{t-j}{h} \right)} = \frac{K\left( \frac{k-i}{h} \right) K \left( \frac{l-j}{h} \right)}{\left(\sum_{s=1}^m K\left( \frac{s-i}{h}\right) \right) \left( \sum_{t=1}^p K \left( \frac{t-j}{h} \right) \right)}
 $$
 für $(i,j), (k,l) \in \{1,\ldots,m\} \times \{1,\ldots,p\}$ und Bandweite $h>0$. Da der zweidimensionale Kern $K_2$ als Produkt eines eindimensionalen Kerns $K$ definiert ist, bedeutet dies für Kerne $K$, die symmetrisch um 0 monoton fallen (z.B.\ Gaußkern), dass Pixel, die diagonal zum entrauschenden Pixel liegen, weniger für die Entrauschung gewichtet werden als Pixel, die horizontal oder vertikal zum entrauschenden Pixel liegen, obwohl sie in beiden Fällen nur einen Pixel vom Zentrum entfernt sind. Für den auf $[-1,1]$ konstanten Rechteckskern findet dagegen eine gleiche Gewichtung aller Pixel eines „angrenzenden Pixelringes“ statt, d.h.\ diagonale, horizontale und vertikale Abstände (gemessen in Pixeln) werden gleich gewichtet.
+
+Bevor wir den Nadaraya-Watson-Schätzer in R implementieren, wollen wir dessen Berechnung als Matrizenprodukt darstellen: Es ist
+$$
+\hat{f}_{mp} (i,j) = \frac{1}{\left(\sum_{s=1}^m K\left( \frac{s-i}{h}\right) \right) \left( \sum_{t=1}^p K \left( \frac{t-j}{h} \right) \right)} \sum_{k=1}^m \sum_{l=1}^p K\left( \frac{k-i}{h} \right) K \left( \frac{l-j}{h} \right) Y_{kl}
+$$
+Daher definieren wir zwei Matrizen $M \in \mathbb{R}^{m \times m}$ und $N \in \mathbb{R}^{p \times p}$ durch
+$$
+M := \left(\frac{K\left( \frac{k-i}{h} \right)}{\sum_{s=1}^m K\left( \frac{s-i}{h}\right)}\right)_{i = 1,\ldots,m, \, k = 1,\ldots,m} \quad \text{und} \quad N:= \left(\frac{K\left( \frac{l-j}{h} \right)}{\sum_{t=1}^p K\left( \frac{t-j}{h}\right)}\right)_{j = 1,\ldots,p, \, l = 1,\ldots,p} .
+$$
+
+Damit folgt also, dass $\hat{f}_{mp}(i,j) = (MYN^\top)_{i,j}$, was eine effiziente Implementierung in R ermöglicht. Wir implementieren den Nadaraya-Watson-Schätzer für einen allgemeinen Kern $K$ daher wie folgt:
 
 ```{r fnNadarayaWatson}
 fnNadarayaWatson <- function(img, K, h) {
@@ -784,6 +795,8 @@ fnNadarayaWatson <- function(img, K, h) {
 }
 ```
 
+Als nächstes testen wir unsere Implementierung des Nadaraya-Watson-Schätzers mit einem Gauß- und Rechteckskern für verschiedene Bandweiten $h$ und unterschiedliche Rauschniveaus $\sigma$ und schreiben hierfür eine allgemeine Plot-Funktion:
+
 ```{r Nadaraya-Watson-estimator evaluation}
 fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
   # This function is a wrapper to compare the denoising results of images with 
@@ -793,8 +806,8 @@ fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
   # 
   # Args:
   #   img:    Image
-  #   sigma:  Vector of standard deviations used to add noise
-  #   h:      Vector of bandwidths used in weights of the
+  #   vsigma: Vector of standard deviations used to add noise
+  #   vh:     Vector of bandwidths used in weights of the
   #           Nadaraya-Watson-estimator
   #   
   # Returns:
@@ -846,21 +859,117 @@ fnEvalNWGaussianNoise <- function(img, vsigma, vh) {
 }
 ```
 
-```{r Nadaraya-Watson-estimator Test, cache = TRUE}
+Betrachten wir die Ergebnisse für `lena.png`:
+
+```{r Nadaraya-Watson-estimator Lena, cache = TRUE}
 sigma <- c(0.1, 0.25, 0.5)
-h <- c(0.1, 1, 10)
+h <- c(1, 3, 5, 50)
 
 # Lena
 fnEvalNWGaussianNoise(imgLenaGray, sigma, h)
+```
+
+Wir können sehen, dass natürlicherweise mit größerem Rauschniveau $\sigma$ das Bildentrauschen schwieriger fällt. Mit größerer Bandweite $h$ wird auch die Umgebung um den zu entrauschenden Pixel der für die Schätzung gewichtigen Pixel größer, d.h.\ die Schätzung ist das gewichtete Mittel von Pixeln einer größeren Umgebung. In der Folge verwischt das Bild stärker bzw.\ wird weicher. Kanten verschmieren und Kontraste zwischen den Farbflächen werden reduziert. Vergleichen wir die Ergebnisse der beiden unterschiedlichen Kerne, so können wir sehen, dass der Gaußkern „radial“ mittelt, wohingegen der Rechteckskern den Pixel umschließende Quadrate zur Mittelung heranzieht. Tatsächlich steuert für den Rechteckskern die Bandweite $h$ genau die Größe des zur Mittelung herngezogenen Quadrates. Wählt man $h=1$, so werden nur alle dem zu entrauschenden Pixel angrenzenden Pixel (sowie der Pixel selbst) zur Mittelung benutzt. Somit erhalten wir für einen Pixel (der nicht am Rand liegt) ein $3\times3$ Quadrat über welches gemittelt wird. Allgemein wird also für Pixel (die hinreichend weit vom Rand entfernt liegen) ein $(2h+1) \times (2h+1)$ zur Mittelung herangezogen. Dieser Effekt wird für die sehr große Bandweite $h=50$ verdeutlicht. Hier ist beim Entrauschen mit Rechtseckskern ein „Schachbrettmuster“ zu erkennen.
+
+Wiederholen wir die Analyse für ein weiteres Bild `porsche.jpg`:
+
+```{r Nadaraya-Watson-estimator Porsche, cache = TRUE}
+sigma <- c(0.1, 0.25, 0.5)
+h <- c(1, 3, 5, 50)
 
 # Porsche
 imgPorsche <- readImage("porsche.jpeg")
 fnEvalNWGaussianNoise(imgPorsche, sigma, h)
 ```
 
-```{r Weighted Median}
-# 7. The weighted median is more robust than the mean
+Beim Bildentrauschen von `porsche.jpg` sind dieselben Effekte wie zuvor für verschiedene Bandweiten und Rauschniveaus sowie die beiden unterschiedlichen Kerne zu beobachten.
+
+Abschließend wollen wir den Nadaraya-Watson-Schätzer auf Robustheit untersuchen und dazu die Bilder mit nicht normalverteiltem Rauschen belegen. Stattdessen wählen wir $t$-verteiltes Rauschen, wodurch häufiger Ausreißer generiert werden:
+
+```{r Nadaraya-Watson-estimator evaluation non-Gaussian noise}
+fnEvalNWCauchyNoise <- function(img, vdf, vh) {
+  # This function is a wrapper to compare the denoising results of images with 
+  # different levels of t-distributed noise for the Nadaraya-Watson-estimator 
+  # with weights defined by the Gaussian kernel and rectangular kernel
+  # respectively for different bandwidths h.
+  # 
+  # Args:
+  #   img:  Image
+  #   vdf:  Vector of degrees of freedom used to add noise
+  #   vh:   Vector of bandwidths used in weights of the
+  #         Nadaraya-Watson-estimator
+  #   
+  # Returns:
+  #   -
+  
+  # Define helper function for label implementation
+  fnLabel <- function(label) {
+    text(x = 20, y = 20, adj = c(0,1), col = "red", cex = 1.5, label = label)
+  }
+  
+  # Set size of frame
+  par(mfrow = c(1, length(vdf)))
+  
+  # Initalize noise image list
+  imagesNoise <- list()
+  
+  for (i in 1:length(vdf)) {
+    # Add noise to image and plot
+    imgNoise <- fnAddNoise(img, rt, df = vdf[i])
+    imagesNoise[i] <- list(imgNoise)
+    display(imgNoise, method = "raster")
+    fnLabel(substitute(paste("df=", df), list(df=vdf[i])))
+  }
+  
+  # Set size of frame for plots below
+  par(mfrow = c(length(vh), length(vdf)))
+  
+  cat('Gaussian kernel')
+  for (h in vh) {
+    # NW-Denoising with Gaussian kernel
+    for (i in 1:length(vdf)) {
+      display(fnNadarayaWatson(imagesNoise[[i]], fnGaussianKernel, h),
+              method = "raster")
+      fnLabel(substitute(paste("df=", df, ", h=", h),
+                         list(df=vdf[i], h=h)))
+    }
+  }
+  
+  cat('Rectangular kernel')
+  for (h in vh) { 
+    # NW-Denoising with rectangular kernel
+    for (i in 1:length(vdf)) {
+      display(fnNadarayaWatson(imagesNoise[[i]], fnRectangularKernel, h), 
+              method = "raster")
+      fnLabel(substitute(paste("df=", df, ", h=", h),
+                         list(df=vdf[i], h=h)))
+    }
+  }
+}
 ```
+
+Betrachten wir erneut die Ergebnisse für `lena.png`:
+
+```{r Nadaraya-Watson-estimator non-Gaussian Noise Lena, cache = TRUE}
+df <- c(100, 50, 1)
+h <- c(1, 3, 5, 50)
+
+# Lena
+fnEvalNWCauchyNoise(imgLenaGray, df, h)
+```
+
+
+Um einen robusteren Schätzer zur erhalten könnten wir, wie in der parametrischen Regression, anstelle der kleinsten quadratischen Abstände die kleinsten absoluten Abstände betrachten, d.h.\ folgendes Problem betrachten:
+
+$$
+\argmin_{y \in [0,1]} \left( \sum_{k=1}^m \sum_{l=1}^p | Y_{kl} - y | \, w_{kl}(i,j) \right).
+$$
+
+Die Lösung des Problems ist dann der gewichtete Median, d.h.\ für das geordnetes sample $Y^{(1)}_{k_1l_1}, \ldots, Y^{(mp)}_{k_{mp},l_{mp}}$ mit Gewichten $w_{k_1l_1}(i,j), \ldots, w_{k_{mp},l_{mp}}(i,j)$ erfüllt der gewichtete Median $Y^{(M)}_{k_{M},l_{M}}$
+$$
+\sum_{t=1}^{M-1} w_{k_tl_t}(i,j) < \frac{1}{2} \quad \text{und} \quad \sum_{t=M+1}^{mp} w_{k_tl_t}(i,j) \leq \frac{1}{2}.
+$$
+
 
 ## Weitere Methoden zur Bildentrauschung
 
