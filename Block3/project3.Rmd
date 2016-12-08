@@ -1,0 +1,48 @@
+---
+title: "Projektaufgaben Block 3"
+author: "Carlo Michaelis, 573479; David Hinrichs, 572347; Lukas Ruff, 572521"
+date: "xx Januar 2017"
+documentclass: article
+fontsize: 10pt
+header-includes:
+  - \usepackage{amsthm}
+  - \usepackage{amssymb}
+  - \usepackage{amsmath}
+  - \DeclareMathOperator*{\argmin}{argmin}
+  - \usepackage{MnSymbol}
+  - \usepackage{bbm}
+  - \usepackage{subfig}
+  - \usepackage{theoremref}
+  - \newtheorem{satz}{Satz}
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    keep_tex: true
+    fig_caption: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+# Set up some stuff
+```
+
+# SPAM vs HAM
+
+In dieser Aufgabe beschäftigen wir uns mit dem Spam vs. Ham Klassifizierungsproblem.
+
+```{r}
+# Einlesen des Datensatz und erstellen der Feature-Matrix
+```
+
+## Subaufgabe 1
+
+
+Spam spam spam! =! ham ham ham!
+
+
+**Lalala**
+
+This is not a test. This is reality.
+
+
+<!--Footnotes-->

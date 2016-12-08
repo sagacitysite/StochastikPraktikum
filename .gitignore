@@ -6,4 +6,12 @@ Block1/project1_files
 Block1/project1_files/*
 Block1/project1.tex
 
+
+*.Rhistory
+*.tex
+Block3/project3_cache
+Block3/project3_cache/*
+
+Block3/project3_files/*
+Block3/project3_files
 .Rproj.user
