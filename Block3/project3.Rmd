@@ -1,7 +1,7 @@
 ---
 title: "Projektaufgaben Block 3"
 author: "Carlo Michaelis, 573479; David Hinrichs, 572347; Lukas Ruff, 572521"
-date: "xx Januar 2017"
+date: "10 Januar 2017"
 documentclass: article
 fontsize: 10pt
 header-includes:
@@ -23,48 +23,81 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-# Set up some stuff
-require('Matrix')
+# Load libraries
+library('Matrix')
 ```
 
-# SPAM vs HAM
+# SPAM vs. HAM: Naive Bayes
 
 In dieser Aufgabe beschäftigen wir uns mit dem Spam vs. Ham Klassifizierungsproblem.
 
-```{r}
-# Einlesen des Datensatz und erstellen der Feature-Matrix
-trainFeatures <- as.matrix(read.table(file='data/preparedFeatures/train-features.txt'))
-trainLabels <- as.matrix(read.table(file='data/preparedFeatures/train-labels.txt'))
-testFeatures <- as.matrix(read.table(file='data/preparedFeatures/test-features.txt'))
-testLabels <- as.matrix(read.table(file='data/preparedFeatures/test-labels.txt'))
+## Einlesen der Daten
 
-head(trainLabels)
-head(trainFeatures)
+```{r Read data}
+# Read train/test data and dictionary
+colFeatures <- c("docID", "wordID", "wordCount")
 
-# Now we want to build a feature matrix where each row represents a file (message), each column a word,
-# and each entry the frequency of that specific word inside the message.
-# For this:
-# the index of the label in test/trainLabels indicates the file id, so if test/trainLabels[5]=1, the # # message with file id=5 is spam. Additionally, these are ordered. The top half is always ham, while the
-# bottom half is always spam. 
-# in the same way, the test/trainFeatures are ordered by file id (V1), followed by word id (V2) and word count (V3) of
-# that specific word inside of the file with id V1.
-# Probably best way: slice the train/testFeatures on different values of the V1 Column and
-# use resulting smaller matrices to fill in the
-# row vector at V1 of the feature matrix with the number from V3 at column position from V2
+trainFeatures <- read.table(file = './data/train-features.txt', 
+                            col.names = colFeatures)
+testFeatures <- read.table(file = './data/test-features.txt',
+                           col.names = colFeatures)
 
-trainFeatureMatrix <- matrix()
-testFeatureMatrix <- matrix()
+YTrain <- read.table(file = './data/train-labels.txt', col.names = "Y")
+YTest <- read.table(file = './data/test-labels.txt', col.names = "Y")
+
+# Read dictionary
+colDict <- c("wordID", "word")
+dict <- read.table(file = './data/dictionary.txt', col.names = colDict)
+nWords <- dim(dict)[1]
 ```
 
-## Subaufgabe 1
+## Erzeugen der Featurematrizen
+
+```{r Build feature matrices}
+# Build (sparse) feature matrices
+XTrain <- sparseMatrix(i = trainFeatures$docID, j = trainFeatures$wordID,
+                       x = trainFeatures$wordCount)
+XTest <- sparseMatrix(i = testFeatures$docID, j = testFeatures$wordID,
+                      x = testFeatures$wordCount)
+```
+
+## Erzeuge Wahrscheinlichkeiten für den Naive-Bayes-Classifier
+
+```{r Generate probabilites for Naive-Bayes-Classifier}
+# Generate probabilites
+indSpam <- as.logical(YTrain[[1]])
+indHam <- !(YTrain[[1]])
+ 
+phiSpam <- (colSums(XTrain[indSpam, ]) + 1) / (sum(XTrain[indSpam, ]) + nWords)
+phiHam <- (colSums(XTrain[indHam, ]) + 1) / (sum(XTrain[indHam, ]) + nWords)
+```
+
+Zähler und Nenner wurden derart angepasst, dass für den Fall, dass keine Trainingsdaten vorliegen, für die bedingten Verteilungen der Wörter in einem Dokument a priori diskrete Gleichverteilungen mit Wahrscheinlichkeiten $\frac{1}{|V|} = \frac{1}{2500}$ angenommen werden.
+
+## Vorhersage auf den Testdaten
+
+```{r Prediction}
+# Prior probabilities of message being Spam or Ham are equal:
+sum(indSpam) == sum(indHam)
+
+# Predict test labels (using logarithm)
+postSpam <- rowSums(t(t(XTest) * log(phiSpam)))
+postHam <- rowSums(t(t(XTest) * log(phiHam)))
+predTest <- (postSpam > postHam) * 1
+
+# Number of errors
+sum(YTest[[1]] != predTest)
+```
+
+```{r Indicators}
+# SPAM indicators
+dict$word[rank(-phiSpam) <= 25]
+
+# HAM indicators
+dict$word[rank(-phiHam) <= 25]
+```
 
 
-Spam spam spam! =! ham ham ham!
-
-
-**Lalala**
-
-This is not a test. This is reality.
 
 
 <!--Footnotes-->
