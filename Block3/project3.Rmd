@@ -24,6 +24,7 @@ output:
 
 ```{r setup, include=FALSE}
 # Set up some stuff
+require('Matrix')
 ```
 
 # SPAM vs HAM
@@ -32,6 +33,27 @@ In dieser Aufgabe beschäftigen wir uns mit dem Spam vs. Ham Klassifizierungspro
 
 ```{r}
 # Einlesen des Datensatz und erstellen der Feature-Matrix
+trainFeatures <- as.matrix(read.table(file='data/preparedFeatures/train-features.txt'))
+trainLabels <- as.matrix(read.table(file='data/preparedFeatures/train-labels.txt'))
+testFeatures <- as.matrix(read.table(file='data/preparedFeatures/test-features.txt'))
+testLabels <- as.matrix(read.table(file='data/preparedFeatures/test-labels.txt'))
+
+head(trainLabels)
+head(trainFeatures)
+
+# Now we want to build a feature matrix where each row represents a file (message), each column a word,
+# and each entry the frequency of that specific word inside the message.
+# For this:
+# the index of the label in test/trainLabels indicates the file id, so if test/trainLabels[5]=1, the # # message with file id=5 is spam. Additionally, these are ordered. The top half is always ham, while the
+# bottom half is always spam. 
+# in the same way, the test/trainFeatures are ordered by file id (V1), followed by word id (V2) and word count (V3) of
+# that specific word inside of the file with id V1.
+# Probably best way: slice the train/testFeatures on different values of the V1 Column and
+# use resulting smaller matrices to fill in the
+# row vector at V1 of the feature matrix with the number from V3 at column position from V2
+
+trainFeatureMatrix <- matrix()
+testFeatureMatrix <- matrix()
 ```
 
 ## Subaufgabe 1
