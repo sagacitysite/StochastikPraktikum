@@ -25,6 +25,7 @@ output:
 ```{r setup, include=FALSE}
 # Load libraries
 library('Matrix')
+library('wordcloud')
 ```
 
 # SPAM vs. HAM: Naive Bayes
@@ -48,7 +49,6 @@ YTest <- read.table(file = './data/test-labels.txt', col.names = "Y")
 # Read dictionary
 colDict <- c("wordID", "word")
 dict <- read.table(file = './data/dictionary.txt', col.names = colDict)
-nWords <- dim(dict)[1]
 ```
 
 ## Erzeugen der Featurematrizen
@@ -64,12 +64,37 @@ XTest <- sparseMatrix(i = testFeatures$docID, j = testFeatures$wordID,
 ## Erzeuge Wahrscheinlichkeiten für den Naive-Bayes-Classifier
 
 ```{r Generate probabilites for Naive-Bayes-Classifier}
-# Generate probabilites
-indSpam <- as.logical(YTrain[[1]])
-indHam <- !(YTrain[[1]])
- 
-phiSpam <- (colSums(XTrain[indSpam, ]) + 1) / (sum(XTrain[indSpam, ]) + nWords)
-phiHam <- (colSums(XTrain[indHam, ]) + 1) / (sum(XTrain[indHam, ]) + nWords)
+fnNBTrain <- function(X, Y) {
+  # This function generates the probabilities for the Naive-Bayes-Classifier.
+  # 
+  # Args:
+  #   X: Matrix of features
+  #   Y: Vector of labels
+  #   
+  # Returns:
+  #   A list containing the following elements:
+  #     $phiSpam:   Probabilities for words occuring in SPAM message
+  #     $phiHam:    Probabilities for words occuring in HAM message
+  #     $gammaSpam: The relative frequency of SPAM messages
+  #     $gammaHam:  The relative frequency of HAM messages
+  
+  nWords <- length(Y)
+  indSpam <- as.logical(Y)
+  indHam <- !(indSpam)
+  NBClass <- list()
+  
+  # Generate probabilities
+  NBClass$phiSpam <- (colSums(X[indSpam, ]) + 1) / (sum(X[indSpam, ]) + nWords)
+  NBClass$phiHam <- (colSums(X[indHam, ]) + 1) / (sum(X[indHam, ]) + nWords)
+  
+  # Get relative frequencies
+  NBClass$gammaSpam <- sum(indSpam)
+  NBClass$gammaHam <- sum(indHam)
+  
+  return(NBClass)
+}
+
+NBClass1 <- fnNBTrain(XTrain, YTrain[[1]])
 ```
 
 Zähler und Nenner wurden derart angepasst, dass für den Fall, dass keine Trainingsdaten vorliegen, für die bedingten Verteilungen der Wörter in einem Dokument a priori diskrete Gleichverteilungen mit Wahrscheinlichkeiten $\frac{1}{|V|} = \frac{1}{2500}$ angenommen werden.
@@ -77,27 +102,88 @@ Zähler und Nenner wurden derart angepasst, dass für den Fall, dass keine Train
 ## Vorhersage auf den Testdaten
 
 ```{r Prediction}
-# Prior probabilities of message being Spam or Ham are equal:
-sum(indSpam) == sum(indHam)
+fnNBPredict <- function(X, NBClass) {
+  # This function predicts one of the two classes (SPAM or HAM) for some test
+  # data X using a Naive-Bayes-Classifier trained by fnNBTrain.
+  # 
+  # Args:
+  #   X:        Matrix of features
+  #   NBClass:  A list returned by fnNBTrain which contains
+  #               $phiSpam:   Probabilities for words occuring in SPAM message
+  #               $phiHam:    Probabilities for words occuring in HAM message
+  #               $gammaSpam: The relative frequency of SPAM messages
+  #               $gammaHam:  The relative frequency of HAM messages
+  # 
+  # Returns:
+  #   A vector with predictions for each example.
+  
+  # Predict labels (using logarithm)
+  postSpam <- rowSums(t(t(X) * log(NBClass$phiSpam))) + log(NBClass$gammaSpam)
+  postHam <- rowSums(t(t(X) * log(NBClass$phiHam))) + log(NBClass$gammaHam)
+  pred <- (postSpam > postHam) * 1
+  
+  return(pred)
+}
 
-# Predict test labels (using logarithm)
-postSpam <- rowSums(t(t(XTest) * log(phiSpam)))
-postHam <- rowSums(t(t(XTest) * log(phiHam)))
-predTest <- (postSpam > postHam) * 1
+# Predict test labels
+predTest1 <- fnNBPredict(XTest, NBClass1)
 
 # Number of errors
-sum(YTest[[1]] != predTest)
+nErr1 <- sum(YTest[[1]] != predTest1)
 ```
 
-```{r Indicators}
-# SPAM indicators
-dict$word[rank(-phiSpam) <= 25]
+Insgesamt gibt es lediglich `r nErr1` falsche Klassifikationen, was einer Fehlerrate von `r round((nErr1 / length(YTest[[1]])) * 100, 2)`% entspricht. 
 
-# HAM indicators
-dict$word[rank(-phiHam) <= 25]
+Schauen wir uns an, welche Wörter besonders gute Indikatoren für SPAM oder HAM sind. Dazu betrachten wir jeweils die 25 Wörter mit den größten $\Phi_{i|1}$ bzw.\ $\Phi_{i|0}$:
+
+```{r Indicators, fig.cap = "Wordclouds for SPAM (left) and HAM (right) indicators."}
+par(mfrow = c(1,2))
+
+# Plot SPAM indicators
+wordcloud(dict$word[rank(-NBClass1$phiSpam) <= 50], 
+          NBClass1$phiSpam[rank(-NBClass1$phiSpam) <= 50],
+          scale = c(2.5, 0.2), main = "SPAM indicators")
+
+# Plot HAM indicators
+wordcloud(dict$word[rank(-NBClass1$phiHam) <= 50], 
+          NBClass1$phiHam[rank(-NBClass1$phiHam) <= 50],
+          scale = c(2.5, 0.2))
+```
+
+## Feature Engineering
+
+Für die Klassifizierung von SPAM und HAM bedeutunglose Wörter sollten in SPAM- und HAM-Nachrichten relativ betrachtet ähnlich häufig vorkommen. Um Ähnlichkeit zu quantifizieren, können wir das Verhältnis von $\Phi_{i|1}$ zu $\Phi_{i|0}$ betrachten. Logarithmieren liefert eine bessere Skalierung.
+
+```{r Removal of meaningless words}
+logRelProbs <- log(NBClass1$phiSpam/NBClass1$phiHam)
+hist(logRelProbs, breaks = 50)
+
+# Remove some words
+indMeaningful <- !((logRelProbs >= (-1.5)) & (logRelProbs <= 1.5))
+
+# Test classification after removal of meaningless words
+NBClass2 <- fnNBTrain(XTrain[, indMeaningful], YTrain[[1]])
+predTest2 <- fnNBPredict(XTest[, indMeaningful], NBClass2)
+
+# New classification error
+nErr2 <- sum(YTest[[1]] != predTest2)
+```
+
+Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von `r nErr1` auf `r nErr2` halbiert.
+
+```{r Additional features}
+# TODO: Implementation of additional features (e.g. number of words in doc)
+# Maybe hints on: https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering
+```
+
+```{r Cross Validation}
+# TODO: Implementation of m-fold cross validation
+# Maybe plots for train/test error in dependence of training set size.
+# Discussion on model generalization and overfitting.
 ```
 
 
+# SPAM vs. HAM: Lineare Regression & Lasso
 
 
 <!--Footnotes-->
