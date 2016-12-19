@@ -26,6 +26,7 @@ output:
 # Load libraries
 library('Matrix')
 library('wordcloud')
+library('glmnet')
 ```
 
 # SPAM vs. HAM: Naive Bayes
@@ -185,5 +186,38 @@ Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von
 
 # SPAM vs. HAM: Lineare Regression & Lasso
 
+```{r Lasso}
+fnLRPredict <- function(X, Y, XTest) {
+  # This function predicts the labels for the test set using Lasso regression
+  # 
+  # Args:
+  #   X: Matrix of training features
+  #   Y: Vector of training labels
+  #   XTest: Vector of test features
+  #   
+  # Returns:
+  #   Vector of predicted labels from test features
+  
+  # fit spam data via lasso regularization and use binomial function
+  fitGlm <- glmnet(X, Y, family = "binomial")
+  
+  # do cross validation to find optimal lambda
+  cv <- cv.glmnet(X, Y)
+  
+  # predict test data
+  YPred <- predict(fitGlm, XTest, type="response", s=cv$lambda.min)
+  
+  # classify test data
+  YPred[YPred >= 0.5] <- 1
+  YPred[YPred < 0.5] <- 0
+  
+  return(YPred)
+}
+
+YPred <- fnLRPredict(XTrain, YTrain[[1]], XTest)
+
+# error rate (compare predicted labels with true labels)
+sum(YPred != YTest)/length(YTest[[1]])
+```
 
 <!--Footnotes-->
