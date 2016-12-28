@@ -185,6 +185,10 @@ Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von
 # Discussion on model generalization and overfitting.
 ```
 
+```{r Raw Features (Bonus)}
+# TODO: Extract the original emails from rawFeatures.zip
+# Create the features in 1) and 5a) by hand
+```
 
 # SPAM vs. HAM: Lineare Regression & Lasso
 
@@ -329,5 +333,16 @@ YPred <- fnLRPredict(XTrain, YTrain[[1]], XTest)
 # error rate (compare predicted labels with true labels)
 sum(YPred != YTest)/length(YTest[[1]])
 ```
+
+# PCA & Eigenfaces
+
+## Aufgaben
+
+```{r PCA}
+# TODO: ...
+#
+#
+```
+
 
 <!--Footnotes-->
