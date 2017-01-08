@@ -16,6 +16,7 @@ header-includes:
   - \newtheorem{satz}{Satz}
   - \newcommand{\E}{\mathbb{E}}
   - \newcommand{\Var}{\text{Var}}
+  - \newcommand{\tr}{\text{tr}}
 output: 
   pdf_document:
     latex_engine: pdflatex
@@ -321,30 +322,35 @@ Auch hier gilt für $\lambda \to 0$, dass $\Var[\hat\beta] = \Var[\hat\beta^{RR}
 Der mittlere quadratische Fehler eines Schätzers $\hat\rho$ für den Parameter $\rho$ kann mittels Bias-Varianz-Zerlegung wie folgt formuliert werden:
 
 $$
-\E[\| \hat\rho - \rho \|^2] = \E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \left( \E[\hat\rho] - \rho \right)^2 + \Var(\hat\rho) = \text{Bias}(\hat\rho) + \text{Varianz}(\hat\rho)
+\E[\| \hat\rho - \rho \|^2] = \E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \left( \E[\hat\rho] - \rho \right)^T \left( \E[\hat\rho] - \rho \right) + \tr \left( \Var(\hat\rho) \right) = \text{Bias}(\hat\rho) + \text{Varianz}(\hat\rho)
 $$
+
+Die Bias-Varianz-Zerlegung lässt sich leicht zeigen indem mit einem $\E[\hat\rho]$ erweitert wird, d.h. $\E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \E[(\hat\rho - \E[\hat\rho] + \E[\hat\rho] - \rho)^T (\hat\rho - \E[\hat\rho] + \E[\hat\rho] - \rho)]$. Durch Ausmultiplikation folgt das Resultat.
 
 Für den Kleinste-Quadrate-Schätzer $\hat\beta = (X^T X)^{-1} X^T Y$ ergibt sich damit:
 
 $$
-\E[\| \hat\beta - \beta \|^2] = (\beta - \beta)^2 + \Var(\hat\beta) = \sigma^2 (X^T X)^{-1}
+\E[\| \hat\beta - \beta \|^2] = (\beta - \beta)^T (\beta - \beta) + \tr \left( \Var(\hat\beta) \right) = \sigma^2\, \tr\left( (X^T X)^{-1} \right)
 $$
 
 Deutlich wird, dass der Schätzer keinen Bias aufweist, d.h. $\text{Bias}(\hat\beta) = 0$.
 
 Für den Ridge-Resgression-Schätzer $\hat\beta^{RR} = (X^T X + \lambda I_p)^{-1} X^T Y$ gilt: 
 
-$$
-\E[\| \hat\beta^{RR} - \beta \|^2] = \left[ (X^T X + \lambda I_p)^{-1} X^T X \beta - \beta \right]^2 + \sigma^2 (X^T X + \lambda I_p)^{-1} X^T X (X^T X + \lambda I_p)^{-1}
-$$
+\begin{align*}
+\E[\| \hat\beta^{RR} - \beta \|^2] = &\left( (X^T X + \lambda I_p)^{-1} X^T X \beta - \beta \right)^T \left( (X^T X + \lambda I_p)^{-1} X^T X \beta - \beta \right)\\
+&+ \sigma^2 \tr\left( (X^T X + \lambda I_p)^{-1} X^T X (X^T X + \lambda I_p)^{-1} \right)
+\end{align*}
 
 Der Ridge-Regression-Schätzer besitzt für $\lambda \ne 0$ einen Bias. Gleichzeitig wird die Varianz im Vergleich zum Kleinste-Quadrate-Schätzer kleiner. Damit "erkauft" man sich bei der Ridge-Regression eine geringere Varianz, der Preis dafür ist jedoch eine Verzerrung der Schätzung. Für ein gut gewähltes $\lambda$ kann dieser "Deal" vorteilhaft sein, z.B. wenn die Varianz des Kleinste-Quadrate-Schätzers so groß ist, dass keine vernünftige Aussage getroffen werden kann.
 
 ## Klassifikation mittels Lasso-Schätzer
 
+### a) Implementierung des Klassifizierers
+
 ```{r Lasso}
-fnLRPredict <- function(X, Y, XTest) {
-  # This function predicts the labels for the test set using Lasso regression
+fnRPredict <- function(X, Y, XTest, ...) {
+  # This function predicts the labels for the test set using Ridge/Lasso regression
   # 
   # Args:
   #   X: Matrix of training features
@@ -354,27 +360,44 @@ fnLRPredict <- function(X, Y, XTest) {
   # Returns:
   #   Vector of predicted labels from test features
   
-  # fit spam data via lasso regularization and use binomial function
-  fitGlm <- glmnet(X, Y, family = "binomial")
+  # Fit spam data via lasso regularization and use binomial function
+  fitGlm <- glmnet(X, Y, family = "binomial", ...)
   
-  # do cross validation to find optimal lambda
+  # Do cross validation to find optimal lambda
   cv <- cv.glmnet(X, Y)
   
-  # predict test data
+  # Predict test data
   YPred <- predict(fitGlm, XTest, type="response", s=cv$lambda.min)
   
-  # classify test data
+  # Classify test data
   YPred[YPred >= 0.5] <- 1
   YPred[YPred < 0.5] <- 0
   
   return(YPred)
 }
 
-YPred <- fnLRPredict(XTrain, YTrain[[1]], XTest)
+## Lasso Regression
+YPredLR <- fnRPredict(XTrain, YTrain[[1]], XTest, alpha = 1)
 
-# error rate (compare predicted labels with true labels)
-sum(YPred != YTest)/length(YTest[[1]])
+# Number of errors
+nErrLR <- sum(YPredLR != YTest)
+
+## Lasso Regression
+YPredRR <- fnRPredict(XTrain, YTrain[[1]], XTest, alpha = 0)
+
+# Number of errors
+nErrRR <- sum(YPredRR != YTest)
 ```
+
+Die Funktion `glmnet` ermöglicht es über den Parameter `alpha` eine Gewichtung zwischen $l^1$-Norm und $l^2$-Norm, also zwischen Lasso- und Ridge-Resgression, vorzunehmen. Im Extremfall kann damit eine pure Lasso- bzw. Ridge-Regression gerechent werden. Beide Fälle wurden durchgeführt. Im Fall der Lasso Regression erhalten wir `r nErrLR` falsche Predictions, bei einer Fehlerrate von `r round((nErrLR / length(YTest[[1]])) * 100, 2)`%. Im Fall der Ridge Regression kommt es zu `r nErrRR` falschen Predictions, was einer Fehlerrate von `r round((nErrRR / length(YTest[[1]])) * 100, 2)`% entspricht.
+
+### b) Vergleich der Hauptergebnisse
+
+Während es bei dem Naive Bayes Ansatz zu `r nErr1` Fehlern kam, kommt es bei Lasso zu `r nErrLR` Fehlern. Die Fehlerrate ist also etwas höher bei Lasso, aber immer noch recht niedrig. Zum Vergleich der Methoden, sollen einige Aspekte angesprochen werden:
+
+  * Bei Lasso Regression lässt sich die Modellierung zusätzlicher Features deutlich leichter gestalten als beim Bayes-Ansatz. Hier müssen lediglich weitere Variablen hinzugefügt werden, während im Bayes-Ansatz eine komplziertere Modellierung erfolgen muss.
+  * Beim Regression-Ansatz erfolgt durch die Verwendung des verallgemeinerten linearen Modells eine Prädiktion der Wahrscheinlichkeit für eine Klasse, es werden nicht die Klassen direkt geschätzt. Dieser Aspekt ermöglicht die Wahl einer gut interpretierbaren Threshold. Beispielsweise könnte definiert werden, dass nur solche E-Mails als Spam klassifiziert werden, die mit 80 prozentiger Sicherheit auch tatsächlich Spam sind. Beim Bayes-Ansatz lässt sich ähnliches durch einen Koeffizienten beim Vergleich der Posteriors erreichen, dieser lässt sich jedoch nicht so anschaulich interpretieren, wie es bei der Lasso-Regression der Fall ist.
+  * Beim Bayes-Ansatz ist es durch die Verwendung eines Priors möglich die Ergebnisse optimieren zu können, was beim Regressions-Ansatz nicht möglich ist.
 
 # PCA & Eigenfaces
 
