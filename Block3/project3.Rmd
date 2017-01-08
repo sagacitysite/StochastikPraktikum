@@ -81,7 +81,7 @@ fnNBTrain <- function(X, Y) {
   #     $gammaSpam: The relative frequency of SPAM messages
   #     $gammaHam:  The relative frequency of HAM messages
   
-  nWords <- length(Y)
+  nWords <- dim(X)[2]
   indSpam <- as.logical(Y)
   indHam <- !(indSpam)
   NBClass <- list()
@@ -91,8 +91,8 @@ fnNBTrain <- function(X, Y) {
   NBClass$phiHam <- (colSums(X[indHam, ]) + 1) / (sum(X[indHam, ]) + nWords)
   
   # Get relative frequencies
-  NBClass$gammaSpam <- sum(indSpam)
-  NBClass$gammaHam <- sum(indHam)
+  NBClass$gammaSpam <- sum(indSpam) / length(Y)
+  NBClass$gammaHam <- sum(indHam) / length(Y)
   
   return(NBClass)
 }
