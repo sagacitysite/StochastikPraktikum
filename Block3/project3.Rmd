@@ -325,7 +325,8 @@ $$
 \E[\| \hat\rho - \rho \|^2] = \E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \left( \E[\hat\rho] - \rho \right)^T \left( \E[\hat\rho] - \rho \right) + \tr \left( \Var(\hat\rho) \right) = \text{Bias}(\hat\rho) + \text{Varianz}(\hat\rho)
 $$
 
-Die Bias-Varianz-Zerlegung lässt sich leicht zeigen indem mit einem $\E[\hat\rho]$ erweitert wird, d.h. $\E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \E[(\hat\rho - \E[\hat\rho] + \E[\hat\rho] - \rho)^T (\hat\rho - \E[\hat\rho] + \E[\hat\rho] - \rho)]$. Durch Ausmultiplikation folgt das Resultat.
+Die Bias-Varianz-Zerlegung lässt sich leicht zeigen indem mit einem $\E[\hat\rho]$ erweitert wird, d.h.  
+$\E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \E[(\hat\rho - \E[\hat\rho] + \E[\hat\rho] - \rho)^T (\hat\rho - \E[\hat\rho] + \E[\hat\rho] - \rho)]$. Durch Ausmultiplikation folgt das Resultat.
 
 Für den Kleinste-Quadrate-Schätzer $\hat\beta = (X^T X)^{-1} X^T Y$ ergibt sich damit:
 
