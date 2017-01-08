@@ -14,6 +14,8 @@ header-includes:
   - \usepackage{subfig}
   - \usepackage{theoremref}
   - \newtheorem{satz}{Satz}
+  - \newcommand{\E}{\mathbb{E}}
+  - \newcommand{\Var}{\text{Var}}
 output: 
   pdf_document:
     latex_engine: pdflatex
@@ -26,6 +28,7 @@ output:
 # Load libraries
 library('Matrix')
 library('wordcloud')
+library('glmnet')
 ```
 
 # SPAM vs. HAM: Naive Bayes
@@ -199,8 +202,189 @@ Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von
 # Discussion on model generalization and overfitting.
 ```
 
+```{r Raw Features (Bonus)}
+# TODO: Extract the original emails from rawFeatures.zip
+# Create the features in 1) and 5a) by hand
+
+# Get the fileslists
+hamTestDir = './data/rawFeatures/ham-test/'
+hamTrainDir = './data/rawFeatures/ham-train/'
+spamTestDir = './data/rawFeatures/spam-test/'
+spamTrainDir = './data/rawFeatures/spam-train/'
+hamTestFiles <- list.files(path = hamTestDir)
+hamTrainFiles <- list.files(path = hamTrainDir)
+spamTestFiles <- list.files(path = spamTestDir)
+spamTrainFiles <- list.files(path = spamTrainDir)
+
+# Get paths to individual files
+hamTestFilesPath <- paste(hamTestDir, hamTestFiles, sep='')
+hamTrainFilesPath <- paste(hamTrainDir, hamTrainFiles, sep='')
+spamTestFilesPath <- paste(spamTestDir, spamTestFiles, sep='')
+spamTrainFilesPath <- paste(spamTrainDir, spamTrainFiles, sep='')
+
+fnReadStuff <- function(args) {
+# function to read the raw data
+# turn off warnings bc/ trailing whitespace leads to NA value and a warning in read.table
+options(warn=-1)
+# do stuff
+#read.table(hamTestFilesPath, sep=' ')
+options(warn=0)
+}
+```
 
 # SPAM vs. HAM: Lineare Regression & Lasso
+
+## Kleinste-Quadrate-Schätzer und Ridge-Regression-Schätzer
+
+### a) Explizite Bestimmung des Ridge-Regression-Schätzers
+
+Wir nehmen ein lineare Modell $Y = X\beta + \epsilon$ an, wobei $\epsilon \sim N(0,\sigma^2 I_n)$. Zunächst betrachten wir den Kleinste-Quadrate-Schätzer $\hat\beta$ und formulieren seine explizite Darstellung (siehe Folien):
+
+$$
+\hat\beta = \argmin_{b\in \mathbb{R}^p} \|Y-Xb\|^2 = (X^T X)^{-1} X^T Y
+$$
+
+Der Ridge-Regression-Schätzer, ist mit der $l^2$-Norm wie folgt definiert, wobei wir den zu minimierenden Ausdruck mit $Q$ bezechnen:
+
+$$
+\hat\beta^{RR} = \argmin_{b\in \mathbb{R}^p}  Q = \argmin_{b\in \mathbb{R}^p} \left( \|Y-Xb\|^2 + \lambda \|b\|^2_{l^2} \right)
+$$
+
+Durch Umstellung erhalten wir:
+
+\begin{align*}
+Q &= \|Y-Xb\|^2 + \lambda \|b\|^2_{l^2}\\
+&= (Y-Xb)^T (Y-Xb) + \lambda b^T b\\
+&= (Y^T-b^T X^T) (Y-Xb) + \lambda b^T b\\
+&= Y^T Y - b^T X^T Y - Y^T X b + b^T X^T X b + \lambda b^T b\\
+&= Y^T Y - 2 b^T X^T Y  + b^T X^T X b + \lambda b^T b
+\end{align*}
+
+Durch Ableitung erhalten wir den Ridge-Regression-Schätzer:
+
+\begin{align*}
+\frac{\partial Q}{\partial b} &= -2 X^T Y + 2 X^T X b + 2 \lambda b \overset{!}{=} 0\\
+&\Leftrightarrow\; X^T Y = (X^T X + \lambda I_p) b\\
+&\Leftrightarrow\; \hat\beta^{RR} = (X^T X + \lambda I_p)^{-1} X^T Y \\
+\end{align*}
+
+### b) Erwartungswert und Varianz
+
+Wir beginnen mit dem Erwartungswert des Kleinste-Quadrate-Schätzers $\hat\beta$. Mit der Linearität des Erwartungswertes, sowie $\E[\epsilon] = 0$ aus der Annahme, gilt:
+
+\begin{align*}
+\E[\hat\beta] &= \E[(X^T X)^{-1} X^T Y]\\
+&= (X^T X)^{-1} X^T \E[X \beta + \epsilon]\\
+&= (X^T X)^{-1} X^T X \beta + (X^T X)^{-1} X^T \E[\epsilon] = \beta
+\end{align*}
+
+Bei der Bestimmung der Varianz von $\hat\beta$ nutzen wir erneut, dass der Ewartungswert der Fehler Null ist. Mit dem Verschiebungssatz gilt daher $\Var(\epsilon) = \E[\epsilon \epsilon^T] = \sigma^2 I_p$. Für die Varianz des Schätzers gilt:
+
+\begin{align*}
+\Var(\hat\beta) &= \E[(\hat\beta - \beta)(\hat\beta - \beta)^T]\\
+&= \E\left[ \left( (X^T X)^{-1} X^T Y - \beta \right) \left( (X^T X)^{-1} X^T Y - \beta \right)^T \right]\\
+&= \E\left[ \left( (X^T X)^{-1} X^T (X\beta + \epsilon) - \beta \right) \left( (X^T X)^{-1} X^T (X\beta + \epsilon) - \beta \right)^T \right]\\
+&= \E\left[ \left( \beta + (X^T X)^{-1} X^T \epsilon - \beta \right) \left( \beta + (X^T X)^{-1} X^T \epsilon - \beta \right)^T \right]\\
+&= \E\left[(X^T X)^{-1} X^T \epsilon \epsilon^T X (X^T X)^{-1} \right]\\
+&= (X^T X)^{-1} X^T \E[\epsilon \epsilon^T] X (X^T X)^{-1}\\
+&= (X^T X)^{-1} X^T \Var(\epsilon) X (X^T X)^{-1}\\
+&= (X^T X)^{-1} X^T \sigma^2 I_n X (X^T X)^{-1}\\
+&= \sigma^2 (X^T X)^{-1} X^T X (X^T X)^{-1}\\
+&= \sigma^2 (X^T X)^{-1}\\
+\end{align*}
+
+Der Erwartungswert des Ridge-Resgression-Schäzers $\hat\beta^{RR}$ folgt analog zum obigen Vorgehen:
+
+\begin{align*}
+\E[\hat\beta^{RR}] &= \E[(X^T X + \lambda I_p)^{-1} X^T Y]\\
+&= (X^T X + \lambda I_p)^{-1} X^T \E[X \beta + \epsilon]\\
+&= (X^T X + \lambda I_p)^{-1} X^T X \beta + (X^T X + \lambda I_p)^{-1} X^T \E[\epsilon]\\
+&= (X^T X + \lambda I_p)^{-1} X^T X \beta
+\end{align*}
+
+Für $\lambda \to 0$ gilt $\E[\hat\beta] = \E[\hat\beta^{RR}] = \beta$. Der Ridge-Regression-Schätzer entspricht dann dem Kleinste-Quadrate-Schätzer und wird entsprechend erwartungstreu. Für $\lambda \to \infty$ steigt der Bias des Ridge-Regression-Schätzers mit steigendem $\lambda$.
+
+Die Varianz wird ebenfalls analog bestimmt:
+
+\begin{align*}
+\Var(\hat\beta^{RR}) &= \E[(\hat\beta^{RR} - \E[\hat\beta^{RR}])(\hat\beta^{RR} - \E[\hat\beta^{RR}])^T]\\
+&= \E\left[ \left( (X^T X + \lambda I_p)^{-1} X^T Y - (X^T X + \lambda I_p)^{-1} X^T X \beta \right) \left( (X^T X + \lambda I_p)^{-1} X^T Y - (X^T X + \lambda I_p)^{-1} X^T X \beta \right)^T \right]\\
+&= \E\left[ \left( (X^T X + \lambda I_p)^{-1} X^T \epsilon \right) \left( (X^T X + \lambda I_p)^{-1} X^T \epsilon \right)^T \right]\\
+&= (X^T X + \lambda I_p)^{-1} X^T \E[\epsilon \epsilon^T] X (X^T X + \lambda I_p)^{-1}\\
+&= \sigma^2 (X^T X + \lambda I_p)^{-1} X^T X (X^T X + \lambda I_p)^{-1}
+\end{align*}
+
+Auch hier gilt für $\lambda \to 0$, dass $\Var[\hat\beta] = \Var[\hat\beta^{RR}] = \sigma^2 (X^T X)^{-1}$. Für $\lambda \to \infty$ wird die Varianz des Ridge-Regression-Schätzers mit zunehmendem $\lambda$ immer kleiner.
+
+### c) Mittlerer quadratischer Fehler
+
+Der mittlere quadratische Fehler eines Schätzers $\hat\rho$ für den Parameter $\rho$ kann mittels Bias-Varianz-Zerlegung wie folgt formuliert werden:
+
+$$
+\E[\| \hat\rho - \rho \|^2] = \E[(\hat\rho - \rho)^T (\hat\rho - \rho)] = \left( \E[\hat\rho] - \rho \right)^2 + \Var(\hat\rho) = \text{Bias}(\hat\rho) + \text{Varianz}(\hat\rho)
+$$
+
+Für den Kleinste-Quadrate-Schätzer $\hat\beta = (X^T X)^{-1} X^T Y$ ergibt sich damit:
+
+$$
+\E[\| \hat\beta - \beta \|^2] = (\beta - \beta)^2 + \Var(\hat\beta) = \sigma^2 (X^T X)^{-1}
+$$
+
+Deutlich wird, dass der Schätzer keinen Bias aufweist, d.h. $\text{Bias}(\hat\beta) = 0$.
+
+Für den Ridge-Resgression-Schätzer $\hat\beta^{RR} = (X^T X + \lambda I_p)^{-1} X^T Y$ gilt: 
+
+$$
+\E[\| \hat\beta^{RR} - \beta \|^2] = \left[ (X^T X + \lambda I_p)^{-1} X^T X \beta - \beta \right]^2 + \sigma^2 (X^T X + \lambda I_p)^{-1} X^T X (X^T X + \lambda I_p)^{-1}
+$$
+
+Der Ridge-Regression-Schätzer besitzt für $\lambda \ne 0$ einen Bias. Gleichzeitig wird die Varianz im Vergleich zum Kleinste-Quadrate-Schätzer kleiner. Damit "erkauft" man sich bei der Ridge-Regression eine geringere Varianz, der Preis dafür ist jedoch eine Verzerrung der Schätzung. Für ein gut gewähltes $\lambda$ kann dieser "Deal" vorteilhaft sein, z.B. wenn die Varianz des Kleinste-Quadrate-Schätzers so groß ist, dass keine vernünftige Aussage getroffen werden kann.
+
+## Klassifikation mittels Lasso-Schätzer
+
+```{r Lasso}
+fnLRPredict <- function(X, Y, XTest) {
+  # This function predicts the labels for the test set using Lasso regression
+  # 
+  # Args:
+  #   X: Matrix of training features
+  #   Y: Vector of training labels
+  #   XTest: Vector of test features
+  #   
+  # Returns:
+  #   Vector of predicted labels from test features
+  
+  # fit spam data via lasso regularization and use binomial function
+  fitGlm <- glmnet(X, Y, family = "binomial")
+  
+  # do cross validation to find optimal lambda
+  cv <- cv.glmnet(X, Y)
+  
+  # predict test data
+  YPred <- predict(fitGlm, XTest, type="response", s=cv$lambda.min)
+  
+  # classify test data
+  YPred[YPred >= 0.5] <- 1
+  YPred[YPred < 0.5] <- 0
+  
+  return(YPred)
+}
+
+YPred <- fnLRPredict(XTrain, YTrain[[1]], XTest)
+
+# error rate (compare predicted labels with true labels)
+sum(YPred != YTest)/length(YTest[[1]])
+```
+
+# PCA & Eigenfaces
+
+## Aufgaben
+
+```{r PCA}
+# TODO: ...
+#
+#
+```
 
 
 <!--Footnotes-->
