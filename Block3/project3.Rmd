@@ -188,6 +188,31 @@ Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von
 ```{r Raw Features (Bonus)}
 # TODO: Extract the original emails from rawFeatures.zip
 # Create the features in 1) and 5a) by hand
+
+# Get the fileslists
+hamTestDir = './data/rawFeatures/ham-test/'
+hamTrainDir = './data/rawFeatures/ham-train/'
+spamTestDir = './data/rawFeatures/spam-test/'
+spamTrainDir = './data/rawFeatures/spam-train/'
+hamTestFiles <- list.files(path = hamTestDir)
+hamTrainFiles <- list.files(path = hamTrainDir)
+spamTestFiles <- list.files(path = spamTestDir)
+spamTrainFiles <- list.files(path = spamTrainDir)
+
+# Get paths to individual files
+hamTestFilesPath <- paste(hamTestDir, hamTestFiles, sep='')
+hamTrainFilesPath <- paste(hamTrainDir, hamTrainFiles, sep='')
+spamTestFilesPath <- paste(spamTestDir, spamTestFiles, sep='')
+spamTrainFilesPath <- paste(spamTrainDir, spamTrainFiles, sep='')
+
+fnReadStuff <- function(args) {
+# function to read the raw data
+# turn off warnings bc/ trailing whitespace leads to NA value and a warning in read.table
+options(warn=-1)
+# do stuff
+#read.table(hamTestFilesPath, sep=' ')
+options(warn=0)
+}
 ```
 
 # SPAM vs. HAM: Lineare Regression & Lasso
