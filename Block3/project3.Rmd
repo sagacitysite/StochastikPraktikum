@@ -136,13 +136,13 @@ Insgesamt gibt es lediglich `r nErr1` falsche Klassifikationen, was einer Fehler
 
 Schauen wir uns an, welche Wörter besonders gute Indikatoren für SPAM oder HAM sind. Dazu betrachten wir jeweils die 25 Wörter mit den größten $\Phi_{i|1}$ bzw.\ $\Phi_{i|0}$:
 
-```{r Indicators, fig.cap = "Wordclouds for SPAM (left) and HAM (right) indicators."}
+```{r Indicators 1, fig.cap = "Wordclouds for SPAM (left) and HAM (right) indicators."}
 par(mfrow = c(1,2))
 
 # Plot SPAM indicators
 wordcloud(dict$word[rank(-NBClass1$phiSpam) <= 50], 
           NBClass1$phiSpam[rank(-NBClass1$phiSpam) <= 50],
-          scale = c(2.5, 0.2), main = "SPAM indicators")
+          scale = c(2.5, 0.2))
 
 # Plot HAM indicators
 wordcloud(dict$word[rank(-NBClass1$phiHam) <= 50], 
@@ -167,6 +167,23 @@ predTest2 <- fnNBPredict(XTest[, indMeaningful], NBClass2)
 
 # New classification error
 nErr2 <- sum(YTest[[1]] != predTest2)
+```
+
+```{r Indicators 2, fig.cap = "Wordclouds for SPAM (left) and HAM (right) indicators after removal of meaningless words."}
+wordsMeaningful <- dict$word[indMeaningful]
+
+# New word clouds
+par(mfrow = c(1,2))
+
+# Plot SPAM indicators
+wordcloud(wordsMeaningful[rank(-NBClass2$phiSpam) <= 50], 
+          NBClass2$phiSpam[rank(-NBClass2$phiSpam) <= 50], 
+          scale = c(2.5, 0.2))
+
+# Plot HAM indicators
+wordcloud(wordsMeaningful[rank(-NBClass2$phiHam) <= 50], 
+          NBClass2$phiHam[rank(-NBClass2$phiHam) <= 50],
+          scale = c(2.5, 0.2))
 ```
 
 Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von `r nErr1` auf `r nErr2` halbiert.
