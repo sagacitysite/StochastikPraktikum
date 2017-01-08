@@ -400,15 +400,4 @@ Während es bei dem Naive Bayes Ansatz zu `r nErr1` Fehlern kam, kommt es bei La
   * Beim Regression-Ansatz erfolgt durch die Verwendung des verallgemeinerten linearen Modells eine Prädiktion der Wahrscheinlichkeit für eine Klasse, es werden nicht die Klassen direkt geschätzt. Dieser Aspekt ermöglicht die Wahl einer gut interpretierbaren Threshold. Beispielsweise könnte definiert werden, dass nur solche E-Mails als Spam klassifiziert werden, die mit 80 prozentiger Sicherheit auch tatsächlich Spam sind. Beim Bayes-Ansatz lässt sich ähnliches durch einen Koeffizienten beim Vergleich der Posteriors erreichen, dieser lässt sich jedoch nicht so anschaulich interpretieren, wie es bei der Lasso-Regression der Fall ist.
   * Beim Bayes-Ansatz ist es durch die Verwendung eines Priors möglich die Ergebnisse optimieren zu können, was beim Regressions-Ansatz nicht möglich ist.
 
-# PCA & Eigenfaces
-
-## Aufgaben
-
-```{r PCA}
-# TODO: ...
-#
-#
-```
-
-
 <!--Footnotes-->
