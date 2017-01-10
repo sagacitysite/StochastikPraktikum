@@ -192,16 +192,90 @@ wordcloud(wordsMeaningful[rank(-NBClass2$phiHam) <= 50],
 
 Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von `r nErr1` auf `r nErr2` halbiert.
 
+## Additional Features
+
+Auch abseits der Wahrscheinlichkeit der Wordcloud zu einer SPAM vs. HAM -Mail zu gehören kann es interessante Features geben, die dabei helfen beide Klassen von einander zu unterscheiden. Nicht betrachtet wurden bisher "Metadaten", wie die Anzahl der Wörter in einer E-Mail, die Art der E-Mail-Adresse des Absenders (enthält sie zum Beispiel viele Zahlen?) oder der Sende- und Empfangszeitpunkt.
+
+
 ```{r Additional features}
 # TODO: Implementation of additional features (e.g. number of words in doc)
 # Maybe hints on: https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering
 ```
 
-```{r Cross Validation}
+Diskussion von "Additional Features"
+
+
+## Cross Validation
+
+### k-fold Cross Validation
+
+Eine der wichtigsten Eigenschaften eines mathematischen Modells ist seine Generalisierbarkeit. In unserem Falle also die Fähigkeit des SPAM-HAM-Klassifzierers neue Emails zuverlässig in SPAM und HAM zu ordnen.
+
+Für die Überprüfung dieser Eigenschaft gibt es verschiedene Verfahren, von denen die k-fold Cross-Validation eines der bekanntesten darstellt.
+
+Bei diesem Verfahren wird der gesamte Datensatz in k gleichgroße Partitionen, sogenannte *folds* geteilt. Im Anschluss wird k-mal ein Classifier trainiert, und für jeden Durchgang i=1..k wird jeweils die i-te fold als Test-/Validierungsset zurückgehalten.
+Gegenüber dem einfachen Verfahren hat die k-fold Cross-Validation vor allem zwei Vorteile:
+1. Es werden alle Daten zum Trainieren verwendet.
+2. Man erhält k verschiedene Classifier anstatt einem einzigen, und kann so ebenfalls Aussagen über das Modell (average fit, Generalisierbarkeit) treffen.
+
+```{r k-fold Cross Validation}
+set.seed(467)
+# lump dataset
+XData = rbind(XTrain, XTest)
+YData = rbind(YTrain, YTest)
+  
+fnCrossValidation <- function(nFolds, X, Y) {
+  
+  
+  nDataPoints <- dim(XData)[1]
+  
+  splitInd <- sample(seq(nDataPoints), round(nDataPoints/nFolds))
+  XDataTrain <- XData[-splitInd, ]
+  YDataTrain <- YData[-splitInd, ]
+  XDataTest <- XData[splitInd, ]
+  YDataTest <- YData[splitInd, ]
+  
+  nErrors <- vector('double', nFolds)
+  
+  for (k in nFolds) {
+    
+    NBClass2 <- fnNBTrain(XDataTrain, YDataTrain[[1]])
+    # Predict test labels
+    prediction <- fnNBPredict(XDataTest, NBClass2)
+    # Number of errors
+    nErrorRate[k] <- sum(YDataTest[[1]] != prediction)/sum(YDataTest[[1]])
+  }
+  
+  return(nErrorRate)
+}
+
+nCrossValErrors <- fnCrossValidation(6, XData, YData)
+# TODO: Implementation of m-fold cross validation
+# Maybe plots for train/test error in dependence of training set size.
+# Discussion on model generalization and overfitting.
+#1: Combine data, 2. split data, 3. train k times, 4. get average accuracy, 5. report 
+
+```
+
+Auswertung von `r nCrossValErrors`
+
+### Utility of data
+
+Eine weitere Frage ist, wie sehr sich das Modell durch die Hinzunahme weiterer Trainingsdaten verbessert. Für diesen Fall führen wir wieder k-fold cross validation durch, erlauben dem Bayes-Classifier jedoch nur {10%..100%} des Trainingsset zu nutzen.
+So lässt sich die Nützlichkeit zusätzlicher Daten abschätzen, solange man annehmen kann dass die Trainingsdaten repräsentativ für zukünftige Daten sind. Diese Annahme ist jedoch **sehr** stark und sollte nur, wenn überhaupt, nach eingehender Beschäftigung mit dem gestellten Problem gemacht werden.
+
+```{r Utility of Data}
+nPercentage <- seq(1,10)
+
+fnKfoldUtility
 # TODO: Implementation of m-fold cross validation
 # Maybe plots for train/test error in dependence of training set size.
 # Discussion on model generalization and overfitting.
 ```
+
+## Feature Extraction
+
+Eine der aufwendigsten Aufgaben im Machine Learning ist die Extraktion aussagekräftiger Features aus Rohdaten. Bis die Daten algorithmisch verwertbar vorliegen, ist viel Arbeit vonnöten. Zur Illustrierung generieren wir die Features für dein Bayes-Classifier aus den bereits etwas vorverarbeiteten Rohdaten:
 
 ```{r Raw Features (Bonus)}
 # TODO: Extract the original emails from rawFeatures.zip
@@ -223,13 +297,19 @@ hamTrainFilesPath <- paste(hamTrainDir, hamTrainFiles, sep='')
 spamTestFilesPath <- paste(spamTestDir, spamTestFiles, sep='')
 spamTrainFilesPath <- paste(spamTrainDir, spamTrainFiles, sep='')
 
-fnReadStuff <- function(args) {
-# function to read the raw data
-# turn off warnings bc/ trailing whitespace leads to NA value and a warning in read.table
-options(warn=-1)
-# do stuff
-#read.table(hamTestFilesPath, sep=' ')
-options(warn=0)
+fnReadFiles <- function(filesList) {
+  # function to read the raw data
+  # turn off warnings bc/ trailing whitespace leads to NA value and a warning in read.table
+  options(warn=-1)
+  # do stuff
+  datatable <- read.table(filesList, sep=' ')
+  options(warn=0)
+  return(datatable)
+}
+
+fnBuildDictionary <- function(foo, nWords) {
+  #Build the dictionary with the nWords most common words
+  
 }
 ```
 
@@ -237,9 +317,9 @@ options(warn=0)
 
 ## Kleinste-Quadrate-Schätzer und Ridge-Regression-Schätzer
 
-### a) Explizite Bestimmung des Ridge-Regression-Schätzers
+**a) Explizite Bestimmung des Ridge-Regression-Schätzers**
 
-Wir nehmen ein lineare Modell $Y = X\beta + \epsilon$ an, wobei $\epsilon \sim N(0,\sigma^2 I_n)$. Zunächst betrachten wir den Kleinste-Quadrate-Schätzer $\hat\beta$ und formulieren seine explizite Darstellung (siehe Folien):
+Wir nehmen ein lineares Modell $Y = X\beta + \varepsilon$ an, wobei $\varepsilon_1, \ldots, \varepsilon_n$ unabhängig und identisch verteilt mit $\E[\varepsilon_1] = 0$ und $\Var(\varepsilon_1) = \sigma^2$ seien. Zunächst betrachten wir den Kleinste-Quadrate-Schätzer $\hat\beta$ und formulieren seine explizite Darstellung (siehe Folien):
 
 $$
 \hat\beta = \argmin_{b\in \mathbb{R}^p} \|Y-Xb\|^2 = (X^T X)^{-1} X^T Y
@@ -269,26 +349,26 @@ Durch Ableitung erhalten wir den Ridge-Regression-Schätzer:
 &\Leftrightarrow\; \hat\beta^{RR} = (X^T X + \lambda I_p)^{-1} X^T Y \\
 \end{align*}
 
-### b) Erwartungswert und Varianz
+**b) Erwartungswert und Varianz**
 
-Wir beginnen mit dem Erwartungswert des Kleinste-Quadrate-Schätzers $\hat\beta$. Mit der Linearität des Erwartungswertes, sowie $\E[\epsilon] = 0$ aus der Annahme, gilt:
+Wir beginnen mit dem Erwartungswert des Kleinste-Quadrate-Schätzers $\hat\beta$. Mit der Linearität des Erwartungswertes, sowie $\E[\varepsilon] = 0$ aus der Annahme, gilt:
 
 \begin{align*}
 \E[\hat\beta] &= \E[(X^T X)^{-1} X^T Y]\\
-&= (X^T X)^{-1} X^T \E[X \beta + \epsilon]\\
-&= (X^T X)^{-1} X^T X \beta + (X^T X)^{-1} X^T \E[\epsilon] = \beta
+&= (X^T X)^{-1} X^T \E[X \beta + \varepsilon]\\
+&= (X^T X)^{-1} X^T X \beta + (X^T X)^{-1} X^T \E[\varepsilon] = \beta
 \end{align*}
 
-Bei der Bestimmung der Varianz von $\hat\beta$ nutzen wir erneut, dass der Ewartungswert der Fehler Null ist. Mit dem Verschiebungssatz gilt daher $\Var(\epsilon) = \E[\epsilon \epsilon^T] = \sigma^2 I_p$. Für die Varianz des Schätzers gilt:
+Bei der Bestimmung der Varianz von $\hat\beta$ nutzen wir erneut, dass der Ewartungswert der Fehler Null ist. Mit dem Verschiebungssatz gilt daher $\Var(\varepsilon) = \E[\varepsilon \varepsilon^T] = \sigma^2 I_n$. Für die Varianz des Schätzers gilt:
 
 \begin{align*}
 \Var(\hat\beta) &= \E[(\hat\beta - \beta)(\hat\beta - \beta)^T]\\
 &= \E\left[ \left( (X^T X)^{-1} X^T Y - \beta \right) \left( (X^T X)^{-1} X^T Y - \beta \right)^T \right]\\
-&= \E\left[ \left( (X^T X)^{-1} X^T (X\beta + \epsilon) - \beta \right) \left( (X^T X)^{-1} X^T (X\beta + \epsilon) - \beta \right)^T \right]\\
-&= \E\left[ \left( \beta + (X^T X)^{-1} X^T \epsilon - \beta \right) \left( \beta + (X^T X)^{-1} X^T \epsilon - \beta \right)^T \right]\\
-&= \E\left[(X^T X)^{-1} X^T \epsilon \epsilon^T X (X^T X)^{-1} \right]\\
-&= (X^T X)^{-1} X^T \E[\epsilon \epsilon^T] X (X^T X)^{-1}\\
-&= (X^T X)^{-1} X^T \Var(\epsilon) X (X^T X)^{-1}\\
+&= \E\left[ \left( (X^T X)^{-1} X^T (X\beta + \varepsilon) - \beta \right) \left( (X^T X)^{-1} X^T (X\beta + \varepsilon) - \beta \right)^T \right]\\
+&= \E\left[ \left( \beta + (X^T X)^{-1} X^T \varepsilon - \beta \right) \left( \beta + (X^T X)^{-1} X^T \varepsilon - \beta \right)^T \right]\\
+&= \E\left[(X^T X)^{-1} X^T \varepsilon \varepsilon^T X (X^T X)^{-1} \right]\\
+&= (X^T X)^{-1} X^T \E[\varepsilon \varepsilon^T] X (X^T X)^{-1}\\
+&= (X^T X)^{-1} X^T \Var(\varepsilon) X (X^T X)^{-1}\\
 &= (X^T X)^{-1} X^T \sigma^2 I_n X (X^T X)^{-1}\\
 &= \sigma^2 (X^T X)^{-1} X^T X (X^T X)^{-1}\\
 &= \sigma^2 (X^T X)^{-1}\\
@@ -298,8 +378,8 @@ Der Erwartungswert des Ridge-Resgression-Schäzers $\hat\beta^{RR}$ folgt analog
 
 \begin{align*}
 \E[\hat\beta^{RR}] &= \E[(X^T X + \lambda I_p)^{-1} X^T Y]\\
-&= (X^T X + \lambda I_p)^{-1} X^T \E[X \beta + \epsilon]\\
-&= (X^T X + \lambda I_p)^{-1} X^T X \beta + (X^T X + \lambda I_p)^{-1} X^T \E[\epsilon]\\
+&= (X^T X + \lambda I_p)^{-1} X^T \E[X \beta + \varepsilon]\\
+&= (X^T X + \lambda I_p)^{-1} X^T X \beta + (X^T X + \lambda I_p)^{-1} X^T \E[\varepsilon]\\
 &= (X^T X + \lambda I_p)^{-1} X^T X \beta
 \end{align*}
 
@@ -310,14 +390,14 @@ Die Varianz wird ebenfalls analog bestimmt:
 \begin{align*}
 \Var(\hat\beta^{RR}) &= \E[(\hat\beta^{RR} - \E[\hat\beta^{RR}])(\hat\beta^{RR} - \E[\hat\beta^{RR}])^T]\\
 &= \E\left[ \left( (X^T X + \lambda I_p)^{-1} X^T Y - (X^T X + \lambda I_p)^{-1} X^T X \beta \right) \left( (X^T X + \lambda I_p)^{-1} X^T Y - (X^T X + \lambda I_p)^{-1} X^T X \beta \right)^T \right]\\
-&= \E\left[ \left( (X^T X + \lambda I_p)^{-1} X^T \epsilon \right) \left( (X^T X + \lambda I_p)^{-1} X^T \epsilon \right)^T \right]\\
-&= (X^T X + \lambda I_p)^{-1} X^T \E[\epsilon \epsilon^T] X (X^T X + \lambda I_p)^{-1}\\
+&= \E\left[ \left( (X^T X + \lambda I_p)^{-1} X^T \varepsilon \right) \left( (X^T X + \lambda I_p)^{-1} X^T \varepsilon \right)^T \right]\\
+&= (X^T X + \lambda I_p)^{-1} X^T \E[\varepsilon \varepsilon^T] X (X^T X + \lambda I_p)^{-1}\\
 &= \sigma^2 (X^T X + \lambda I_p)^{-1} X^T X (X^T X + \lambda I_p)^{-1}
 \end{align*}
 
 Auch hier gilt für $\lambda \to 0$, dass $\Var[\hat\beta] = \Var[\hat\beta^{RR}] = \sigma^2 (X^T X)^{-1}$. Für $\lambda \to \infty$ wird die Varianz des Ridge-Regression-Schätzers mit zunehmendem $\lambda$ immer kleiner.
 
-### c) Mittlerer quadratischer Fehler
+**c) Mittlerer quadratischer Fehler**
 
 Der mittlere quadratische Fehler eines Schätzers $\hat\rho$ für den Parameter $\rho$ kann mittels Bias-Varianz-Zerlegung wie folgt formuliert werden:
 
@@ -336,7 +416,7 @@ $$
 
 Deutlich wird, dass der Schätzer keinen Bias aufweist, d.h. $\text{Bias}(\hat\beta) = 0$.
 
-Für den Ridge-Resgression-Schätzer $\hat\beta^{RR} = (X^T X + \lambda I_p)^{-1} X^T Y$ gilt: 
+Für den Ridge-Regression-Schätzer $\hat\beta^{RR} = (X^T X + \lambda I_p)^{-1} X^T Y$ gilt: 
 
 \begin{align*}
 \E[\| \hat\beta^{RR} - \beta \|^2] = &\left( (X^T X + \lambda I_p)^{-1} X^T X \beta - \beta \right)^T \left( (X^T X + \lambda I_p)^{-1} X^T X \beta - \beta \right)\\
@@ -349,7 +429,7 @@ Deutlich wird das im orthogonalen Fall, wenn $X^T X = I_p$. Dann gilt für $\hat
 
 ## Klassifikation mittels Lasso-Schätzer
 
-### a) Implementierung des Klassifizierers
+**a) Implementierung des Klassifizierers**
 
 ```{r Lasso}
 fnRPredict <- function(X, Y, XTest, ...) {
@@ -385,32 +465,21 @@ YPredLR <- fnRPredict(XTrain, YTrain[[1]], XTest, alpha = 1)
 # Number of errors
 nErrLR <- sum(YPredLR != YTest)
 
-## Lasso Regression
+## Ridge Regression
 YPredRR <- fnRPredict(XTrain, YTrain[[1]], XTest, alpha = 0)
 
 # Number of errors
 nErrRR <- sum(YPredRR != YTest)
 ```
 
-Die Funktion `glmnet` ermöglicht es über den Parameter `alpha` eine Gewichtung zwischen $l^1$-Norm und $l^2$-Norm, also zwischen Lasso- und Ridge-Resgression, vorzunehmen. Im Extremfall kann damit eine pure Lasso- bzw. Ridge-Regression gerechent werden. Beide Fälle wurden durchgeführt. Im Fall der Lasso Regression erhalten wir `r nErrLR` falsche Predictions, bei einer Fehlerrate von `r round((nErrLR / length(YTest[[1]])) * 100, 2)`%. Im Fall der Ridge Regression kommt es zu `r nErrRR` falschen Predictions, was einer Fehlerrate von `r round((nErrRR / length(YTest[[1]])) * 100, 2)`% entspricht.
+Die Funktion `glmnet` ermöglicht es über den Parameter `alpha` eine Gewichtung zwischen $l^1$-Norm und $l^2$-Norm, also zwischen Lasso- und Ridge-Resgression, vorzunehmen. Im Extremfall kann damit eine pure Lasso- bzw.\ Ridge-Regression gerechent werden. Beide Fälle wurden durchgeführt. Im Fall der Lasso Regression erhalten wir `r nErrLR` falsche Predictions, bei einer Fehlerrate von `r round((nErrLR / length(YTest[[1]])) * 100, 2)`%. Im Fall der Ridge Regression kommt es zu `r nErrRR` falschen Predictions, was einer Fehlerrate von `r round((nErrRR / length(YTest[[1]])) * 100, 2)`% entspricht.
 
-### b) Vergleich der Hauptergebnisse
+**b) Vergleich der Hauptergebnisse**
 
 Während es bei dem Naive Bayes Ansatz zu `r nErr1` Fehlern kam, kommt es bei Lasso zu `r nErrLR` Fehlern. Die Fehlerrate ist also etwas höher bei Lasso, aber immer noch recht niedrig. Zum Vergleich der Methoden, sollen einige Aspekte angesprochen werden:
 
   * Bei Lasso Regression lässt sich die Modellierung zusätzlicher Features deutlich leichter gestalten als beim Bayes-Ansatz. Hier müssen lediglich weitere Variablen hinzugefügt werden, während im Bayes-Ansatz eine komplziertere Modellierung erfolgen muss.
-  * Beim Regression-Ansatz erfolgt durch die Verwendung des verallgemeinerten linearen Modells eine Prädiktion der Wahrscheinlichkeit für eine Klasse, es werden nicht die Klassen direkt geschätzt. Dieser Aspekt ermöglicht die Wahl einer gut interpretierbaren Threshold. Beispielsweise könnte definiert werden, dass nur solche E-Mails als Spam klassifiziert werden, die mit 80 prozentiger Sicherheit auch tatsächlich Spam sind. Beim Bayes-Ansatz lässt sich ähnliches durch einen Koeffizienten beim Vergleich der Posteriors erreichen, dieser lässt sich jedoch nicht so anschaulich interpretieren, wie es bei der Lasso-Regression der Fall ist.
+  * Beim Regression-Ansatz erfolgt durch die Verwendung des verallgemeinerten linearen Modells eine Prädiktion der Wahrscheinlichkeit für eine Klasse, es werden nicht die Klassen direkt geschätzt. Dieser Aspekt ermöglicht die Wahl einer gut interpretierbaren Threshold. Beispielsweise könnte definiert werden, dass nur solche E-Mails als Spam klassifiziert werden, die mit 80 prozentiger Sicherheit auch Spam sein könnten. Beim Bayes-Ansatz lässt sich ähnliches durch einen Koeffizienten beim Vergleich der Posteriors erreichen, dieser lässt sich jedoch nicht so anschaulich interpretieren, wie es bei der Lasso-Regression der Fall ist.
   * Beim Bayes-Ansatz ist es durch die Verwendung eines Priors möglich die Ergebnisse optimieren zu können, was beim Regressions-Ansatz nicht möglich ist.
-
-# PCA & Eigenfaces
-
-## Aufgaben
-
-```{r PCA}
-# TODO: ...
-#
-#
-```
-
 
 <!--Footnotes-->
