@@ -237,6 +237,7 @@ fnCrossValidation <- function(nFolds, X, Y) {
   
   nErrors <- vector('double', nFolds)
   
+  nErrorRate <- NULL
   for (k in nFolds) {
     
     NBClass2 <- fnNBTrain(XDataTrain, YDataTrain[[1]])
@@ -267,7 +268,6 @@ So lässt sich die Nützlichkeit zusätzlicher Daten abschätzen, solange man an
 ```{r Utility of Data}
 nPercentage <- seq(1,10)
 
-fnKfoldUtility
 # TODO: Implementation of m-fold cross validation
 # Maybe plots for train/test error in dependence of training set size.
 # Discussion on model generalization and overfitting.
@@ -425,7 +425,7 @@ Für den Ridge-Regression-Schätzer $\hat\beta^{RR} = (X^T X + \lambda I_p)^{-1}
 
 Der Ridge-Regression-Schätzer besitzt für $\lambda \ne 0$ einen Bias. Gleichzeitig wird die Varianz im Vergleich zum Kleinste-Quadrate-Schätzer kleiner. Damit "erkauft" man sich bei der Ridge-Regression eine geringere Varianz, der Preis dafür ist jedoch eine Verzerrung der Schätzung. Für ein gut gewähltes $\lambda$ kann dieser "Deal" vorteilhaft sein, z.B. wenn die Varianz des Kleinste-Quadrate-Schätzers so groß ist, dass keine vernünftige Aussage getroffen werden kann.
 
-Deutlich wird das im orthogonalen Fall, wenn $X^T X = I_p$. Dann gilt für $\hat\beta = X^T Y$ und für $\hat\beta^{RR} = \frac{X^T Y}{1 + \lambda} = \frac{\hat\beta}{1 + \lambda}$. Die geschätzten Kleinste-Quadrate Parameter $\hat\beta$ werden für $\lambda > 0$ also immer kleiner sein als die der Ridge-Regression $\hat\beta^{RR}$.
+Deutlich wird das im orthogonalen Fall, wenn $X^T X = I_p$. Dann gilt für $\hat\beta = X^T Y$ und für $\hat\beta^{RR} = \frac{X^T Y}{1 + \lambda} = \frac{\hat\beta}{1 + \lambda}$. Die geschätzten Kleinste-Quadrate Parameter $\hat\beta$ werden für $\lambda > 0$ also immer kleiner sein als die der Ridge-Regression $\hat\beta^{RR}$. Sehr deutlich wird in dem Spezialfall, dass $\hat\beta^{RR}$ verzerrt sein muss und dass es gegen Null tendiert.
 
 ## Klassifikation mittels Lasso-Schätzer
 
