@@ -192,16 +192,90 @@ wordcloud(wordsMeaningful[rank(-NBClass2$phiHam) <= 50],
 
 Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von `r nErr1` auf `r nErr2` halbiert.
 
+## Additional Features
+
+Auch abseits der Wahrscheinlichkeit der Wordcloud zu einer SPAM vs. HAM -Mail zu gehören kann es interessante Features geben, die dabei helfen beide Klassen von einander zu unterscheiden. Nicht betrachtet wurden bisher "Metadaten", wie die Anzahl der Wörter in einer E-Mail, die Art der E-Mail-Adresse des Absenders (enthält sie zum Beispiel viele Zahlen?) oder der Sende- und Empfangszeitpunkt.
+
+
 ```{r Additional features}
 # TODO: Implementation of additional features (e.g. number of words in doc)
 # Maybe hints on: https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering
 ```
 
-```{r Cross Validation}
+Diskussion von "Additional Features"
+
+
+## Cross Validation
+
+### k-fold Cross Validation
+
+Eine der wichtigsten Eigenschaften eines mathematischen Modells ist seine Generalisierbarkeit. In unserem Falle also die Fähigkeit des SPAM-HAM-Klassifzierers neue Emails zuverlässig in SPAM und HAM zu ordnen.
+
+Für die Überprüfung dieser Eigenschaft gibt es verschiedene Verfahren, von denen die k-fold Cross-Validation eines der bekanntesten darstellt.
+
+Bei diesem Verfahren wird der gesamte Datensatz in k gleichgroße Partitionen, sogenannte *folds* geteilt. Im Anschluss wird k-mal ein Classifier trainiert, und für jeden Durchgang i=1..k wird jeweils die i-te fold als Test-/Validierungsset zurückgehalten.
+Gegenüber dem einfachen Verfahren hat die k-fold Cross-Validation vor allem zwei Vorteile:
+1. Es werden alle Daten zum Trainieren verwendet.
+2. Man erhält k verschiedene Classifier anstatt einem einzigen, und kann so ebenfalls Aussagen über das Modell (average fit, Generalisierbarkeit) treffen.
+
+```{r k-fold Cross Validation}
+set.seed(467)
+# lump dataset
+XData = rbind(XTrain, XTest)
+YData = rbind(YTrain, YTest)
+  
+fnCrossValidation <- function(nFolds, X, Y) {
+  
+  
+  nDataPoints <- dim(XData)[1]
+  
+  splitInd <- sample(seq(nDataPoints), round(nDataPoints/nFolds))
+  XDataTrain <- XData[-splitInd, ]
+  YDataTrain <- YData[-splitInd, ]
+  XDataTest <- XData[splitInd, ]
+  YDataTest <- YData[splitInd, ]
+  
+  nErrors <- vector('double', nFolds)
+  
+  for (k in nFolds) {
+    
+    NBClass2 <- fnNBTrain(XDataTrain, YDataTrain[[1]])
+    # Predict test labels
+    prediction <- fnNBPredict(XDataTest, NBClass2)
+    # Number of errors
+    nErrorRate[k] <- sum(YDataTest[[1]] != prediction)/sum(YDataTest[[1]])
+  }
+  
+  return(nErrorRate)
+}
+
+nCrossValErrors <- fnCrossValidation(6, XData, YData)
+# TODO: Implementation of m-fold cross validation
+# Maybe plots for train/test error in dependence of training set size.
+# Discussion on model generalization and overfitting.
+#1: Combine data, 2. split data, 3. train k times, 4. get average accuracy, 5. report 
+
+```
+
+Auswertung von `r nCrossValErrors`
+
+### Utility of data
+
+Eine weitere Frage ist, wie sehr sich das Modell durch die Hinzunahme weiterer Trainingsdaten verbessert. Für diesen Fall führen wir wieder k-fold cross validation durch, erlauben dem Bayes-Classifier jedoch nur {10%..100%} des Trainingsset zu nutzen.
+So lässt sich die Nützlichkeit zusätzlicher Daten abschätzen, solange man annehmen kann dass die Trainingsdaten repräsentativ für zukünftige Daten sind. Diese Annahme ist jedoch **sehr** stark und sollte nur, wenn überhaupt, nach eingehender Beschäftigung mit dem gestellten Problem gemacht werden.
+
+```{r Utility of Data}
+nPercentage <- seq(1,10)
+
+fnKfoldUtility
 # TODO: Implementation of m-fold cross validation
 # Maybe plots for train/test error in dependence of training set size.
 # Discussion on model generalization and overfitting.
 ```
+
+## Feature Extraction
+
+Eine der aufwendigsten Aufgaben im Machine Learning ist die Extraktion aussagekräftiger Features aus Rohdaten. Bis die Daten algorithmisch verwertbar vorliegen, ist viel Arbeit vonnöten. Zur Illustrierung generieren wir die Features für dein Bayes-Classifier aus den bereits etwas vorverarbeiteten Rohdaten:
 
 ```{r Raw Features (Bonus)}
 # TODO: Extract the original emails from rawFeatures.zip
@@ -223,13 +297,19 @@ hamTrainFilesPath <- paste(hamTrainDir, hamTrainFiles, sep='')
 spamTestFilesPath <- paste(spamTestDir, spamTestFiles, sep='')
 spamTrainFilesPath <- paste(spamTrainDir, spamTrainFiles, sep='')
 
-fnReadStuff <- function(args) {
-# function to read the raw data
-# turn off warnings bc/ trailing whitespace leads to NA value and a warning in read.table
-options(warn=-1)
-# do stuff
-#read.table(hamTestFilesPath, sep=' ')
-options(warn=0)
+fnReadFiles <- function(filesList) {
+  # function to read the raw data
+  # turn off warnings bc/ trailing whitespace leads to NA value and a warning in read.table
+  options(warn=-1)
+  # do stuff
+  datatable <- read.table(filesList, sep=' ')
+  options(warn=0)
+  return(datatable)
+}
+
+fnBuildDictionary <- function(foo, nWords) {
+  #Build the dictionary with the nWords most common words
+  
 }
 ```
 
