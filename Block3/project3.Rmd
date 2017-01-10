@@ -192,73 +192,70 @@ wordcloud(wordsMeaningful[rank(-NBClass2$phiHam) <= 50],
 
 Durch die Entfernung bedeutungsloser Wörtern hat sich die Anzahl der Fehler von `r nErr1` auf `r nErr2` halbiert.
 
-## Additional Features
+## Additional Features (unfinished)
 
 Auch abseits der Wahrscheinlichkeit der Wordcloud zu einer SPAM vs. HAM -Mail zu gehören kann es interessante Features geben, die dabei helfen beide Klassen von einander zu unterscheiden. Nicht betrachtet wurden bisher "Metadaten", wie die Anzahl der Wörter in einer E-Mail, die Art der E-Mail-Adresse des Absenders (enthält sie zum Beispiel viele Zahlen?) oder der Sende- und Empfangszeitpunkt.
 
-
-```{r Additional features}
-# TODO: Implementation of additional features (e.g. number of words in doc)
-# Maybe hints on: https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering
-```
-
-Diskussion von "Additional Features"
-
-
 ## Cross Validation
 
-### k-fold Cross Validation
+### m-fold Cross Validation
 
 Eine der wichtigsten Eigenschaften eines mathematischen Modells ist seine Generalisierbarkeit. In unserem Falle also die Fähigkeit des SPAM-HAM-Klassifzierers neue Emails zuverlässig in SPAM und HAM zu ordnen.
 
-Für die Überprüfung dieser Eigenschaft gibt es verschiedene Verfahren, von denen die k-fold Cross-Validation eines der bekanntesten darstellt.
+Für die Überprüfung dieser Eigenschaft gibt es verschiedene Verfahren, von denen die m-fold Cross-Validation eines der bekanntesten darstellt.
 
-Bei diesem Verfahren wird der gesamte Datensatz in k gleichgroße Partitionen, sogenannte *folds* geteilt. Im Anschluss wird k-mal ein Classifier trainiert, und für jeden Durchgang i=1..k wird jeweils die i-te fold als Test-/Validierungsset zurückgehalten.
-Gegenüber dem einfachen Verfahren hat die k-fold Cross-Validation vor allem zwei Vorteile:
+Bei diesem Verfahren wird der gesamte Datensatz in m gleichgroße Partitionen, sogenannte *folds* geteilt. Im Anschluss wird m-mal ein Classifier trainiert, und für jeden Durchgang k=1..m wird jeweils die k-te fold als Test-/Validierungsset zurückgehalten.
+
+Gegenüber dem einfachen Verfahren hat die m-fold Cross-Validation vor allem zwei Vorteile:
+
 1. Es werden alle Daten zum Trainieren verwendet.
-2. Man erhält k verschiedene Classifier anstatt einem einzigen, und kann so ebenfalls Aussagen über das Modell (average fit, Generalisierbarkeit) treffen.
+2. Man erhält m verschiedene Classifier anstatt einem einzigen, und kann so ebenfalls Aussagen über das Modell (z.B. Generalisierbarkeit) treffen.
 
-```{r k-fold Cross Validation}
-set.seed(467)
+```{r m-fold Cross Validation}
+set.seed(67)
 # lump dataset
 XData = rbind(XTrain, XTest)
 YData = rbind(YTrain, YTest)
   
-fnCrossValidation <- function(nFolds, X, Y) {
-  
+fnCrossValidation <- function(X, Y, nFolds, nPercentage) {
+  # This functions takes the data and performs nFolds-fold Cross-Validation
+  # and returns the errors for each run.
+  # Additionally, nPercentage may be used to change the size of the training set to
+  # evaluate the utility of more data
   
   nDataPoints <- dim(XData)[1]
+  shuffledIndex <- sample(nDataPoints)
   
-  splitInd <- sample(seq(nDataPoints), round(nDataPoints/nFolds))
-  XDataTrain <- XData[-splitInd, ]
-  YDataTrain <- YData[-splitInd, ]
-  XDataTest <- XData[splitInd, ]
-  YDataTest <- YData[splitInd, ]
+  # Create folds
+  splitInd <- split(shuffledIndex, ceiling(seq_along(shuffledIndex)/round(nDataPoints/nFolds)))
+  nErrorRate <- vector('double', nFolds)
   
-  nErrors <- vector('double', nFolds)
-  
-  nErrorRate <- NULL
-  for (k in nFolds) {
+  for (k in 1:nFolds) {
+    # Reduce the size of the training data in accordance with nPercentage
+    keepInd <- seq(1:round(nPercentage*(nDataPoints-length(splitInd[[k]]))))
     
-    NBClass2 <- fnNBTrain(XDataTrain, YDataTrain[[1]])
-    # Predict test labels
-    prediction <- fnNBPredict(XDataTest, NBClass2)
+    # Create final test/train sets for k-th cross validation
+    XDataTrain <- X[-splitInd[[k]], ][keepInd, ]
+    YDataTrain <- Y[-splitInd[[k]], ][keepInd]
+    XDataTest <- X[splitInd[[k]], ]
+    YDataTest <- Y[splitInd[[k]], ]
+    
+    NBClass3 <- fnNBTrain(XDataTrain, YDataTrain)
+    # Predict labels
+    prediction2 <- fnNBPredict(XDataTest, NBClass3)
     # Number of errors
-    nErrorRate[k] <- sum(YDataTest[[1]] != prediction)/sum(YDataTest[[1]])
+    nErrorRate[k] <- sum(YDataTest != prediction2)/length(YDataTest)
   }
   
   return(nErrorRate)
 }
 
-nCrossValErrors <- fnCrossValidation(6, XData, YData)
-# TODO: Implementation of m-fold cross validation
-# Maybe plots for train/test error in dependence of training set size.
-# Discussion on model generalization and overfitting.
-#1: Combine data, 2. split data, 3. train k times, 4. get average accuracy, 5. report 
-
+folds = 10
+CrossValErrors <- fnCrossValidation(XData, YData, folds, 1)
+plot(CrossValErrors, ylim = c(0,1))
 ```
 
-Auswertung von `r nCrossValErrors`
+Der Plot zeigt die Fehler der verschiedenen Durchläufe der Cross Validation. Die geringe Größe der Fehler weist auf ein gutes Modell hin, die kleine Varianz zwischen den einzelnen Durchläufen deutet auf eine gute Generalisierbarkeit (oder sehr homogene Daten)
 
 ### Utility of data
 
@@ -266,20 +263,22 @@ Eine weitere Frage ist, wie sehr sich das Modell durch die Hinzunahme weiterer T
 So lässt sich die Nützlichkeit zusätzlicher Daten abschätzen, solange man annehmen kann dass die Trainingsdaten repräsentativ für zukünftige Daten sind. Diese Annahme ist jedoch **sehr** stark und sollte nur, wenn überhaupt, nach eingehender Beschäftigung mit dem gestellten Problem gemacht werden.
 
 ```{r Utility of Data}
-nPercentage <- seq(1,10)
+Percentages <- seq(0.1,1, 0.05)
+UtilityErrors <- NULL
 
-# TODO: Implementation of m-fold cross validation
-# Maybe plots for train/test error in dependence of training set size.
-# Discussion on model generalization and overfitting.
+for (i in 1:length(Percentages)) {
+  UtilityErrors[i] <- mean(fnCrossValidation(XData, YData, 6, Percentages[i]))
+}
+plot(UtilityErrors, x=Percentages)
 ```
+Wie aus dem Plot ersichtlich ist der Verlauf der *Data Utility* nicht etwa linear, sondern diese steigt bei ca. 40% verwendeter Daten sprunghaft an (analog zum hier dargestellten Abfall der Fehlerrate). Ein möglicher Grund könnte die Notwendigkeit sein jedes Wort zumindest einmal gesehen haben zu müssen um einen Score für SPAM vs. HAM zu berechnen.
 
-## Feature Extraction
+
+## Feature Extraction (unfinished)
 
 Eine der aufwendigsten Aufgaben im Machine Learning ist die Extraktion aussagekräftiger Features aus Rohdaten. Bis die Daten algorithmisch verwertbar vorliegen, ist viel Arbeit vonnöten. Zur Illustrierung generieren wir die Features für dein Bayes-Classifier aus den bereits etwas vorverarbeiteten Rohdaten:
 
 ```{r Raw Features (Bonus)}
-# TODO: Extract the original emails from rawFeatures.zip
-# Create the features in 1) and 5a) by hand
 
 # Get the fileslists
 hamTestDir = './data/rawFeatures/ham-test/'
