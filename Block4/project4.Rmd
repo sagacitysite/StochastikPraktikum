@@ -1,0 +1,106 @@
+---
+title: "Projektaufgaben Block 4"
+author: "Carlo Michaelis, 573479; David Hinrichs, 572347; Lukas Ruff, 572521"
+date: "31 Januar 2017"
+documentclass: article
+fontsize: 10pt
+header-includes:
+  - \usepackage{amsthm}
+  - \usepackage{amssymb}
+  - \usepackage{amsmath}
+  - \DeclareMathOperator*{\argmin}{argmin}
+  - \usepackage{MnSymbol}
+  - \usepackage{bbm}
+  - \usepackage{subfig}
+  - \usepackage{theoremref}
+  - \newtheorem{satz}{Satz}
+  - \newcommand{\E}{\mathbb{E}}
+  - \newcommand{\Var}{\text{Var}}
+  - \newcommand{\tr}{\text{tr}}
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    keep_tex: true
+    fig_caption: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+# Load libraries
+```
+
+# Markovketten zur Modellierung von Krebswachstum
+
+```{r Read data}
+# Read data
+P <- as.matrix(read.csv("data/lungcancer.csv"))
+numStates <- dim(P)[1]
+
+# Sanity check
+apply(P, 1, sum)
+```
+
+```{r Mean number of steps for cancer to reach position (Method 1)}
+# Method 1
+fnMCMeanSteps1 <- function(x, mu, P, tailProb = 0.01){
+  # This function computes the mean number of steps needed to reach state x for
+  # a Markov chain defined with initial distribution mu and transition matrix P.
+  # 
+  # Args:
+  #   x:        Target state
+  #   mu:       Initial distribution
+  #   P:        Transition matrix
+  #   tailProb: Tail probability to control approximation
+  #   
+  # Returns:
+  #   Expected number of steps to reach state x for the first time
+  
+  # Step 0
+  cumProbs <- mu[x]
+  mean <- mu[x] * 0  # symbolic initialization
+  
+  # Step 1
+  tempProb <- sum(mu[-x] * P[-x, x])
+  cumProbs <- cumProbs + tempProb
+  mean <- mean + tempProb * 1
+  
+  # Further steps
+  PTilde <- diag(length(mu) - 1)  # initialize PTilde
+  k <- 2
+  
+  while (1-cumProbs >= tailProb) {
+    PTilde <- PTilde %*% P[-x, -x]  # Update PTilde
+    tempProb <- mu[-x] %*% PTilde %*% P[-x, x]  # Get prob. of hitting time k
+    cumProbs <- cumProbs + tempProb  # cumulate probability mass
+    mean <- mean + tempProb * k  # update mean
+    k <- k+1
+  }
+  
+  # Return mean
+  return(as.double(mean))
+}
+```
+
+```{r Test Method 1}
+# Define initial distribution (always begin in state 23 (Lung))
+mu <- rep(0, numStates)
+mu[23] <- 1
+
+# Expected steps to reach certain position
+meanStepsBladder <- fnMCMeanSteps1(5, mu, P, tailProb = 10^-5)
+meanStepsBrain <- fnMCMeanSteps1(7, mu, P, tailProb = 10^-5)
+meanStepsHeart <- fnMCMeanSteps1(17, mu, P, tailProb = 10^-5)
+```
+
+
+# Poisson-Prozess
+
+
+# Der betrunkene Vogel
+
+
+# Geometrische Brownsche Bewegung und Option Pricing
+
+
+
+<!--Footnotes-->

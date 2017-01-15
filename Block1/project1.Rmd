@@ -1,0 +1,1157 @@
+---
+title: "Projektaufgaben Block 1"
+author: "Carlo Michaelis, 573479; Lukas Ruff, 572521"
+date: "15 November 2016"
+documentclass: article
+fontsize: 10pt
+header-includes:
+  - \usepackage{amsthm}
+  - \usepackage{amssymb}
+  - \usepackage{MnSymbol}
+  - \usepackage{bbm}
+  - \usepackage{subfig}
+  - \usepackage{theoremref}
+  - \newtheorem{satz}{Satz}
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    keep_tex: true
+    fig_caption: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE}
+# load libraries
+library(xtable)
+```
+
+# Infinite-Monkey-Theorem
+
+## Formulierung und Beweis des Infinite-Monkey-Theorems
+
+Laut dem Infinite-Monkey-Theorem wird ein Affe, der unendlich lange zufällig auf einer Schreibmaschine tippt, fast sicher jede beliebige Zeichenkette unendlich oft schreiben. Diese bildhafte Interpretation des mathematischen Satzes soll der gedanklichen Einordnung von Unendlichkeit dienen. Das Infinite-Monkey-Theorem ist ein Beispiel für die Anwendung des Lemmas von Borel-Cantelli. \newline
+
+\begin{satz}[Lemma von Borel-Cantelli] 
+Sei $(\Omega, \mathcal{F}, P)$ ein Wahrscheinlichkeitsraum.
+
+a) Ist $(A_n)_{n \in \mathbb{N}}$ eine Folge von Ereignissen mit $\sum_{n \in \mathbb{N}} P(A_n) < \infty$, so gilt 
+$$ 
+P \left( \limsup_{n \to \infty} A_n \right) = 0.
+$$
+
+b) Ist $(A_n)_{n \in \mathbb{N}}$ eine Folge von unabhängigen Ereignissen mit $\sum_{n \in \mathbb{N}} P(A_n) = + \infty$, so gilt 
+$$
+P \left( \limsup_{n \to \infty} A_n \right) = 1.
+$$
+\end{satz}
+
+Um das Infinite-Monkey-Theorem formulieren zu können, modellieren wir zunächst einen geeigneten Wahrscheinlichkeitsraum. Definiere dazu ein endliches Alphabet $\Omega := \{\text{a, b, c, } \ldots \}$, d.h.\ $\Omega$ ist eine Menge von Zeichen (Buchstaben, Satzzeichen, Zahlen, etc.\) mit $\vert \Omega \vert = n$ für ein $n \in \mathbb{N}$. Setze weiter die zugehörige $\sigma$-Algebra als Potenzmenge $\mathcal{F} := \mathcal{P}(\Omega)$ und definiere das Wahrscheinlichkeitsmaß $P$ als diskrete Gleichverteilung, d.h.\ $P(A) = \frac{\vert A \vert}{\vert \Omega \vert} = \frac{\vert A \vert}{n}$ für $A \in \mathcal{F}$. Somit modelliert $(\Omega, \mathcal{F}, P)$ das Ziehen von Zeichen aus einem Alphabet mit gleicher Wahtscheinlichkeit. Den Übergang zu Zeichenketten (Folgen von Zeichen aus dem Alphabet $\Omega$) können wir nun mittels des (stets existierenden und eindeutigen) Produktraumes $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ mit $\mathbb{P} := P^{\mathbb{N}}$ bewerkstelligen. Hiermit können wir das Infinite-Monkey-Theorem wie folgt formulieren und beweisen: \newline
+
+\begin{satz}[Infinite-Monkey-Theorem]
+Betrachte den oben definierten Produktraum $(\Omega^{\mathbb{N}}, \mathcal{F}^{\mathbb{N}}, \mathbb{P})$ von (unendlich langen) Zeichenketten und sei $s = (s_1, \ldots, s_m)^\top \in \Omega^m$ eine beliebige Zeichenkette der Länge $m \in \mathbb{N}$ (String). Definiere zu $k \in \mathbb{N}$ das Ereignis
+$$ 
+A_{k} := \left\{ \omega = (\omega_j)_{j \in \mathbb{N}} \in \Omega^{\mathbb{N}} \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \right\},
+$$
+d.h.\ $A_k$ ist das Ereignis, dass String $s$ der Länge $m$ an der Stelle $k$ in einer Zeichenkette beginnt. Dann ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse und es gilt
+$$
+\mathbb{P} \left( \limsup_{j \to \infty} A_{jm+1} \right) = 1.
+$$
+\end{satz}
+
+\begin{proof}[Beweis]
+Es sei $\pi_i: \Omega^{\mathbb{N}} \to \Omega, (\omega_j)_{j \in \mathbb{N}} \mapsto \omega_i$ die $i$-te Koordinatenprojektion auf dem kartesischen Produkt $\Omega^{\mathbb{N}}$. Weiter sei $(I_j)_{j \in \mathbb{N}_0}$ eine Zerlegung von $\mathbb{N}$ in disjunkte Blöcke der Länge $m$, d.h.\ 
+$$
+\mathbb{N} = \bigcupdot_{j \in \mathbb{N}_0} I_j \qquad \text{mit} \qquad I_j := \bigcup_{k = 1}^m \{jm+k\}, \, j \in \mathbb{N}_0.
+$$
+Dann folgt für $j \in \mathbb{N}_0$
+$$
+\begin{aligned}
+\mathbb{P}(A_{jm+1}) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{jm+1} = s_1, \ldots, \omega_{(j+1)m} = s_m \right\} \right) \\
+&= \mathbb{P}\left( \bigcap_{k = 1}^m \pi_{jm+k}^{-1}(\{s_k\}) \right) \\
+&= \prod_{k=1}^m P(\{s_k\}) = \left(\frac{1}{n} \right)^m,
+\end{aligned}
+$$
+da $\mathbb{P} = P^{\mathbb{N}}$ Produktmaß ist. Weiter folgt für $j_1, j_2 \in \mathbb{N}_0, j_1 \not = j_2$:
+$$
+\begin{aligned}
+\mathbb{P} \left( A_{j_1m+1} \cap A_{j_2m+1} \right) &= \mathbb{P}\left( \left\{ \omega \, : \, \omega_{j_1m+1} = s_1, \ldots, \omega_{(j_1+1)m} = s_m \right\} \cap \left\{ \omega \, : \, \omega_{j_2m+1} = s_1, \ldots, \omega_{(j_2+1)m} = s_m \right\} \right) \\
+&= \mathbb{P}\left( \left( \bigcap_{k = 1}^m \pi_{j_1m+k}^{-1}(\{s_k\}) \right) \cap \left( \bigcap_{k = 1}^m \pi_{j_2m+k}^{-1}(\{s_k\}) \right) \right) \\
+&= \left( \prod_{k=1}^m P(\{s_k\}) \right)^2 = \left(\frac{1}{n} \right)^m  \left(\frac{1}{n} \right)^m = \mathbb{P}(A_{j_1m+1}) \cdot \mathbb{P}(A_{j_2m+1}),
+\end{aligned}
+$$
+da $I_{j_1} \cap I_{j_2} = \emptyset$ für $j_1 \not= j_2$. Somit ist $(A_{jm+1})_{j \in \mathbb{N}_0}$ eine Folge unabhängiger Ereignisse mit
+$$
+\sum_{j \in \mathbb{N}_0} P(A_{jm+1}) = \sum_{j \in \mathbb{N}_0} \left(\frac{1}{n}\right)^m = + \infty.
+$$
+D.h.\ mit Teil b) des Lemma von Borel-Cantelli folgt die Behauptung.
+\end{proof}
+
+Es gilt also
+
+$$
+\begin{aligned}
+\mathbb{P} \left( \limsup_{j \to \infty} A_{jm+1} \right) &= \mathbb{P} \left( \bigcap_{j \in \mathbb{N}_0} \bigcup_{k \geq j} A_{km+1} \right) \\
+&= \mathbb{P} \left( \left\{ \omega \in \Omega^{\mathbb{N}}  \, : \, \forall j \in \mathbb{N}_0 \, \exists k \geq j : \omega \in A_{km+1} \right\} \right) \\
+&= \mathbb{P} \left( \left\{ \omega \in \Omega^{\mathbb{N}}  \, : \, \omega \in A_{jm+1} \text{ für unendlich viele } j \in \mathbb{N}_0 \right\} \right) = 1,
+\end{aligned}
+$$
+d.h.\ ein beliebiger String $s$ der Länge $m$ erscheint fast sicher unendlich oft.
+
+## Simulation eines Infinite-Monkey Experiments
+
+In diesem Abschnitt wollen wir das Infinite-Monkey-Theorem experimentell simulieren. Wir schreiben hierzu eine R-Funktion die solange zufällig Zeichen aus dem Alphabet $\Omega = \{a, b, \ldots, y, z\}$ mit gleicher Wahrscheinlichkeit (d.h.\ $\frac{1}{26}$) auswählt, bis eine vorgegebene Zeichenkette $s = (s_1, \ldots, s_m)^\top \in \Omega^m, m \in \mathbb{N},$ vollständig erschienen ist. Die R-Funktion gibt dann die Anzahl der bis zum Erscheinen der Zeichenkette $s$ gezogenen Zeichen zurück. Damit simulieren wir die Zufallsvariable $X: \Omega^{\mathbb{N}} \to \mathbb{N}$ mit 
+$$ 
+X(\omega) = \min\{k+m-1 \, : \, \omega_k = s_1, \ldots, \omega_{k+m-1} = s_m \text{ für } k \in \mathbb{N} \}
+$$
+
+Wir haben die Funktion wie folgt in `R` implementiert:[^1]
+
+\newpage
+```{r Infinite-Monkey}
+fnInfiniteMonkey <- function(strTarget) {
+  # This function is a simulation of the Infinite-Monkey-Theorem. It generates a
+  # random sequence of letters until a given target string appears.
+  # 
+  # Args:
+  #   strTarget: The target string which should be matched
+  #   
+  # Returns:
+  #   The number of generated letters until the target string appeared
+  
+  # Split target string to vector of chars
+  vecCharTarget <- strsplit(strTarget, "")[[1]]
+  # Get the number of letters in target string
+  nTarget <- length(vecCharTarget)
+  
+  # Set counting variable (at least nTarget letters needed)
+  nCounter <- nTarget
+  
+  # Switch on the monkey (i.e. sample the first nTarget letters)
+  vecLetterSeqTail <- sample(letters, nTarget, replace = TRUE)
+  
+  # Let the monkey type until target string was written
+  while(!identical(vecCharTarget, vecLetterSeqTail)) {
+    
+    # Let the monkey hit another key (sample next letter) and store in 
+    # vecLetterSeqTail (first in, first out)
+    if (nTarget == 1) {
+      vecLetterSeqTail <- sample(letters, 1)
+    } else {
+      vecLetterSeqTail <- c(vecLetterSeqTail[2:nTarget], 
+                            sample(letters, 1, replace = TRUE))
+    }
+    # Count
+    nCounter <- nCounter + 1
+  }
+  
+  # Return the length of the generated letter sequence
+  return(nCounter)
+}
+```
+
+```{r Infinite-Monkey Simulation, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram of letter sequence lengths and mean letter sequence length by number of samples.\\label{fig:plotMonkey}"}
+fnEvaluateMonkey <- function(strTarget, nSamples) {
+  # This function runs the Inifinite-Monkey multiple times with a given
+  # string and evaluates the outcome with some plots
+  # 
+  # Args:
+  #   strTarget: The target string which should be matched
+  #   nSamples:  Number of samples, which should be used for evaluation
+  #   
+  # Returns:
+  #   The Monte-Carlo approximation of the exptected value
+  
+  # Prepare vector for resulting lengths of letter sequences
+  vecLetterSeqLen <- integer(nSamples)
+  
+  # RELEASE THE MONKEYS! (... one after another)
+  for (i in 1:nSamples) {
+    vecLetterSeqLen[i] <- fnInfiniteMonkey(strTarget)
+  }
+  
+  # Compute mean with each new sample
+  vecLetterSeqLenMeans <- cumsum(vecLetterSeqLen) / (1:nSamples)
+  
+  # Split plot panel
+  par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+  
+  # Plot histogram
+  hist(vecLetterSeqLen,
+       breaks = seq(min(vecLetterSeqLen), max(vecLetterSeqLen), length = 50),
+       xlab = "Length of letter sequence",
+       main = NULL)
+  abline(v = vecLetterSeqLenMeans[nSamples], col = "red")
+  legend("topright", legend = "Mean", lty = 1, col = "red")
+  
+  # Plot means
+  plot(1:nSamples, vecLetterSeqLenMeans,
+       xlab = "Number of samples",
+       ylab = "Mean length of letter sequence up to sample",
+       type = "l")
+  abline(h = vecLetterSeqLenMeans[nSamples], col = "red")
+  legend("topright", legend = "Mean", lty = 1, col = "red")
+  
+  # Set title
+  title(paste("Target string: '",strTarget, "'",
+              "; Mean length of letter sequence: ",
+              vecLetterSeqLenMeans[nSamples], sep = ""),
+        outer = TRUE, line = -2)
+  
+  # Return MC approximation
+  return(vecLetterSeqLenMeans[nSamples])
+}
+
+# Set seed
+set.seed(7)
+# Simulate
+numMCMean <- fnEvaluateMonkey("ab", 10^4)
+```
+
+In Abbildung \ref{fig:plotMonkey} haben wir ein Histogramm der simulierten Anzahlen von Zeichen und die durchschnittliche Anzahl von Zeichen, bis die Zeichenkette `'ab'` vollständig erschienen ist, für $10^4$ Samples geplottet. Wir können sehen, dass die Anzahl von Zeichen $X$ einer rechtsschiefen Verteilung folgt. Die durch das starke Gesetz der großen Zahlen motivierte Monte-Carlo-Approximation von $\mathbb{E}[X]$ liegt bei `r numMCMean`. 
+
+Zur Simulation von Infinite-Monkey Experimenten wollen wir abschließend noch folgende Überlegung durchführen: würden wir anstatt einer fortlaufenden Zeichenfolge, bei welcher je Schleife nur ein weiterer Letter generiert wird, je Schleifendurchlauf einen Zeichen-Block der Länge $m$ generieren und mit $s$ vergleichen, so entspräche jeder Schleifendurchlauf einem Bernoulli-Experiment mit Erfolgswahrscheinlichkeit $p = \left( \frac{1}{n} \right)^m$. In diesem Fall wäre die Anzahl der Blöcke, die notwendig sind um eine Übereinstimmung mit $s$ zu erhalten, gerade geometrisch-verteilt mit Erfolgswahrscheinlichkeit $p = \left( \frac{1}{n} \right)^m$. Diese Zerlegung in Blöcke der Länge $m$ entspricht genau der Folge unabhängiger Ereignisse aus dem Beweis des Theorems.
+
+
+\newpage
+
+# Monte-Carlo-Approximationen
+
+``` {r Monte-Carlo Fehlerabschätzung, echo=FALSE, cache=TRUE}
+fnErrorEstimation <- function(X, fnRandom, m = 100,
+                    fnValueCalculation = function(x) {x}) {
+  # This function is doing the error calculation, plotting all results,
+  # generating and plotting confidence band.
+  # There are two different methods in use:
+  #  * Using central limit theorem
+  #  * Using simulation
+  # 
+  # Args:
+  #   X:        Contains the data, can be raw random or already precalculated
+  #   fnRandom: Function to use in specific case to generate random values
+  #   m:        Number of MC-Simulations, has default value
+  #   fnValueCalculation:
+  #             If values should be computed in any way, this function is doing
+  #             it. If no value is given, just use values X as they are (default)
+  #   
+  # Returns:
+  #   Nothing, just prints the plot
+  
+  # Calculate values
+  if(class(X) != "list") { X = list(X) }
+  x <- do.call(fnValueCalculation, X)
+  
+  # Save length of sample in variable
+  n <- length(x)
+  
+  ################ Error estimation using central limit theorem ################
+  
+  # Compute mean with each new sample
+  vecMeans <- cumsum(x) / (1:n)
+  
+  # NOTE: t-distribution
+  # Compute confidence band
+  vecConf <- list(top = NULL, bottom = NULL)
+  for(i in 1:n) {
+    vecConf$top[i] <- vecMeans[i] + 1.96*sqrt(var(x[1:i])/i)
+    vecConf$bottom[i] <- vecMeans[i] - 1.96*sqrt(var(x[1:i])/i)
+  }
+  
+  # Plot means against number of samples
+  plot(1:n, vecMeans, type="l",
+       xlab = "Number of Monte-Carlo samples",
+       ylab = "Monte-Carlo approximation",
+       ylim = c(min(na.omit(vecConf$bottom), vecMeans),
+                max(na.omit(vecConf$top), vecMeans)),
+       pch = 4, cex = 0.8)
+  
+  # Plot overall mean
+  abline(vecMeans[n], 0, col = "red")
+  
+  # Plot confidence band
+  lines(vecConf$top, col = "blue")
+  lines(vecConf$bottom, col = "blue")
+  
+  ##################### Error estimation using simulation #####################
+  
+  # Generate n x m matrix with random values
+  mSampleMatrix <- NULL
+  for(i in 1:m) {
+    X <- fnRandom(n)
+    if(class(X) != "list") { X = list(X) }
+    mSampleMatrix <- cbind(mSampleMatrix, do.call(fnValueCalculation, X))
+  }
+  
+  # Calculate confidence band
+  mEst <- apply(mSampleMatrix, 2, cumsum)/(1:n)
+  mConf <- apply(mEst, 1, quantile, c(.025, .975))
+  
+  # Plot upper and lower confidence bound
+  lines(mConf[1,], col = "green")
+  lines(mConf[2,], col = "green")
+  
+  # Add legend for all lines
+  legend("topright", c("Monte-Carlo approximation", "Error estimation (CLT)",
+                       "Error estimation (Simulation)"), 
+         lty = 1, col=c("red", "blue", "green"), bty="n", cex=.75)
+}
+```
+
+## Nährerung für $\pi$
+
+Um eine Nährerung für $\pi$ zu erreichen, können in einem Quadrat zufällige Punkt erzeugt werden. Derjenige Anteil der Punkte, der innerhalb des Kreises liegt, ergibt $\pi$. Zunächst definieren wir die Zufallsvariablen, aus denen die Koordinaten gezogen werden:
+
+\begin{equation*}
+X \sim U([-1,1]^2)\quad\text{, d.h}\quad X_1 \sim U([-1,1]) \quad \text{und} \quad X_2 \sim U([-1,1])
+\end{equation*}
+
+Dabei sind $X_{1}$und $X_{2}$ unabhängig. Die gemeinsame Dichtefunktion ergibt sich aus den einzelnen Dichten und kann wie folgt beschrieben werden:
+
+\begin{align*}
+f(x_1, x_2) &= \frac{1}{4}\,\mathbbm{1}_{[-1,1]}(x_1)\,\mathbbm{1}_{[-1,1]}(x_2)\\
+&= \frac{1}{2}\,\mathbbm{1}_{[-1,1]}(x_1)\,\frac{1}{2}\,\mathbbm{1}_{[-1,1]}(x_2)\\
+&= f(x_1)f(x_2)
+\end{align*}
+
+Wir können $\pi$ wie folgt als Integral darstellen:
+
+\begin{equation}
+\label{eq:def_pi}
+\pi = \int_{-1}^{1} \int_{-1}^{1} \mathbbm{1}_S(x_1,x_2)\,dx_1 dx_2
+\end{equation}
+
+wobei $S = \{x_1,x_2\,|\,x_1^2+x_2^2 \le 1\}$. Stochastisch ergibt sich $\pi$ wiederum als Erwartungswert der Indikatorfunktion von der gleichverteilten Zufallsvariablen $X$ auf der Menge der Kreispunkte:
+
+\begin{align*}
+\mathbb{E}[\mathbbm{1}_S(X)] &= \mathbb{E}[\mathbbm{1}_S(X_1,X_2)]\\
+&= \int_{\mathbb{R}^2} \mathbbm{1}_S(x_1,x_2) f(x_1,x_2)\,d\lambda(x_1,x_2)\\
+&= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} \mathbbm{1}_S(x_1,x_2) \cdot \frac{1}{4} \,\mathbbm{1}_{[-1,1]}(x_1)\,\mathbbm{1}_{[-1,1]}(x_2) \,dx_1 dx_2 \quad \text{(Fubini)}\\
+&= \frac{1}{4}\, \int_{-1}^1 \int_{-1}^1 \mathbbm{1}_S(x_1,x_2) \,dx_1 dx_2\\
+&\overset{\eqref{eq:def_pi}}{=} \frac{1}{4}\pi
+\end{align*}
+
+Durch Umstellung folgt damit direkt:
+
+\begin{equation*}
+\pi = 4\,\mathbb{E}[\mathbbm{1}_S(X)] = 4\,\mathbb{E}[\mathbbm{1}_S(X_1,X_2)]
+\end{equation*}
+
+Im folgenden Code ist die Monte-Carlo Approximation mittels `R` dargestellt:
+
+```{r Näherung Pi, fig.height=4, fig.cap="Simulation result (left) and error estimation (right).\\label{fig:plotPi}"}
+fnPiRandom <- function(n) {
+  # Generates random uniform values for x (x1) and y (x2) axis
+  # 
+  # Args:
+  #   n: Number of samples
+  #   
+  # Returns:
+  #   A list of x1 and x2 random values with size of n
+  return(list(x1 = runif(n, min = -1, max = 1),
+              x2 = runif(n, min = -1, max = 1)))
+}
+
+fnPiIndicator <- function(x1, x2) {
+  # Indicate which values are inside of the circle with radius 1
+  # and which are outside
+  # 
+  # Args:
+  #   x1: Random values of x-axis
+  #   x2: Random values of y-axis
+  #   
+  # Returns:
+  #   A vector containing values 0, if point is outside of circle, and 4, 
+  #   if point is inside of circle with radius 1
+  return(((x1^2 + x2^2) <= 1)*4)
+}
+
+fnPiPlotCircle <- function(x1, x2) {
+  # Plots all random points.
+  # Points which are inside are red, points outside blue and some circle-points
+  # are calculated, to mark the border in black
+  # 
+  # Args:
+  #   x1: Random values of x-axis
+  #   x2: Random values of y-axis
+  #   
+  # Returns:
+  #   Nothing, just prints the plot
+  
+  inside <- as.logical(fnPiIndicator(x1, x2))
+  outside <- !inside
+  
+  # Plot points inside and outside
+  plot(x1[inside], x2[inside], pch = 20, cex = 0.5, col = "red",
+       xlab = "x", ylab = "y", xlim = c(-1,1), ylim = c(-1,1))
+  points(x1[outside], x2[outside], pch = 20, cex = 0.5, col = "blue")
+  
+  # Plot circle points to mark the border
+  points(sin(1:10000), cos(1:10000), pch = 20, cex = 0.2, col = "black")
+}
+
+# Split plot panel
+par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Create random values
+set.seed(42)
+X <- fnPiRandom(2000)
+
+# Plot random values and circle
+fnPiPlotCircle(X$x1, X$x2)
+
+# Run error estimation
+fnErrorEstimation(X, fnPiRandom, fnValueCalculation = fnPiIndicator)
+
+# Set title for plots
+title(paste("Monte-Carlo simulation with sample size of ", length(X$x1),
+            " results in pi value of ", mean(fnPiIndicator(X$x1, X$x2)), sep = ""),
+      outer = TRUE,  line = -2)
+```
+
+Die Ergebnisse sind in Darstellung \ref{fig:plotPi} gezeigt. Auf der linken Seite sind die generierten Zufallswerte dargestellt. Die Werte, welche im inneren des Kreises (schwarz) gelandet sind, wurden rot markiert, Werte außerhalb blau. Auf der rechten Seite ist der kumulierte Mittelwert der Samples schwarz dargestellt. Die rote Linie markiert den Mittelwert über alle Samples und die blaue und grüne Linie markieren die zwei möglichen Methoden der Fehlerabschätzung (mittels Zentralem Grenzwertsatz und Simulation).
+
+## Approximation einer Wahrscheinlichkeit
+
+Gegeben sei eine Zufallsvariable $X \sim N(0,1)$. Die Wahrscheinlichkeit $\mathbb{P}(X > 20)$ soll per Monte-Carlo-Simulation approximiert werden. Zunächst formulieren wir die Wahrscheinlichkeit:
+
+\begin{align*}
+P(X > 20) &= 1-F(20) = \mathbb{E}[\mathbbm{1}_{(X > 20)}]\\
+&= \int_{-\infty}^{\infty} \mathbbm{1}_{(X > 20)} \frac{1}{\sqrt{2\pi\sigma^2}} \exp{\left(-\frac{(x -\mu)^2}{2\sigma}\right)}\,dx\\
+&= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\right)}\,dx
+\end{align*}
+
+wobei $F$ die Verteilungsfunktion der Standardnormalverteilung bezeichne.
+
+Um Zufallszahlen generieren zu können, müssen die Grenzen endlich sein, daher verwenden wir die Transformation $Y = \frac{1}{X} \,\Leftrightarrow\, X = \frac{1}{Y}$ und damit $\frac{dx}{dy} = -\frac{1}{y^2}$. Es folgt im Weiteren:
+
+\begin{align*}
+P(X > 20) &= \int_{20}^{\infty} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{x^2}{2}\right)}\,dx\\
+&= \int_{0}^{\frac{1}{20}} \frac{1}{\sqrt{2\pi}} \exp{\left(-\frac{1}{2y^2}\right)} \frac{1}{y^2}\,dy\\
+&= \int_{0}^{\frac{1}{20}} \tilde{g}(y)\,dy = \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)]
+\end{align*}
+
+Dabei ist $Y \sim U([0,\frac{1}{20}])$ mit Dichtefunktion $f_Y(y) = 20\,\mathbbm{1}_{[0,\frac{1}{20}]}(y)$, wodurch auch der Vorfaktor $\frac{1}{20}$ vor dem Erwartungswert begründet ist. Um das deutlich zu machen, kann folgende Rück-Umformung bzgl.\ der Gleichverteilung betrachtet werden:
+
+\begin{align*}
+\frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] &= \frac{1}{20}\,\int_{-\infty}^{\infty} \tilde{g}(y)\cdot f(y) \,dy\\
+&= \int_{-\infty}^{\infty} \tilde{g}(y)\cdot \mathbbm{1}_{[0,\frac{1}{20}]}(y) \,dy\\
+&= \int_{0}^{\frac{1}{20}} \tilde{g}(y) \,dy
+\end{align*}
+
+Definieren wir uns nun eine Funktion $g(y) = \frac{1}{20} \tilde{g}(y)$, dann gilt:
+
+\begin{equation*}
+P(X > 20) = \frac{1}{20}\,\mathbb{E}[\tilde{g}(Y)] = \mathbb{E}[g(Y)] \approx \frac{1}{n}\sum_{i=1}^n g(y)
+\end{equation*}
+
+Der letzte Schritt entspricht der Monte-Carlo-Approximation und wird durch das Gesetz der großen Zahlen bzw.\ den Satz von Glivenko-Cantelli motiviert.
+
+Zunächst soll versucht werden die Wahrscheinlichkeit  mittels der `R`-Funktion `pnorm` zu bestimmen.
+
+``` {r Wahrscheinlichkeit Naiv 1}
+# Using pnorm
+1 - pnorm(20)
+```
+
+Die von `R` zur Verfügung gestellte Funktion `pnorm` kann die an der Stelle sehr kleine Wahrscheinlichkeit nicht mehr exakt angeben und rundet auf 0. Eine Möglichkeit trotzdem eine Lösung zu erhalten, wäre zunächst eine naive Monte-Carlo-Implementierung, die einfach eine hohe Zahl an standardnormalverteilten Zufallswerten erzeugt und prüft wie häufig diese Werte außerhalb von 20 vor kommen.
+
+``` {r Wahrscheinlichkeit Naiv 2}
+# Naive Monte-Carlo approximation
+n <- 1000000
+x <- rnorm(n)
+indicator <- (x > 20) * 1
+mean(indicator)
+```
+
+Auch hier ist das Ergebnis Null, da die Wahrscheinlichkeit so klein ist, dass selbst --- wie im obigen Fall --- $1.000.000$ Zufallszahlen nicht ausreichen, um ein solch unwahrscheinliches Ereignis zu erhalten.
+
+Im nächsten Versuch soll die oben beschriebene Transformation verwendet werden.
+
+``` {r Wahrscheinlichkeit Monte Carlo Transformation, fig.height=4, fig.cap="Results and error estimation of probability approximation.\\label{fig:plotP}"}
+
+fnProbRandom <- function(n) {
+  # Generate random uniform values between 0 and 1/20
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n with values between 0 and 1/20
+  return(runif(n, min = 0, max = 1/20))
+}
+
+fnProbG <- function(u) {
+  # Calculate values of function g
+  # 
+  # Args:
+  #   u: Random values
+  #   
+  # Returns:
+  #   Result of function g, using random values u as argument
+  return((1/20) * (1/sqrt(2*pi)) * exp(-1/(2*(u^2))) * (1/(u^2)))
+}
+
+# Set plot panel to one plot
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Generate random values
+set.seed(42)
+u <- fnProbRandom(10000)
+
+# Calculate values with function g
+g <- fnProbG(u)
+
+# Run error estimation
+fnErrorEstimation(u, fnProbRandom, fnValueCalculation = fnProbG)
+
+# Set title for plot
+title(paste("Monte-Carlo simulation with sample size of ", length(u),
+            " results in P value of ", format(mean(g), digits = 3), sep = ""),
+      outer = TRUE,  line = -2)
+```
+
+Im Gegensatz zu den obigen naiven Ansätzen ist mittels der Transformation in gleichverteilte Zufallsvariablen eine Lösung bereits mit einer relativ kleinen Anzahl von Zufallswerten möglich. Die Ergebnisse sind in Abbildung \ref{fig:plotP} dargestellt.
+
+## Approximation eines Integrals
+
+Die Integrale in den Grenzen zwischen $0$ und $1$ zweier Funktionen $h_1$ und $h_2$ sollen mit Hilfe einer Monte-Carlo Approximation bestimmt werden.
+
+\begin{equation*}
+h_1(x) = [\cos(50x) + \sin(20x)]^2 \qquad h_2(x) = \sin\left(\frac{1}{x}\right)
+\end{equation*}
+
+Die Implementierung in `R` efolgt über zwei Funktionen:
+
+``` {r integrate functions}
+fnIntH1 <- function(x) {
+  # Calculate values of function h1
+  # 
+  # Args:
+  #   x: Random values
+  #   
+  # Returns:
+  #   Result of function h1, using random values x as argument
+  return((cos(50*x)+sin(20*x))^2)
+}
+
+fnIntH2 <- function(x) {
+  # Calculate values of function h2
+  # 
+  # Args:
+  #   x: Random values
+  #   
+  # Returns:
+  #   Result of function h2, using random values x as argument
+  return(sin(1/x))
+}
+```
+
+Wie bei der Bestimmung der Wahrscheinlichkeit oben, kann auch hier zunächst mit einem naiven Ansatz begonnen werden. Mit Hilfe der `integrate`-Funktion von `R`, soll eine Lösung der Integrale erfolgen.
+
+``` {r naiv 1}
+# Using R's integrate function to integrate h1
+h1Int <- integrate(fnIntH1, 0, 1)
+h1Int
+```
+
+Für die Funktion $h_1$ funktioniert die Bestimmung des Integrals ohne Probleme. Für die zweite Funktion $h_2$, kommt es jedoch zu einem Fehler bei der Berechnung.
+
+``` {r naiv 2}
+# Using R's integrate function to integrate h2
+tryCatch({
+    integrate(fnIntH2, 0, 1)
+  }, error = function(e) {
+    print(e)
+  })
+```
+
+Die Monte-Carlo-Approximation kann beide Integrale annähern. Das Vorgehen ist weitestgehend anlog zur Bestimmung der Wahrscheinlichkeit in der vorigen Aufgabe.
+
+``` {r integral monte-carlo, fig.height=4, fig.cap="Results and error estimation of integral approximation.\\label{fig:plotInt}"}
+fnIntRandom <- function(n) {
+  # Generate random uniform values
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n with values between 0 and 1
+  return(runif(n))
+}
+  
+# Set plot panel to two plots
+par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Using Monte-Carlo integration
+set.seed(42)
+u <- fnIntRandom(10000)
+h1 <- fnIntH1(u)
+h2 <- fnIntH2(u)
+
+# Run error estimation
+fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH1)
+title(paste("h1: ", length(u), " samples, result: ",
+            round(mean(h1), 3), sep = ""))
+fnErrorEstimation(u, fnIntRandom, fnValueCalculation = fnIntH2)
+title(paste("h2: ", length(u), " samples, result ",
+            round(mean(h2), 3), sep = ""))
+```
+
+In Abbildung \ref{fig:plotInt} sind die Ergebnisse und Fehlerauswertungen der Integral-Approximationen mittels Monte-Carlo dargestellt. Ein Vergleich der Ergbnisse ist nur für $h_1$ möglich, da nur hier die `integrate`-Funktion von `R` ein Ergebnis liefert.
+
+```{r integral comparison error}
+# Calculate percentage error
+err <- round(abs(h1Int$value - mean(h1))/h1Int$value, 5)
+print(err)
+```
+
+Es ergibt sich als eine relative Abweichung von $\sim$ `r err*100`% zwischen der `integrate`-Funktion und der Monte-Carlo-Approximation.
+
+## Erwartungswert der Fläche eines zufälligen Dreiecks
+
+Zur einfachen Bestimmung des Erwartungswertes eines zufälligen Dreiecks, wobei die drei Eckpunkte unabhängig auf dem Einheitsquadrat gleichverteilt sind (d.h.\ $(X_1, Y_1), (X_2, Y_2), (X_3, Y_3) \overset{iid}{\sim} U([0,1]^2)$), kann genutzt werden, dass die Fläche des Dreiecks durch folgende Formel gegeben ist:
+
+\begin{equation*}
+\frac{1}{2}|\text{Det}\,A|,\quad\text{wobei } A = \begin{pmatrix}x_1 & y_1 & 1\\ x_2 & y_2 & 1\\ x_2 & y_2 & 1\\\end{pmatrix}
+\end{equation*}
+
+Die Monte-Carlo-Approximation wurde wie folgt implementiert:
+
+``` {r triangle monte-carlo, fig.height=4, fig.cap="Results and error estimation of random triangle area.\\label{fig:plotTri}"}
+fnAreaRandom <- function(n) {
+  # Generate three random uniform values between 0 and 1 for x and y
+  # respectively. The function directly calculates the area of triangle
+  # between these three random points.
+  # 
+  # Args:
+  #   n: Size of sample
+  #   
+  # Returns:
+  #   Random vector of size n containing area values of random triangles
+  
+  areas <- NULL
+  for (i in 1:n) {
+    # Generate random values for x- and y-axis
+    x <- runif(3)
+    y <- runif(3)
+    # Calculate area of triangle and add to vector
+    areas[i] <- abs(0.5 * det(matrix(c(x, y, c(1, 1, 1)), nrow = 3, ncol = 3)))
+  }
+  
+  # Return vector of random triangle areas
+  return(areas)
+}
+
+# Set plot panel to one plot
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Generate random triangle area values
+set.seed(42)
+A <- fnAreaRandom(1000)
+
+# Run error estimation
+fnErrorEstimation(A, fnAreaRandom)
+title(paste("Monte-Carlo simulation with sample size of ", length(A),
+            " results in area of ", round(mean(A), 4), sep = ""))
+```
+
+Das Ergebnis und die Fehlerauswertung sind in Abbildung \ref{fig:plotTri} dargestellt. Wir können sehen, dass die Monte-Carlo Approximation etwa $11/144 \approx$ `r round(11/144,4)` entspricht.
+
+\newpage
+
+# Eine (naive) Datenanalyse
+
+Für die naive Datenanalyse am Beispieldatensatz `faithful` wurden verschiedene Diagramme erstellt, die eine intuitive Auswertung der Daten ermöglichen können. Der Datensatz bezieht sich auf erhobene Daten der Wartezeiten zwischen den Ausstößen und den Eruptionszeiten des Geysirs "Old Faithful Geyser" in den USA.
+
+## Histogramm
+
+Ein Histogramm stellt die Häufigkeit von Daten dar. Dabei werden Daten in Klassen (bins) eingeteilt und die jeweilige Häufigkeit von auftretenden Elementen innerhalb dieser Klasse auf der y-Achse aufgetragen. Ein Histogramm ermöglicht damit eine erste grobe Einschätzung der möglichen Verteilung der Daten.
+
+Wird die gesamte Variable `eruptions` (d.h. Dauer des Ausstoßes) ausgewertet, ergibt sich ein Histogramm, welches in Abbildung \ref{fig:histoAll} dargestellt ist. Hierbei wird bereits deutlich, dass es sich um eine bimodale Verteilung handelt. Es könnte also z.B.\ sein, dass der Ausstoß des Geysirs nach zwei unterschiedlichen Prozessen abläuft. Zur Darstellung der Wartezeiten wurde demnach gleich eine Trennung der Daten vorgenommen (Eruptionszeit größer bzw. kleiner als 3 Minuten), welche in Abbilung \ref{fig:histoSep} dargestellt sind. Die getrennte Darstellung unterstützt die Vermutung. Ob es sich um normalverteilte Daten handelt kann erst mit dem QQ-Plot (siehe unten) genauer evaluiert werden und ist hier im besten Fall zu erahnen.
+
+```{r histogram 1, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with all eruption data.\\label{fig:histoAll}"}
+# Create subsets of faithful
+faithLow  <- subset(faithful, eruptions <= 3)
+faithHigh <- subset(faithful, eruptions > 3)
+
+# Define some string variables for labeling plots 
+stEruption <- "Eruption time (in min)"
+stWaiting  <- "Waiting time (in min)"
+
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Histogram with all eruption time
+hist(faithful$eruptions,  main = "Eruption time", xlab = stEruption,
+     breaks = seq(min(faithful$eruptions), max(faithful$eruptions),
+                  length = 20))
+```
+
+```{r histograms 2, echo=FALSE, cache=TRUE, fig.height=4, fig.cap="Histogram with eruption data, separated in two categories.\\label{fig:histoSep}"}
+par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Histogram with waiting time, sparated by low/high eruption time
+hist(faithLow$waiting,  xlab = stWaiting,
+     main = "Waiting time (eruption time < 3 min)",
+     xlim= c(min(faithful$waiting), max(faithful$waiting)))
+hist(faithHigh$waiting,  xlab = stWaiting,
+     main = "Waiting time (eruption time > 3 min)",
+     xlim= c(min(faithful$waiting), max(faithful$waiting)))
+```
+
+## Boxplot
+
+Auch ein Boxplot soll dabei helfen die Verteilung der Daten einschätzen zu können. Der Boxplot besteht dabei aus drei oder vier Elementen. Es wird eine Box ausgegeben, deren Kanten den Bereich des unteren und oberen Quartils abgrenzt. Innerhalb der Box wird der Median als Linie eingezeichnet. Zusätzlich werden so genannte Whisker (ebenfalls oben und unten) eingezeichnet, die sich aus dem $1,5$-fachen des Interquartilsabstands ergeben. Optional können extreme Ausreißer als Punkte mit dargestellt werden. Der Boxplot gibt damit eine optische Einschätzung der empirischen Verteilung der Daten.
+
+In Abbildung \ref{fig:box} sind die Wartezeiten für die zwei Untermengen mit Eruptionszeiten über und unter 3 Minuten dargestellt. Auch hier wird deutlich, dass es sich um zwei getrennte Verteilungen zu handeln scheint. Die empirischen Verteilungen scheinen sich nur wenig zu überschneiden.
+
+```{r boxplot, echo=FALSE, cache=TRUE, fig.height=6, fig.cap="Boxplot with waiting data, separated in two categories.\\label{fig:box}"}
+par(mfrow = c(1,1), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Boxplot with waiting time, one for low/hogh eruption time
+boxplot(faithLow$waiting, faithHigh$waiting,
+        names = c("eruption time < 3 min", "eruption time > 3 min"),
+        main = "Waiting time")
+```
+
+## QQ-Plot
+
+Ein QQ-Plot vergleicht die empirischen Quantile (eine Achse) mit den theoretischen Quantilen (andere Achse). Wenn die Daten einer theoretischen Verteilung exakt folgen, liegen alle Punkte somit auf einer Linie. Mit Hilfe eines QQ-Plots ist es bereits sehr gut möglich eine Einschätzung darüber zu bekommen, welche konkrete Verteilung den Daten vermutlich zu Grunde liegt.
+
+In Abbildung \ref{fig:qq} sind alle Varianten dargestellt, d.h. Eruptions- und Wartzeiten, sowohl für den gesamten Datensatz, als auch getrennt für solche mit langen Eruptionszeiten (größer 3 Minuten) und kurzen Eruptionszeiten (kleiner 3 Minuten). Verglichen wird jeweils mit den theoretischen Quantilen der Standardnormalverteilung. Dabei wird deutlich, dass die getrennten Daten jeweils annähernd normalverteilt sind (bis auf Schwankungen in den Tails). Die nicht getrennten Daten ergeben aber kein solides Bild und sind gemeinsam offensichtlich nicht normalverteilt. Dies spricht sehr dafür, dass die Eruptionen des Geysirs nach zwei unterschiedlichen Prozessen ablaufen.
+
+```{r qq-plots, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="QQ-Plots in different data-combination.\\label{fig:qq}"}
+par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# QQ-Plot and QQ-Line for eruption time
+# One for (1) all, (2) low and (3) high eruptions time
+
+qqnorm(faithful$eruptions, pch = 20, cex = 0.75, ylab = stEruption,
+       main = "Eruption time (all eruption times)")
+qqline(faithful$eruptions)
+
+qqnorm(faithLow$eruptions, pch = 20, cex = 0.75, ylab = stEruption,
+       main = "Eruption time (eruption time < 3 min)")
+qqline(faithLow$eruptions)
+
+qqnorm(faithHigh$eruptions, pch = 20, cex = 0.75, ylab = stEruption,
+       main = "Eeruption time (eruption time > 3 min)")
+qqline(faithHigh$eruptions)
+
+# QQ-Plot and QQ-Line for waiting time
+# One for (1) all, (2) low and (3) high eruptions time
+
+qqnorm(faithful$waiting, pch = 20, cex = 0.75, ylab = stWaiting,
+       main = "Waiting time (all eruption times)")
+qqline(faithful$waiting)
+
+qqnorm(faithLow$waiting, pch = 20, cex = 0.75, ylab = stWaiting,
+       main = "Waiting time (eruption time < 3 min)")
+qqline(faithLow$waiting)
+
+qqnorm(faithHigh$waiting, pch = 20, cex = 0.75, ylab = stWaiting,
+       main = "Waiting time (eruption time > 3 min)")
+qqline(faithHigh$waiting)
+```
+
+## Scatter Plot and Regression
+
+Ein Scatter-Plot stellt alle Punkte zweier (oder mehrerer Variablen) dar. Dabei ist das Ziel Abhängigkeiten zwischen den Variablen einschätzen können.
+
+```{r scatter, echo=FALSE, cache=TRUE, fig.height=5, fig.cap="Scatter plots and regression lines in different data combinations.\\label{fig:scat}"}
+# Define some variables for scaling
+vecMinmaxEruption <- c(min(faithful$eruptions), max(faithful$eruptions))
+vecMinmaxWaiting  <- c(min(faithful$waiting), max(faithful$waiting))
+
+par(mfrow = c(2,3), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# 6 Scatter-Plots with regression lines and coefficients in all combinations
+
+# x: eruption, y: waiting
+
+plot(faithful$eruptions, faithful$waiting, main = "All eruption times",
+     xlab = stEruption, ylab = stWaiting)
+linRegression1 <- lm(waiting ~ eruptions, data = faithful)
+abline(linRegression1)
+
+plot(faithLow$eruptions, faithLow$waiting, main = "Eruption time < 3 min",
+     xlab = stEruption, ylab = stWaiting,
+     xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
+linRegression2 <- lm(waiting ~ eruptions, data = faithLow)
+abline(linRegression2)
+
+plot(faithHigh$eruptions, faithHigh$waiting, main = "Eruption time > 3 min",
+     xlab = stEruption, ylab = stWaiting,
+     xlim = vecMinmaxEruption, ylim = vecMinmaxWaiting)
+linRegression3 <- lm(waiting ~ eruptions, data = faithHigh)
+abline(linRegression3)
+
+# x: waiting, y: eruption
+
+plot(faithful$waiting, faithful$eruptions, main = "All eruption times",
+     xlab = stWaiting, ylab = stEruption)
+linRegression4 <- lm(eruptions ~ waiting, data = faithful)
+abline(linRegression4)
+
+plot(faithLow$waiting, faithLow$eruptions, main = "Eruption time < 3 min",
+     xlab = stWaiting, ylab = stEruption,
+     xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
+linRegression5 <- lm(eruptions ~ waiting, data = faithLow)
+abline(linRegression5)
+
+plot(faithHigh$waiting, faithHigh$eruptions, main = "Eruption time > 3 min",
+     xlab = stWaiting, ylab = stEruption,
+     xlim = vecMinmaxWaiting, ylim = vecMinmaxEruption)
+linRegression6 <- lm(eruptions ~ waiting, data = faithHigh)
+abline(linRegression6)
+```
+
+In Abbildung \ref{fig:scat} wurden Scatter Plots für alle Variablen-Kombinationen (analog zu den QQ-Plots) erstellt. Dabei wird erneut deutlich, dass es zwei Gruppen von Daten zu geben scheint. Durch die Regressionsgeraden wird zusätzlich deutlich, dass es in allen Fällen signifikante Zusammenhänge (auf einem Niveau von $\alpha = 0.05$ oder auch $\alpha = 0.01$) gibt. Die Auswertungen, d.h. die Koeffizienten, die t-Werte und die p-Werte der Regressionsanalysen, sind in den Tabelle \ref{tab:regs} zusammengefasst.
+
+```{r table1, echo=FALSE, results="asis"}
+dir.create("./tables", showWarnings = FALSE)
+print(xtable(summary(linRegression1)$coefficients),
+      file="./tables/reg1.tex", floating = FALSE)
+print(xtable(summary(linRegression2)$coefficients),
+      file="./tables/reg2.tex", floating = FALSE)
+print(xtable(summary(linRegression3)$coefficients),
+      file="./tables/reg3.tex", floating = FALSE)
+print(xtable(summary(linRegression4)$coefficients),
+      file="./tables/reg4.tex", floating = FALSE)
+print(xtable(summary(linRegression5)$coefficients),
+      file="./tables/reg5.tex", floating = FALSE)
+print(xtable(summary(linRegression6)$coefficients),
+      file="./tables/reg6.tex", floating = FALSE)
+```
+
+\begin{table}[ht]
+  \centering
+  \subfloat[Regression: waiting $\sim$ eruptions (all)]{\label{tab:reg1}\scalebox{.8}{\input{tables/reg1.tex}}}\quad
+  \subfloat[Regression: eruptions $\sim$ waiting (all)]{\label{tab:reg4}\scalebox{.8}{\input{tables/reg4.tex}}}\\
+  \subfloat[Regression: waiting $\sim$ eruptions (<3 min)]{\label{tab:reg2}\scalebox{.8}{\input{tables/reg2.tex}}}\quad
+  \subfloat[Regression: eruptions $\sim$ waiting (<3 min)]{\label{tab:reg5}\scalebox{.8}{\input{tables/reg5.tex}}}\\
+  \subfloat[Regression: waiting $\sim$ eruptions (>3 min)]{\label{tab:reg3}\scalebox{.8}{\input{tables/reg3.tex}}}\quad
+  \subfloat[Regression: eruptions $\sim$ waiting (>3 min)]{\label{tab:reg6}\scalebox{.8}{\input{tables/reg6.tex}}}
+  \caption{Regression coefficients, standard error, t values and p values}
+  \label{tab:regs}
+\end{table}
+
+## Schätzung
+
+Zuletzt kann eine Schätzung des erwarteten nächsten Ausbruchs erfolgen. Als Schätzer des Ewartungswerts wird der Mittelwert der Daten verwendet, welcher sich im Falle der Normalverteilung aus dem Maximum-Likelihood-Ansatz oder auch aus dem Kleinste-Quadrate-Ansatz ergibt. Zusätzlich wird der Standard-Fehler bestimmt, d.h.\ die geschätzte Standardabweichung des Schätzers. `R` wendet in der Funktion `var` den unverzerrten Schätzer der Varianz an, welcher durch $n-1$ teilt.
+
+```{r estimation, results="asis"}
+estAll <- mean(faithful$waiting)
+stdAll <- sqrt(var(faithful$waiting))
+estLow <- mean(faithLow$waiting)
+stdLow <- sqrt(var(faithLow$waiting))
+estHigh <- mean(faithHigh$waiting)
+stdHigh <- sqrt(var(faithHigh$waiting))
+
+print(xtable(matrix(c(estAll, estLow, estHigh, stdAll, stdLow, stdHigh),
+                    ncol = 2, dimnames = list(
+                      c("all", "<3 min", ">3 min"),
+                      c("mean", "standard error"))
+                    ),
+             caption = "Mean estimates and standard errors of waiting time"),
+      comment = FALSE)
+```
+
+Die Schätzer wurden für die drei Fälle (alle Daten, Eruptionszeit größer und kleiner 3 Minuten) berechnet und mit ihren Standard-Fehlern in Tabelle 2 dargestellt. Die Schätzer streuen weniger, wenn die Fälle einzeln betrachtet werden (lange/kurze Ausbrüche). Auch das liefert einen weiteren Hinweis für die These, dass eine getrennte Betrachtung Sinn hat.
+
+\newpage
+
+# Normalverteilung
+
+In diesem Abschnitt wollen wir verschiedene Zufallsgeneratoren, d.h.\ deterministische Algorithmen zur Erzeugung von pseudo-zufälligen Zahlen, vergleichen. Unser Ziel ist die Erzeugung von unabhängigen standard-normalverteilten (Pseudo-)Zufallszahlen $Z \sim N(0,1)$.
+
+Um die „Güte“ der erzeugten Zufallszahlen zu überprüfen verwenden wir Histogramme, QQ-Norm-Plots und zwei statistische Tests auf Normalverteilung (Kolmogorov-Smirnov-Test[^2] und Shapiro-Wilk-Test[^3]). Wir haben diese Überprüfungen in einer R-Funktion zusammengefasst:
+
+```{r fnCheckNormality}
+fnCheckNormality <- function(vecSample) {
+  # This function helps to check a sample of generated random numbers for 
+  # normality. It helps comparing different random number generators by using 
+  # histograms, qq-norm-plots, Kolmogorov-Smirnov-tests, and Shapiro-Wilk-test.
+  # 
+  # Args:
+  #   vecSample: A sample of generated random numbers
+  #   
+  # Returns:
+  #   -
+  
+  # Split plot panel
+  par(mfrow = c(1,2), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+  
+  # Plot histogram
+  hist(vecSample,
+       breaks = seq(min(vecSample), max(vecSample), length = 25),
+       probability = TRUE,
+       xlim = c(-5, 5),
+       ylim = c(0, 0.5),
+       xlab = "Samples from random number generator",
+       main = "Histogram of random samples")
+  
+  # Add density of standard normal to the plot
+  vecNorm <- seq(-5, 5, by = 0.1)
+  vecNormDensity <- dnorm(vecNorm)
+  lines(vecNorm, vecNormDensity, col = "blue")
+  legend("topright", legend = "Density of standard normal", 
+         lty = 1, col = "blue", cex = 0.75)
+  
+  # QQ-norm-plot
+  qqnorm(vecSample, ylim = c(-5, 5), cex = 0.8)
+  qqline(vecSample)
+  
+  # Perform Kolmogorov-Smirnov test
+  print(ks.test(vecSample, "pnorm"))
+  
+  # Perform Shapiro-Wilk test for normality
+  print(shapiro.test(vecSample))
+}
+```
+
+Als Benchmark überprüfen wir zunächst die in R mit der Funktion `rnorm` standardmäßig implementierte Methode zur Erzeugung standard-normalverteilter Zufallsvariablen:
+
+```{r rnormTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated with `rnorm`.\\label{fig:plotNormRnorm}"}
+# Test with rnorm-function
+set.seed(42)
+vecNorm <- rnorm(5000)
+fnCheckNormality(vecNorm)
+```
+
+Wir können sehen, dass Histogramm und Dichtefunktion der Standard-Normalverteilung sowie die theoretischen mit den empirischen Quantile sehr gut übereinstimmen. Dieser optische Eindruck wird durch die beiden statistischen Tests unterstützt: in beiden Tests liegen die p-Werte deutlich über den gewöhnlichen Signifikanzniveaus $\alpha$ von 0.05 oder 0.01. D.h.\ in beiden Tests kann die Nullhypothese, dass die Zufallszahlen normalverteilt sind, nicht abgelehnt werden.
+
+Im Folgenden wollen wir drei verschiedene Methoden zur Erzeugung von standard-normalverteilten Zufallsvariablen vergleichen. Alle drei Methoden setzen die Erzeugung von unabhängigen $U([0,1])$-verteilten Zufallsvariablen voraus, wovon wir annehmen, dass diese zuverlässig in R erzeugt werden können.[^4]
+
+## Box-Muller-Methode
+
+Die Box-Muller-Methode nutzt aus, dass für $U_1, U_2 \overset{iid}{\sim} U([0,1])$ die Transformationen $Z = Z_1 := \sqrt{-2\log U_1} \cos(2\pi U_2), Z_2 := \sqrt{-2\log U_1} \sin(2\pi U_2)$ unabhängige standard-normalverteilte Zufallsvariablen sind.[^5] Wir überprüfen $Z = Z_1$:
+
+```{r BoxMullerTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated with the Box-Muller method.\\label{fig:plotNormBoxMuller}"}
+# Generate random numbers from the standard normal using the Box-Muller-Method
+set.seed(42)
+nSamples <- 5000
+
+vecU1 <- runif(nSamples)
+vecU2 <- runif(nSamples)
+vecZ1 <- sqrt((-2)*log(vecU1)) * cos(2*pi*vecU2)
+
+# Test for normality
+fnCheckNormality(vecZ1)
+```
+
+Wiederum stimmen Histogramm und Dichtefunktion sowie die theoretischen mit den empirischen Quantilen sehr gut überein. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte deutlich größer sind.
+
+## Summe stetig gleichverteilter Zufallsvariablen
+
+Als zweite Methode wollen wir gleichverteilte Zufallszahlen $U_1, \ldots, U_m \overset{iid}{\sim} U([-1/2,1/2])$ für ein $m \in \mathbb{N}$ erzeugen und $Z = \sum_{i=1}^m U_i$ setzen. Es ist $\mathbb{E}[U_1] = 0$ und $\text{Var}(U_1) = 1/12$. Damit gilt nach dem zentralen Grenzwertsatz, dass die standardisierte Summe in Verteilung gegen die Standard-Normalverteilung konvergiert:
+
+$$
+\sqrt{\frac{12}{m}} \sum_{i = 1}^m U_i \overset{d}{\longrightarrow} N(0,1).
+$$
+
+Damit stimmt die standardisierte Summe mit der Summe $Z = \sum_{i=1}^m U_i$ für $m = 12$ überein. Wir werden nun überprüfen, ob $m = 12$ bereits hinreichend groß ist, um normalverteilte Zufallszahlen durch $Z$ zu generieren[^6]:
+
+```{r UnifSumTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated from the sum of $m = 12$ uniform random variables.\\label{fig:plotNormUnifSum}"}
+# Generate random numbers from the standard normal as sum of i.i.d. 
+# U([-0.5, 0.5])-distributed random variables
+
+set.seed(42)
+nSamples <- 5000
+m <- 12  # number of i.i.d. random variables
+
+matUnif <- matrix(runif(nSamples*m, -0.5, 0.5), ncol = m)
+vecZ2 <- apply(matUnif, 1, sum)
+
+# Test for normality
+fnCheckNormality(vecZ2)
+```
+
+Das Histogramm und Dichtefunktion sowie die theoretischen mit den empirischen Quantilen stimmen wiederum gut überein. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte größer sind. Im Vergleich zur Box-Muller-Methode sind die p-Werte der Tests jedoch kleiner. Der QQ-Norm-Plot lässt des Weiteren vermuten, dass die Tails nicht so gut übereinstimmen.
+
+## Accept-Reject-Algorithmus mit Laplace-Kandidatendichte
+
+Als letzte Methode wollen wir den Accept-Reject-Algorithmus mit der Dichte der Laplace-Verteilung
+
+$$
+g_{\alpha}(x) = \frac{\alpha}{2} \exp(-\alpha|x|), \quad \alpha > 0,
+$$
+als Kandidatendichte implementieren. Um Zufallszahlen der Laplace-Verteilung zu generieren, wenden wir die Inversionsmethode an. Für die Verteilungsfunktion $F_{\alpha}$ der Laplace-Verteilung gilt:
+
+$$
+F_{\alpha} (x) = \int_{- \infty}^x \frac{\alpha}{2} \exp(-\alpha|y|) \, dy = \begin{cases}
+\int_{- \infty}^x \frac{\alpha}{2} \exp(\alpha y) \, dy = \frac{1}{2} \exp(\alpha x) &, x < 0, \\
+\frac{1}{2} \exp(0) + \int_{0}^x \frac{\alpha}{2} \exp(-\alpha y) \, dy = 1 - \frac{1}{2} \exp(\alpha x) &, x \geq 0. \\
+\end{cases}
+$$
+
+Somit folgt für die Inverse $F^{-1}_{\alpha}$:
+
+$$
+F^{-1}_{\alpha}(u) = \begin{cases}
+\frac{1}{\alpha} \log(2u) &, u < \frac{1}{2}, \\
+-\frac{1}{\alpha} \log(2(1-u)) &, u \geq \frac{1}{2}.
+\end{cases}
+$$
+
+Um Zufallszahlen einer Zielverteilung mit Dichte $f$ zu erzeugen, muss für die Kandidatendichte $g_{\alpha}$ und eine Konstante $M$ gelten, dass $\frac{f(x)}{g(x)} \leq M$ für alle $x \in \mathbb{R}$. Da die Akzeptanzwahrscheinlichkeit im Accept-Reject-Sampling durch $\frac{1}{M}$ gegeben ist, hat es Sinn $M$ möglichst „scharf“ (d.h.\ klein) zu wählen, sodass weniger Samples abgelehnt werden. Definiere
+
+$$
+h_{\alpha}(x) := \frac{f(x)}{g_{\alpha}(x)} = \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\alpha |x| - \frac{x^2}{2}\right), \quad x \in \mathbb{R},
+$$
+da $f$ in unserer Anwendung die Dichte der Standard-Normalverteilung ist. Dann ist $h_{\alpha}$ für $|x| = \alpha$ maximal, denn
+
+$$
+\begin{aligned}
+\frac{\partial}{\partial x} h_{\alpha}(x)  = h_{\alpha}(x) \cdot (\alpha \mathbbm{1}_{(0, \infty)}(x) -\alpha \mathbbm{1}_{(-\infty,0)}(x) - x) &\overset{!}{=} 0 \\
+\iff x &= \alpha \mathbbm{1}_{(0, \infty)}(x) -\alpha \mathbbm{1}_{(-\infty,0)}(x),
+\end{aligned}
+$$
+da $h_{\alpha}(x) > 0$ für alle $x \in \mathbb{R}$.
+
+```{r hPlot1, echo = FALSE, fig.height=4, fig.cap="The function $h_{\\alpha}$ for different values of $\\alpha$.\\label{fig:ploth1}"}
+# Define function h
+h <- function(x, alpha = 1) {
+  return(sqrt(2/pi) * (1/alpha) * exp(alpha*abs(x) - (x^2)/2))
+}
+
+# Set plotting parameters
+par(ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9) 
+
+# Plot
+x <- seq(-4, 4, 0.01)
+plot(x, h(x), 
+     type = "l",
+     ylim = c(0,3),
+     xlab = "x",
+     ylab = expression(h[alpha](x)))
+lines(x, h(x, alpha = 1.5), col = "blue")
+lines(x, h(x, alpha = 2), col = "red")
+legend("topright", 
+       legend = c(expression(alpha == 1), 
+                  expression(alpha == 1.5), 
+                  expression(alpha == 2)),
+       lty = c(1, 1, 1), 
+       col = c("black", "blue", "red"),
+       cex = 0.75)
+```
+
+Somit ist $h_{\alpha}$ uniform durch $h_{\alpha}(\alpha) = \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\frac{\alpha^2}{2}\right)$ beschränkt. Weiter können wir diese Schranke in $\alpha > 0$ minimieren:
+
+$$
+\begin{aligned}
+\frac{\partial}{\partial \alpha} \left( \sqrt{\frac{2}{\pi}} \cdot \frac{1}{\alpha} \cdot \exp\left(\frac{\alpha^2}{2}\right) \right) = \sqrt{\frac{2}{\pi}} \left( 1- \frac{1}{\alpha^2} \right) \exp\left( \frac{\alpha^2}{2} \right) &\overset{!}{=} 0 \\
+\iff \alpha &= 1.
+\end{aligned}
+$$
+
+```{r hPlot2, echo = FALSE, fig.height=4, fig.cap="$h_{\\alpha}(\\alpha)$ as a function in $\\alpha$.\\label{fig:ploth2}"}
+# Define function h
+h <- function(alpha) {
+  return(sqrt(2/pi) * (1/alpha) * exp((alpha^2)/2))
+}
+
+# Set plotting parameters
+par(ps = 9,
+    cex.axis = 0.9,
+    cex.lab = 0.9) 
+
+# Plot
+alpha <- seq(0.5, 2, 0.01)
+plot(alpha, h(alpha), 
+     type = "l",
+     xlab = expression(alpha),
+     ylab = expression(h[alpha](alpha)))
+```
+
+Somit wählen wir die scharfe Schranke $M = \sqrt{\frac{2}{\pi}} \exp(0.5) \approx 1.3155$ und können den Accept-Reject-Algorithmus wie folgt implementieren:
+
+```{r AcceptRejectTest, fig.height=4, fig.cap="Histogram and QQ-Norm-plot for random numbers generated using Accept-Reject-Sampling with Laplace proposal density with $\\alpha = 1$.\\label{fig:plotNormAcceptReject}"}
+# Generate random numbers from the standard normal using the 
+# accept-reject-algorithm with Laplace proposal density
+
+# Set seed and number of samples
+set.seed(42)
+nSamples <- 5000
+
+# Define Laplace density
+g <- function(x, alpha = 1) {
+  return((alpha/2) * exp((-alpha)*  abs(x)))
+}
+
+# Define bound M efficiently
+M <- sqrt(2/pi) * exp(0.5)
+
+# Sample from U([0,1])
+vecU1 <- runif(nSamples)
+
+# Sample from the Laplace distibution using the inversion-method
+alpha <- 1
+vecU2 <- runif(nSamples)
+vecLaplace <- rep(0, nSamples)
+vecLaplace[vecU2 < 0.5] <- (1/alpha) * log(2*vecU2[vecU2 < 0.5])
+vecLaplace[vecU2 >= 0.5] <- (-1/alpha) * log(2*(1-vecU2[vecU2 >= 0.5]))
+
+# Accept or reject?
+vecZ3 <- vecLaplace[vecU1 <= dnorm(vecLaplace)/(M * g(vecLaplace))]
+
+# Acceptance ratio
+fAcceptRatio <- length(vecZ3) / nSamples
+
+# Test for normality
+fnCheckNormality(vecZ3)
+```
+
+Die Akzeptanzrate `fAcceptRatio` liegt bei `r fAcceptRatio`. D.h.\ es müssen im Schnitt etwa vier Zufallszahlen bzgl.\ $g_1$ erzeugt werden um drei standard-normalverteilte Zufallszahlen zu erhalten.
+
+Wir sehen wiederum, dass Histogramm und Dichtefunktion sowie die theoretischen und empirischen Quantile sehr gut übereinstimmen. Auch die Tests können zum Signifikanzniveau $\alpha = 0.05$ oder $\alpha = 0.01$ nicht abgelehnt werden, da die p-Werte größer sind.
+
+## Vergleich der Methoden
+
+Wir haben gesehen, dass für alle drei Methoden sowohl die Kolmogorov-Smirnov-Tests als auch die Shapiro-Wilk-Tests zu üblichen Signifikanzniveaus ($\alpha = 0.05$ oder $\alpha = 0.01$) nicht abgelehnt werden können. D.h.\ es gibt für keine der Methoden statistisch signifikante Evidenz die gegen standard-normalverteilte Zufallszahlen sprechen würde.
+
+Abschließend wollen wir noch die Tails der durch die drei verschiedenen Methoden sowie der durch `rnorm` erzeugten Samples vergleichen. Abbildung \ref{fig:plotTails} zeigt QQ-Norm-Plots für Werte außerhalb von $[-2, 2]$. Wir können sehen, dass im Falle von Methode 2 (Summe von $m = 12$ unabhängigen und identisch-verteilten $U([-1/2, 1/2])$ Zufallsvariablen) die Tails systematisch kürzer zu sein scheinen. Das liegt daran, dass es sich hierbei nicht um eine transformative (wie beispielsweise Box-Muller), sondern eine approximative Methode handelt, welcher der zentrale Grenzwertsatz zugrunde liegt. Die Werte für Methode 2 sind auf $[-m/2, m/2] = [-6,6]$ beschränkt, was eine „Stauchung“ der Verteilung bewirkt.
+
+```{r TailPlots, echo=FALSE, fig.height=4, fig.cap="QQ-Norm-Plots for lower and upper tails of the different random number generation methods.\\label{fig:plotTails}"}
+# Set plot parameters
+par(mfrow = c(2,4), ps = 9, cex.axis = 0.9, cex.lab = 0.9)
+
+# Plot lower tails
+qqnorm(vecNorm, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75, main = "rnorm")
+qqline(vecNorm)
+qqnorm(vecZ1, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75,
+       main = "Box-Muller")
+qqline(vecZ1)
+qqnorm(vecZ2, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75, 
+       main = "Sum of uniforms")
+qqline(vecZ2)
+qqnorm(vecZ3, xlim = c(-5, -2), ylim = c(-5, -2), cex = 0.75, 
+       main = "Accept-Reject-Algorithm")
+qqline(vecZ3)
+
+# Plot upper tails
+qqnorm(vecNorm, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75, main = "rnorm")
+qqline(vecNorm)
+qqnorm(vecZ1, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75,
+       main = "Box-Muller")
+qqline(vecZ1)
+qqnorm(vecZ2, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75, 
+       main = "Sum of uniforms")
+qqline(vecZ2)
+qqnorm(vecZ3, xlim = c(2, 5), ylim = c(2, 5), cex = 0.75, 
+       main = "Accept-Reject-Algorithm")
+qqline(vecZ3)
+```
+
+
+<!--Footnotes-->
+[^1]: Eine effizientere Implementierung wäre je Schleifendurchlauf eine größere Anzahl an Zeichen zu generieren und den resultierenden Zeichen-Block mit einem Fenster nach `strTarget` zu durchsuchen. Dabei muss beachtet werden, dass `strTarget` auch in der Überlappung zweier Blöcke erscheinen könnte. Für unsere Untersuchung ist eine vereinfachte (ineffiziente) Implementierung jedoch ausreichend. Für große Samples oder einen langen String `strTarget` sollte jedoch auf jeden Fall eine effizientere Implementierung herangezogen werden.
+[^2]: <https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test>
+[^3]:<https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test>
+[^4]: Die Methoden zur Erzeugung von Zufallszahlen in R finden sich in der Dokumentation unter „RNG“ (Random Number Generation), welche auch unter <https://stat.ethz.ch/R-manual/R-devel/library/base/html/Random.html> eingesehen werden kann.
+[^5]: Es ist $(Z_1, Z_2) = (R \cos(2\pi U_2), R \sin(2\pi U_2))$ die Polarkoordinatentransformation mit Radius $R := \sqrt{-2\log U_1}$. Die Aussage lässt sich dann mit Hilfe des Dichtetransformationssatzes nachweisen.
+[^6]: Ein bekanntes Resultat über die Güte der Konvergenz im zentralen Grenzwertsatz ist der Satz von Berry-Esseen. Dieser besagt (in einfacher Form), dass wenn das dritte absolute Moment existiert (was in unserem Fall zutrifft), die Konvergenzrate der Ordnung $n^{-\frac{1}{2}}$ ist. (<https://en.wikipedia.org/wiki/Berry%E2%80%93Esseen_theorem>)
