@@ -95,6 +95,84 @@ meanStepsHeart <- fnMCMeanSteps1(17, mu, P, tailProb = 10^-5)
 
 # Poisson-Prozess
 
+```{r Read data}
+N <- as.matrix(read.csv("data/traffic.csv", header = TRUE))
+
+# Get vector of 96 data points
+Nt <- as.vector(t(N[,2:5]))
+
+# Calculate lambda tilde and lambda as function of t
+lambdaTildeT <- Nt
+lambdaT <- 1.2 * lambdaTildeT
+
+fnSimulatePoisson <- function(lambdaT, nSimulations = 10000) {
+  # Get random poisson distributed values for nSimulations days
+  vSimulated <- rpois(length(lambdaT)*nSimulations, lambdaT)
+  # Split data into matrix of form: mSplitted[day, quarter-hour]
+  # where day goes from 1 to nSimulations and quater-hour from 1 to 96
+  mSplitted <- t(matrix(simulated, nrow=96, ncol=nSimulations))
+  
+  return(mSplitted)
+}
+
+splitted <- fnSimulatePoisson(lambdaT)
+
+# task 1
+meanCarsPerDay <- mean(rowSums(splitted))
+
+# task 2
+thousandsCar <- NULL
+for(i in 1:nSimulations) {
+  cumsumDay <- cumsum(splitted[i,])
+  # You leave "floor" here
+  # It's not clear if floor should ne applies only for mean, or also here.
+  # Howeever, in the end the results seems to be the same
+  thousandsCar[i] <- floor(max(which(cumsumDay <= 1000))/4)
+}
+
+meanThousandsCar <- floor(mean(thousandsCar))
+
+# task 3
+# Time between 1:30 and 1:45 is at position 7
+meanCarsAtNightQuarter <- mean(as.vector(splitted[,7]))
+# The result is 0, which we can easily explain as lambda is 0 in this timeslot
+# More input data, to have a more precise model, would possibly change this
+
+# task 4/5
+maxTrafficPeriodIndices <- NULL
+maxTrafficPeriodValues <- NULL
+for(i in 1:nSimulations) {
+  cumsumDay <- cumsum(splitted[i,])
+  
+  # Initialize new vector
+  sumHourlyPeriod <- NULL
+  
+  # Run from 0.0 to 23.0
+  for(j in 1:(length(cumsumDay)-4)) {
+    sumHourlyPeriod[j] <- cumsumDay[j+4] - cumsumDay[j]
+  }
+  
+  # Get maximum position and store in vector
+  maxTrafficPeriodIndices[i] <- which.max(sumHourlyPeriod)
+  maxTrafficPeriodValues[i] <- max(sumHourlyPeriod)
+}
+
+hist(maxTrafficPeriodIndices,
+     breaks = max(maxTrafficPeriodIndices)-min(maxTrafficPeriodIndices),
+     main = paste("Histogramm bzgl. ", nSimulations, "Simulationen"),
+     xlab = "Einstündige Periode mit maximalem Traffic", ylab = "Häufigkeit")
+grid()
+# where eg. 30 is the time period between 07:15 - 08:15,
+# 31 is 07:30 - 08:30, and so on
+
+# task 5
+hist(maxTrafficPeriodsValues,
+     main = paste("Histogramm bzgl. ", nSimulations, "Simulationen"),
+     xlab = paste("Anzahl der vorbeifahrende Fahrzeuge in einstündiger Periode",
+                  "mit maximalem Traffic"),
+     ylab = "Häufigkeit")
+grid()
+```
 
 # Der betrunkene Vogel
 
