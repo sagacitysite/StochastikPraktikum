@@ -95,6 +95,106 @@ meanStepsHeart <- fnMCMeanSteps1(17, mu, P, tailProb = 10^-5)
 
 # Poisson-Prozess
 
+```{r Read Data}
+N <- as.matrix(read.csv("data/traffic.csv", header = TRUE))
+
+# Get vector of 96 data points
+Nt <- as.vector(t(N[,2:5]))
+
+# Calculate lambda tilde and lambda as function of t
+lambdaTildeT <- Nt
+lambdaT <- 1.2 * lambdaTildeT
+```
+
+```{r Simulate Poisson Traffic}
+fnSimulatePoisson <- function(lambda, n) {
+  # This function simulates poisson values based on vector of parameters lambda
+  # 
+  # Args:
+  #   lambda:   Vector of parameters for poisson distribution
+  #   n:        Number of simulations
+  #   
+  # Returns:
+  #   Simulated vectors as matrix, where every row is a simulation of one day
+  #   therefore the matrix as n rows.
+  
+  # Get random poisson distributed values for n days
+  vSimulated <- rpois(length(lambda)*n, lambda)
+  
+  # Split data into matrix of form: mSplitted[day, quarter-hour]
+  # where day goes from 1 to n and quater-hour from 1 to 96
+  mSplitted <- t(matrix(vSimulated, nrow=length(lambda), ncol=n))
+  
+  return(mSplitted)
+}
+
+# Define number of simulations
+nSimulations = 10000
+
+# Run poisson simulation, based on parameter values from traffic.csv
+mSimulation <- fnSimulatePoisson(lambdaT, nSimulations)
+```
+
+```{r Evaluate Results}
+## Task 1
+meanCarsPerDay <- mean(rowSums(mSimulation))
+
+## Task 2
+thousandsCar <- NULL
+for(i in 1:nSimulations) {
+  # Calculate cumulative sums per day (per simulation)
+  cumsumDay <- cumsum(mSimulation[i,])
+  
+  # It's not clear if floor should ne applies only for mean, or also here
+  # However, in the end the results seems to be the same
+  thousandsCar[i] <- floor(max(which(cumsumDay <= 1000))/4)
+}
+
+meanThousandsCar <- floor(mean(thousandsCar))
+
+## Task 3
+# Time between 1:30 and 1:45 is at position 7
+meanCarsAtNightQuarter <- mean(as.vector(mSimulation[,7]))
+# The result is 0, which we can easily explain as lambda is 0 in this timeslot
+# More input data, to have a more precise model, would possibly change this
+
+## Task 4/5
+maxTrafficPeriodIndices <- NULL
+maxTrafficPeriodValues <- NULL
+for(i in 1:nSimulations) {
+  # Calculate cumulative sums per day (per simulation)
+  cumsumDay <- cumsum(mSimulation[i,])
+  
+  # Initialize new vector
+  sumHourlyPeriod <- NULL
+  
+  # Run from 0.0 to 23.0
+  for(j in 1:(length(cumsumDay)-4)) {
+    sumHourlyPeriod[j] <- cumsumDay[j+4] - cumsumDay[j]
+  }
+  
+  # Get maximum position and store in vector
+  maxTrafficPeriodIndices[i] <- which.max(sumHourlyPeriod)
+  maxTrafficPeriodValues[i] <- max(sumHourlyPeriod)
+}
+
+par(mfrow = c(1,2))
+
+hist(maxTrafficPeriodIndices,
+     breaks = max(maxTrafficPeriodIndices)-min(maxTrafficPeriodIndices),
+     main = paste("4) Histogramm bzgl. ", nSimulations, "Simulationen"),
+     xlab = "Einstündige Periode mit maximalem Traffic", ylab = "Häufigkeit")
+grid()
+# where eg. 30 is the time period between 07:15 - 08:15,
+# 31 is 07:30 - 08:30, and so on
+
+hist(maxTrafficPeriodValues,
+     main = paste("5) Histogramm bzgl. ", nSimulations, "Simulationen"),
+     xlab = paste("Anzahl der vorbeifahrende Fahrzeuge in einstündiger Periode",
+                  "mit maximalem Traffic"),
+     ylab = "Häufigkeit")
+grid()
+```
 
 # Der betrunkene Vogel
 
