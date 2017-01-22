@@ -27,6 +27,8 @@ output:
 
 ```{r setup, include=FALSE}
 # Load libraries
+# shit's getting serious
+library('ggplot2')
 ```
 
 # Markovketten zur Modellierung von Krebswachstum
@@ -250,6 +252,71 @@ grid()
 ```
 
 # Der betrunkene Vogel
+
+In dieser Aufgabe beschäftigen wir uns mit dem Unterschied in State Recurrence zwischen zwei- und dreidimensionalen Random Walks.
+Anders gesagt: Ein betrunkener Mensch (d=2) findet meist nach Hause, ein betrunkener Vogel (d=3) aber vielleicht nicht.
+
+Dazu betrachten wir eine brownsche Bewegung $B_t$, die vom Punkt x ausgeht...
+
+```{r simulate drunk bird and human}
+# TODO: only use positive values on z-axis!
+# TODO: enable other destinations than 0 (or not, actually)
+# TODO: find a good way to make the 3d line plot for the bird
+# TOO: add MonteCarlo wrapper function for the simulation
+
+# check if library is there
+require('ggplot2')
+
+fnRandomWalk <- function(d, x, N, dx) {
+  # This function generates a random walk of dimension d
+  #
+  #
+  dfWalk = data.frame(matrix(nrow=N, ncol=d+1))
+  
+  n=1
+  pos=x
+  dfWalk[1,1:d] = pos
+  dist = sqrt(sum(pos*pos))
+  dfWalk[1,d+1] = dist
+  
+  
+  while(n<N && dist>dx) {
+    # Thi is the loop handling the random walk
+
+    rstep <- c(round(rnorm(d),2))
+    pos = pos+rstep
+    dist <- sqrt(sum(pos*pos))
+    dfWalk[n+1,1:d] = pos+rstep
+    dfWalk[n+1,d+1] = dist
+    n = n+1 
+  }
+  
+  # na.omit ist necessary to handle random walks exiting after n<N (made it home)
+  return(na.omit(dfWalk))
+}
+
+set.seed(2567)
+
+human1 <- fnRandomWalk(2, c(10,10), 1000, 3)
+p1 <- ggplot(human1, aes(x=human1[1], y=human1[2], color=human1[3])) + geom_path()
+p1
+
+bird1 <- fnRandomWalk(3, c(10,10,10), 1000, 3)
+p2 <- ggplot(bird1, aes(x=bird1[1], y=bird1[2], z=bird1[3], color=bird1[4])) + geom_path()
+p2
+
+fnRandomMC <- function(nSamples, nSim) {
+  # This is the MC wrapper function for the random walk simulation
+  #
+  #
+  a <- NULL
+  for (i in nSim) {
+    
+    
+  }
+}
+
+```
 
 
 # Geometrische Brownsche Bewegung und Option Pricing
