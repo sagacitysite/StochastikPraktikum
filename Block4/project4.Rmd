@@ -258,9 +258,8 @@ Anders gesagt: Ein betrunkener Mensch (d=2) findet meist nach Hause, ein betrunk
 
 Dazu betrachten wir eine brownsche Bewegung $B_t$, die vom Punkt x ausgeht...
 
-```{r simulate drunk bird and human}
+```{r illustrate drunk bird and human}
 # TODO: only use positive values on z-axis!
-# TODO: enable other destinations than 0 (or not, actually)
 # TODO: find a good way to make the 3d line plot for the bird
 # TOO: add MonteCarlo wrapper function for the simulation
 
@@ -279,10 +278,8 @@ fnRandomWalk <- function(d, x, N, dx) {
   dist = sqrt(sum(pos*pos))
   dfWalk[1,d+1] = dist
   
-  
   while(n<N && dist>dx) {
     # Thi is the loop handling the random walk
-
     rstep <- c(round(rnorm(d),2))
     pos = pos+rstep
     dist <- sqrt(sum(pos*pos))
@@ -290,22 +287,41 @@ fnRandomWalk <- function(d, x, N, dx) {
     dfWalk[n+1,d+1] = dist
     n = n+1 
   }
-  
   # na.omit ist necessary to handle random walks exiting after n<N (made it home)
   return(na.omit(dfWalk))
 }
 
 set.seed(2567)
+humanWalk <- fnRandomWalk(2, c(10,10), 1000, 3)
 
-human1 <- fnRandomWalk(2, c(10,10), 1000, 3)
-p1 <- ggplot(human1, aes(x=human1[1], y=human1[2], color=human1[3])) + geom_path()
+# Plotting
+sf <- data.frame(X=10, Y=10)
+sff <- data.frame(X=0, Y=0)
+p1 <- ggplot(humanWalk, aes(x=X1, y=X2, color=X3)) +
+    geom_path() +
+    geom_point(data=sf,aes(X,Y),colour='red',size=4) +
+    geom_point(data=sff,aes(X,Y),colour='green',size=4)
 p1
 
-bird1 <- fnRandomWalk(3, c(10,10,10), 1000, 3)
-p2 <- ggplot(bird1, aes(x=bird1[1], y=bird1[2], z=bird1[3], color=bird1[4])) + geom_path()
+# Plotting 2
+birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
+p2 <- ggplot(birdWalk, aes(x=X1, y=X2, z=X3, color=X4)) +
+    geom_path()
 p2
 
-fnRandomMC <- function(nSamples, nSim) {
+```
+
+In the plots we see an example of each random walk.
+bla
+bla
+bla
+
+## Monte Carlo simulation of random walks
+
+Now we move on to simulating the random walk in d=2 and d=3, and its state recurrence, via a Monte Carlo simulation
+```{r Simulate random walks}
+
+fnRandomWalkMC <- function(nSamples, nSim) {
   # This is the MC wrapper function for the random walk simulation
   #
   #
