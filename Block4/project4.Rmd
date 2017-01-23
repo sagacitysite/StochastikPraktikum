@@ -266,7 +266,7 @@ Dazu betrachten wir eine brownsche Bewegung $B_t$, die vom Punkt x ausgeht...
 # check if library is there
 require('ggplot2')
 
-fnRandomWalk <- function(d, x, N, dx) {
+fnRandomWalk <- function(d, x, N, R) {
   # This function generates a random walk of dimension d
   #
   #
@@ -278,7 +278,7 @@ fnRandomWalk <- function(d, x, N, dx) {
   dist = sqrt(sum(pos*pos))
   dfWalk[1,d+1] = dist
   
-  while(n<N && dist>dx) {
+  while(n<N && R<dist) {
     # Thi is the loop handling the random walk
     rstep <- c(round(rnorm(d),2))
     pos = pos+rstep
@@ -321,16 +321,29 @@ bla
 Now we move on to simulating the random walk in d=2 and d=3, and its state recurrence, via a Monte Carlo simulation
 ```{r Simulate random walks}
 
-fnRandomWalkMC <- function(nSamples, nSim) {
+fnRandomWalkMC <- function(nSim, nSamples, R) {
   # This is the MC wrapper function for the random walk simulation
   #
-  #
-  a <- NULL
+  # ongoing dev:
+  # for each number in nSim, simulate nSamples random walks and store their exit status
+  # todo: add % of "got home" walks to dfRand as column, use X1 column for values of nSim
+  dfRand <- data.frame(...)
   for (i in nSim) {
-    
+    dfB <- NULL
+    dfH <- NULL
+    for (j in nSamples) {
+      dfB[j] <- dim(fnRandomWalk(2, startpos[1:2], i, R))[[1]]
+      dfH[j] <- dim(fnRandomWalk(3, startpos[1:3], i, R))[[1]]
+    }
+    dfRand[something] <- c(i, sum(dfB<i)/nSamples, sum(dfH<i)/nSamples)
     
   }
+  return(dfRand)
 }
+
+#startpos <- c(10,10,10)
+#nSim <- c(10, 50, 100, 200, 500, 1000, 2000, 4000, 6000, 10000)
+#dfMC <- fnRandomWalkMC(nSim, 30, 3)
 
 ```
 
