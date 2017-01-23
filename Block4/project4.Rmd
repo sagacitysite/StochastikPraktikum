@@ -2,27 +2,28 @@
 title: "Projektaufgaben Block 4"
 author: "Carlo Michaelis, 573479; David Hinrichs, 572347; Lukas Ruff, 572521"
 date: "31 Januar 2017"
-documentclass: article
-fontsize: 10pt
-header-includes:
-  - \usepackage{amsthm}
-  - \usepackage{amssymb}
-  - \usepackage{amsmath}
-  - \DeclareMathOperator*{\argmin}{argmin}
-  - \usepackage{MnSymbol}
-  - \usepackage{bbm}
-  - \usepackage{subfig}
-  - \usepackage{theoremref}
-  - \newtheorem{satz}{Satz}
-  - \newcommand{\E}{\mathbb{E}}
-  - \newcommand{\Var}{\text{Var}}
-  - \newcommand{\tr}{\text{tr}}
-output: 
+output:
   pdf_document:
+    fig_caption: yes
+    keep_tex: yes
     latex_engine: pdflatex
-    keep_tex: true
-    fig_caption: true
-    number_sections: true
+    number_sections: yes
+  html_document: default
+header-includes:
+- \usepackage{amsthm}
+- \usepackage{amssymb}
+- \usepackage{amsmath}
+- \DeclareMathOperator*{\argmin}{argmin}
+- \usepackage{MnSymbol}
+- \usepackage{bbm}
+- \usepackage{subfig}
+- \usepackage{theoremref}
+- \newtheorem{satz}{Satz}
+- \newcommand{\E}{\mathbb{E}}
+- \newcommand{\Var}{\text{Var}}
+- \newcommand{\tr}{\text{tr}}
+fontsize: 10pt
+documentclass: article
 ---
 
 ```{r setup, include=FALSE}
@@ -259,9 +260,10 @@ Anders gesagt: Ein betrunkener Mensch (d=2) findet meist nach Hause, ein betrunk
 Dazu betrachten wir eine brownsche Bewegung $B_t$, die vom Punkt x ausgeht...
 
 ```{r illustrate drunk bird and human}
-# TODO: only use positive values on z-axis!
+# TODO: only use positive values on z-axis?
 # TODO: find a good way to make the 3d line plot for the bird
-# TOO: add MonteCarlo wrapper function for the simulation
+# TODO: this could be way more efficient, right now we
+# create a dataframe for each random walk (necessary for first plots, but not for MC)
 
 # check if library is there
 require('ggplot2')
@@ -293,62 +295,92 @@ fnRandomWalk <- function(d, x, N, R) {
 
 set.seed(2567)
 humanWalk <- fnRandomWalk(2, c(10,10), 1000, 3)
+birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
+```
 
-# Plotting
-sf <- data.frame(X=10, Y=10)
-sff <- data.frame(X=0, Y=0)
+## Plots für Menschen und Vogel
+
+Mensch und Vogel besuchen die gleiche Kneipe (die des Vogels liegt auf dem Dach der Bar), und torkeln nach getanem Werk nach Hause:
+
+```{r human walk, echo=FALSE}
+# Plotting human random walk
+start <- data.frame(X=10, Y=10, Z=10)
+goal <- data.frame(X=0, Y=0, Z=10)
 p1 <- ggplot(humanWalk, aes(x=X1, y=X2, color=X3)) +
     geom_path() +
-    geom_point(data=sf,aes(X,Y),colour='red',size=4) +
-    geom_point(data=sff,aes(X,Y),colour='green',size=4)
+    geom_point(data=start,aes(X,Y),colour='red',size=4) +
+    geom_point(data=goal,aes(X,Y),colour='green',size=4)
 p1
+```
 
-# Plotting 2
+Der Mensch muss sich nur in $R²$ bewegen...
+
+```{r bird walk, echo=FALSE}
+# Plotting bird random walk
 birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
-p2 <- ggplot(birdWalk, aes(x=X1, y=X2, z=X3, color=X4)) +
-    geom_path()
+p2 <- ggplot(birdWalk, aes(x=X1, y=X2, color=X4)) +
+    geom_path() +
+    geom_point(data=start,aes(X,Y),colour='red',size=4) +
+    geom_point(data=goal,aes(X,Y),colour='green',size=4)
 p2
 
 ```
 
-In the plots we see an example of each random walk.
-bla
-bla
-bla
+während der Vogel in $R³$ Probleme bekommt.
 
-## Monte Carlo simulation of random walks
 
-Now we move on to simulating the random walk in d=2 and d=3, and its state recurrence, via a Monte Carlo simulation
+## Monte Carlo
+
+Jetzt simulieren wir den random walk für d=2 und d=3 mit einer Monte Carlo Simulation
 ```{r Simulate random walks}
 
 fnRandomWalkMC <- function(nSim, nSamples, R) {
   # This is the MC wrapper function for the random walk simulation
   #
-  # ongoing dev:
-  # for each number in nSim, simulate nSamples random walks and store their exit status
-  # todo: add % of "got home" walks to dfRand as column, use X1 column for values of nSim
-  dfRand <- data.frame(...)
-  for (i in nSim) {
-    dfB <- NULL
+  #
+  
+  dfRand <- data.frame(matrix(nrow=length(nSim), ncol=3))
+  for (i in 1:length(nSim)) {
     dfH <- NULL
-    for (j in nSamples) {
-      dfB[j] <- dim(fnRandomWalk(2, startpos[1:2], i, R))[[1]]
-      dfH[j] <- dim(fnRandomWalk(3, startpos[1:3], i, R))[[1]]
+    dfB <- NULL
+    for (j in 1:nSamples) {
+      dfH[j] <- dim(fnRandomWalk(2, startpos[1:2], nSim[i], R))[[1]]
+      dfB[j] <- dim(fnRandomWalk(3, startpos[1:3], nSim[i], R))[[1]]
     }
-    dfRand[something] <- c(i, sum(dfB<i)/nSamples, sum(dfH<i)/nSamples)
+    dfRand[i,] <- c(nSim[i], sum(dfH<nSim[i])/nSamples, sum(dfB<nSim[i])/nSamples)
     
   }
   return(dfRand)
 }
 
-#startpos <- c(10,10,10)
-#nSim <- c(10, 50, 100, 200, 500, 1000, 2000, 4000, 6000, 10000)
-#dfMC <- fnRandomWalkMC(nSim, 30, 3)
-
+# simulate
+#################################### Runtime for this is about 60 sec.
+ptbegin <- proc.time()
+startpos <- c(10,10,10)
+nSim <- c(10, 50, 100, 200, 500, 1000)#, 2000, 5000, 10000)
+dfMC <- fnRandomWalkMC(nSim, 100, 3)
+ptend <- proc.time() - ptbegin
+####################################
 ```
 
+```{r plot MC, echo=FALSE}
+plotMC <- ggplot(dfMC, aes(x=X1, y=X2, color='human')) +
+        geom_line() +
+        geom_line(aes(x=X1, y=X3, color='bird')) +
+        scale_x_log10()
+plotMC
+  
+```
+
+Die y-Achse zeigt den %-Anteil an random walks, die nach Hause führen. Die x-Achse zeigt die Anzahl der erlaubten Schritte (logarithmisch)
 
 # Geometrische Brownsche Bewegung und Option Pricing
+
+test
+```{r}
+#test
+```
+
 
 
 
