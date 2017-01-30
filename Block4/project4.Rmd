@@ -28,14 +28,16 @@ documentclass: article
 
 ```{r setup, include=FALSE}
 # Load libraries
-# shit's getting serious
 library('ggplot2')
+library(xtable)
 ```
 
 # Markovketten zur Modellierung von Krebswachstum
 
+Lade die Übergangsmatrix $P$ aus der Datei `cancer.csv`:
+
 ```{r Read data}
-# Read data
+# Read transition matrix
 P <- as.matrix(read.csv("data/lungcancer.csv"))
 nStates <- dim(P)[1]
 
@@ -43,9 +45,20 @@ nStates <- dim(P)[1]
 apply(P, 1, sum)
 ```
 
+Um die mittlere Anzahl von Schritten $\E[\tau_x]$ für Position $x \in \{1,\ldots,50\}$ zu approximieren, implementieren wir zwei Methoden. In Methode 1 nutzen wir aus, dass 
+\[
+  \mathbb{P}(\tau_x = k) = \sum_{i,j \not = x} \tilde{P}_{ij}^{k-1} P_{jx} \mu(i)
+\]
+gilt, um mittels
+\[
+  \E[\tau_x] =\sum_{k=0}^\infty k \mathbb{P}(\tau_x = k)
+\]
+die mittlere Anzahl von Schritten zu approximieren, wobei $\mu$ die Anfangsverteilung und $P$ die Übergangsmatrix ist. $(\tilde{P}_{ij})$ bezeichnet die Übergangsmatrix $P$, wenn die $x$-te Spalte und die $x$-te Zeile von $P$ durch Nullen ersetzt werden, mit $\tilde{P}^{k-1} = \tilde{P}^{k-2}\tilde{P}$.
+
 ```{r Mean number of steps for cancer to reach position (Method 1)}
 # Method 1
-fnMCMeanSteps1 <- function(x, mu, P, tailProb = 0.01){
+
+fnMCMeanSteps1 <- function(x, mu, P, tailProb = 10^-3){
   # This function computes the mean number of steps needed to reach state x for
   # a Markov chain defined with initial distribution mu and transition matrix P.
   # 
@@ -84,19 +97,11 @@ fnMCMeanSteps1 <- function(x, mu, P, tailProb = 0.01){
 }
 ```
 
-```{r Test Method 1}
-# Define initial distribution (always begin in state 23 (Lung))
-mu <- rep(0, nStates)
-mu[23] <- 1
-
-# Expected steps to reach certain position
-meanStepsBladder <- fnMCMeanSteps1(5, mu, P, tailProb = 10^-5)
-meanStepsBrain <- fnMCMeanSteps1(7, mu, P, tailProb = 10^-5)
-meanStepsHeart <- fnMCMeanSteps1(17, mu, P, tailProb = 10^-5)
-```
+In Methode 2 simulieren wir 10.000 Markovketten und approximieren $\E[\tau_x]$ durch Mittelwertbildung. Dabei wählen wir einen maximalen Zeithorizont $T$ und berücksichtigen nur Pfade bei denen die Position $x$ auch erreicht wird.
 
 ```{r Mean number of steps for cancer to reach position (Method 2)}
 # Method 2
+
 fnMCMeanSteps2 <- function(x, mu, P, T = 1000){
   # This function computes the mean number of steps needed to reach state x for
   # a Markov chain defined with initial distribution mu and transition matrix P.
@@ -116,36 +121,72 @@ fnMCMeanSteps2 <- function(x, mu, P, T = 1000){
   nStates <- length(mu)
   nSim <- 10^4
   
-  # Initialize matrix for markov chains
-  matSteps <- matrix(nrow = nSim, ncol = T)
+  # Initialize vector to hold number of steps taken to reach state x for the
+  # first time for each simulated markov chain
+  vSteps <- vector(mode = "integer", length = nSim)
   
-  # Sample initial state with mu
-  matSteps[, 1] <- sample(1:nStates, nSim, replace = TRUE, prob = mu)
-  
-  # Write sub-function for state-dependend sampling to use with sapply
-  fnMCStep <- function(state){
-    return(sample(1:nStates, 1, prob = P[state, ]))
-  }
-  
-  # Simulate markov chains
-  for (i in 2:T){
-    matSteps[, i] <- sapply(matSteps[, i-1], fnMCStep)
-  }
-  
-  # Get steps needed to reach state x the first time for each simulation
-  # Again, we use a sub-function that can be used with apply
-  fnFirstTime <- function(mc){
-    # Args:
-    #   mc: markov chain (vector)
+  # Start simulation of nSim markov chains with a maximum number of T steps
+  for (n in 1:nSim){
+    # Sample first state
+    state <- sample(1:nStates, 1, prob = mu)
     
-    return(which(mc == x)[1])  # returns NA, if state x is not reached at all
+    for (t in 2:T+1){
+      if (state == x){
+        # break if state is x
+        vSteps[n] <- t-1  # store number of steps
+        break
+      } else if (t == T+1) {
+        # catch if state x has not been reached in T steps with NA
+        vSteps[n] <- NA
+        break
+      }
+      
+      # sample next state depending on current state
+      state <- sample(1:nStates, 1, prob = P[state, ])
+    }
   }
-  
-  mean <- mean(apply(matSteps, 1, fnFirstTime), na.rm = TRUE)
-  
+
   # Return mean
-  return(mean)
+  return(mean(vSteps, na.rm = TRUE))
 }
+```
+
+```{r Test Methods, cache = TRUE}
+# Define initial distribution (always begin in state 23 (Lung))
+mu <- rep(0, nStates)
+mu[23] <- 1
+
+# Expected number of steps to reach certain positions (Bladder, Brain, Heart)
+ 
+# Method 1
+startTime <- Sys.time()
+meanStepsBladder1 <- fnMCMeanSteps1(5, mu, P, tailProb = 10^-5)
+meanStepsBrain1 <- fnMCMeanSteps1(7, mu, P, tailProb = 10^-5)
+meanStepsHeart1 <- fnMCMeanSteps1(17, mu, P, tailProb = 10^-5)
+endTime  <- Sys.time()
+timeMethod1 <- endTime - startTime
+
+# Method 2
+set.seed(42)
+startTime <- Sys.time()
+meanStepsBladder2 <- fnMCMeanSteps2(5, mu, P, T = 10000)
+meanStepsBrain2 <- fnMCMeanSteps2(7, mu, P, T = 10000)
+meanStepsHeart2 <- fnMCMeanSteps2(17, mu, P, T = 10000)
+endTime  <- Sys.time()
+timeMethod2 <- endTime - startTime
+```
+
+Methode 1 benötigte **`r round(as.double(timeMethod1, units = "secs"), 1)` Sekunden**, wohingegen Methode 2  **`r round(as.double(timeMethod2, units = "mins"), 1)` Minuten** für die Approximation benötigte. Die Ergebnisse für Blase, Gehirn und Herz sind in folgender Tabelle zusammengefasst:
+
+```{r Results Table, echo = FALSE, results = "asis"}
+print(xtable(matrix(c(meanStepsBladder1, meanStepsBrain1, meanStepsHeart1,
+                      meanStepsBladder2, meanStepsBrain2, meanStepsHeart2),
+                    ncol = 2, dimnames = list(
+                      c("Bladder", "Brain", "Heart"),
+                      c("Method 1", "Method 2"))
+                    ),
+             caption = "Expected number of steps to reach position in body."),
+      comment = FALSE)
 ```
 
 
