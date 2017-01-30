@@ -448,9 +448,9 @@ sigma <- 0.2
 X0 <- 100
 K <- 100
 C <- list()
-
-
-
+# MC funktioniert noch nicht, und Euler verwirrt mich die Formel atm
+#
+#
 
 ############# Black-Scholes
 d1 <- 1/(sigma*sqrt(TCall))*(log(X0/K)+(r+(0.5*sigma^2))*TCall)
