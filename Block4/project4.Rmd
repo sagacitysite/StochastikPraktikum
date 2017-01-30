@@ -176,7 +176,7 @@ endTime  <- Sys.time()
 timeMethod2 <- endTime - startTime
 ```
 
-Methode 1 benötigte `r round(as.double(timeMethod1, units = "secs"), 1)` Sekunden, wohingegen Methode 2 `r round(as.double(timeMethod2, units = "secs"), 1)` Sekunden für die Approximation benötigte. Die Ergebnisse für Blase, Gehirn und Herz sind in folgender Tabelle zusammengefasst:
+Methode 1 benötigte **`r round(as.double(timeMethod1, units = "secs"), 1)` Sekunden**, wohingegen Methode 2  **`r round(as.double(timeMethod2, units = "mins"), 1)` Minuten** für die Approximation benötigte. Die Ergebnisse für Blase, Gehirn und Herz sind in folgender Tabelle zusammengefasst:
 
 ```{r Results Table, echo = FALSE, results = "asis"}
 print(xtable(matrix(c(meanStepsBladder1, meanStepsBrain1, meanStepsHeart1,
