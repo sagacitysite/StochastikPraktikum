@@ -337,9 +337,9 @@ length <- 10000
 startpos <- c(10,10,10)
 R <- 3
 
-randValsX <- matrix(rnorm(walks*steps,0,1),nrow=walks,ncol=steps)
-randValsY <- matrix(rnorm(walks*steps,0,1),nrow=walks,ncol=steps)
-randValsZ <- matrix(rnorm(walks*steps,0,1),nrow=walks,ncol=steps)
+randValsX <- matrix(rnorm(walks*steps,0,length/steps),nrow=walks,ncol=steps)
+randValsY <- matrix(rnorm(walks*steps,0,length/steps),nrow=walks,ncol=steps)
+randValsZ <- matrix(rnorm(walks*steps,0,length/steps),nrow=walks,ncol=steps)
 randValsX[,1] <- startpos[1]
 randValsY[,1] <- startpos[2]
 randValsZ[,1] <- startpos[3]
@@ -397,19 +397,61 @@ Als Trennung schonmal die Chunks eingefügt
 
 ## Praxisteil
 
-Jetzt nähern wir das Resultat der Black-Scholes Formel mit Hilfe einer MC-Simulation, und mit dem in der Vorlesung vorgestellten Euler-Schema:
+Jetzt nähern wir das Resultat der Black-Scholes Formel mit Hilfe einer MC-Simulation, und mit dem in der Vorlesung vorgestellten Euler-Schema.
 
 ```{r geometric brownian motion MC}
+# set up
+TCall <- 1
+r <- 0.04
+sigma <- 0.2
+X0 <- 100
+K <- 100
+C <- list()
 
-## Black-Scholes
 
 
-## Monte Carlo
 
+############# Black-Scholes
+d1 <- 1/(sigma*sqrt(TCall))*(log(X0/K)+(r+(0.5*sigma^2))*TCall)
+d2 <- d1-sigma*sqrt(TCall)
+C$BlackScholes <- X0*pnorm(d1,0,1) - K*exp(-r*TCall)*pnorm(d2,0,1)
+
+############## Monte Carlo
+walks <- 1000
+steps <- 100
+TCalls <- c(seq(0.01,1,1/steps))
+
+randValsBrown <- matrix(rnorm(walks*steps,0,TCalls/steps),nrow=walks,ncol=steps)
+randValsBrown <- t(apply(randValsBrown,1,cumsum))
+mu <- r
+X_t <- X0*exp((mu-0.5*sigma^2)*TCalls+sigma*randValsBrown)
+
+expVals <- (X_t - K)
+######
+rep.row<-function(x,n){
+   matrix(rep(x,each=n),nrow=n)
+}
+TCalls <- rep.row(TCalls,walks)
+######
+smth <- exp(-r*TCalls)/(walks)*expVals
+smth[smth<0] <- 0
+C$MC <- apply(smth/walks,2,sum)
 
 ## Euler
+#### confusing formula on slides
+X_k <- X_k_1 + mu*((k-1)*T)
+
+
+
+
+C$Euler <- NULL
+## plotting
+plot(C$MC)
+abline(h=C$BlackScholes,col='red')
 
 ```
+
+### Resultate
 
 Die Black-Scholes Formel [Formel] ergibt...
 
