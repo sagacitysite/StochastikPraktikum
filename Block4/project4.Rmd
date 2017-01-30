@@ -384,12 +384,38 @@ Die y-Achse zeigt den %-Anteil an random walks, die nach Hause führen. Die x-Ac
 
 # Geometrische Brownsche Bewegung und Option Pricing
 
-test
+## Theorieteil
+
+Als Trennung schonmal die Chunks eingefügt
 ```{r}
-#test
+#Lalalalala
+
+
+
+
 ```
 
+## Praxisteil
 
+Jetzt nähern wir das Resultat der Black-Scholes Formel mit Hilfe einer MC-Simulation, und mit dem in der Vorlesung vorgestellten Euler-Schema:
+
+```{r geometric brownian motion MC}
+
+## Black-Scholes
+
+
+## Monte Carlo
+
+
+## Euler
+
+```
+
+Die Black-Scholes Formel [Formel] ergibt...
+
+Die MC Simulation ...
+
+Das Euler-Schema...
 
 
 <!--Footnotes-->
