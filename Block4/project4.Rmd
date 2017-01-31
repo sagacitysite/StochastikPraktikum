@@ -522,7 +522,7 @@ fnBrownianMotion <- function(nSim, nSteps, tMax){
   # Returns:
   #   A matrix with nSim rows and nSteps columns, i.e. each row is the simulation
   #   of one brownian motion.
-  matSteps <- matrix(rnorm(nSim*nSteps, 0, tMax/nSteps), 
+  matSteps <- matrix(rnorm(nSim*nSteps, 0, sqrt(tMax/nSteps)), 
                      nrow = nSim, ncol = nSteps)
   return(t(apply(matSteps, 1, cumsum)))
 }
@@ -589,9 +589,9 @@ Black und Scholes (1973) modellieren $X_t$, den Preis eines Wertpapiers zum Zeit
 $$
   C = e^{-rT}\E^*[(X_T - K)_+],
 $$
-wobei $r > 0$ die risikolose Zinsrate und $X_T$ unter dem Maß $\mathbb{P}^*$ eine geometrische Brownsche Bewegung mit Parametern $\mu = r$ und $\sigma$ ist. \\
+wobei $r > 0$ die risikolose Zinsrate und $X_T$ unter dem Maß $\mathbb{P}^*$ eine geometrische Brownsche Bewegung mit Parametern $\mu = r$ und $\sigma$ ist.
 
-Im Folgenden seien $T=1$, $r = 0.04$, $\sigma = 0.2$ und $X_0 = K = 100$. \\
+Im Folgenden seien $T=1$, $r = 0.04$, $\sigma = 0.2$ und $X_0 = K = 100$.
 ```{r Set parameter}
 # Set parameter of geometric brownian motion and call option
 TCall <- 1
@@ -633,52 +633,75 @@ payouts <- matX[, nSteps] - K
 payouts[payouts <= 0] <- 0
 
 C$MC <- exp(-r) * mean(payouts)
-
 ```
 
+In der dritten Methode wollen wir $C$ mit Hilfe des Euler-Schemas berechnen. Für die Black and Scholes SDE
+\[
+  \text{d}X_t = \mu X_t \text{d}t + \sigma X_t \text{d}B_t
+\]
+ergibt sich folgender rekursiver Zusammenhang im Euler-Schema:
+\begin{align*}
+  \tilde{X}_{k\frac{T}{N}} &:= \tilde{X}_{(k-1)\frac{T}{N}} + \mu \tilde{X}_{(k-1)\frac{T}{N}} \cdot \frac{T}{N} + \sigma \tilde{X}_{(k-1)\frac{T}{N}} \cdot \sqrt{\frac{T}{N}} Z_k \\
+  &= \left( 1+\mu \frac{T}{N} + \sigma \sqrt{\frac{T}{N}} Z_k \right) \tilde{X}_{(k-1)\frac{T}{N}},
+\end{align*}
+mit $Z_k \overset{iid}{\sim} N(0,1), k = 1, \ldots, N$ und $\tilde{X}_0 = X_0$.
 
-```{r Geometric Brownian Motion MC}
-############## Monte Carlo
-# walks <- 1000
-# steps <- 100
-# TCalls <- c(seq(0.01,1,1/steps))
-# 
-# randValsBrown <- matrix(rnorm(walks*steps,0,TCalls/steps),nrow=walks,ncol=steps)
-# randValsBrown <- t(apply(randValsBrown,1,cumsum))
-# mu <- r
-# X_t <- X0*exp((mu-0.5*sigma^2)*TCalls+sigma*randValsBrown)
-# 
-# expVals <- (X_t - K)
-# ######
-# rep.row<-function(x,n){
-#    matrix(rep(x,each=n),nrow=n)
-# }
-# TCalls <- rep.row(TCalls,walks)
-# ######
-# smth <- exp(-r*TCalls)/(walks)*expVals
-# smth[smth<0] <- 0
-# C$MC <- apply(smth/walks,2,sum)
+```{r Euler scheme}
+fnEulerScheme <- function(nSim, nSteps, tMax, mu, sigma, X0){
+  # This function simulates nSim price processes with nSteps of length 
+  # (tMax/nSteps) using trend mu, volatility sigma, and starting price X0.
+  # 
+  # Args:
+  #   nSim:   Number of simulations/walks
+  #   nSteps: Number of steps in each walk
+  #   tMax:   Overall length of each walk
+  #   mu:     Trend
+  #   sigma:  Volatility
+  #   X0:     Start price
+  #   
+  # Returns:
+  #   A matrix with nSim rows and nSteps columns, i.e. each row is the simulation
+  #   of one brownian motion.
+  
+  # Get length of one step
+  stepLen <- tMax/nSteps
+  
+  # Simulate from the standard normal
+  matNorm <- matrix(rnorm(nSim*nSteps), nrow = nSim)
+  
+  # Initialize price processes
+  matX <- matrix(nrow = nSim, ncol = nSteps)
+  matX[,1] <- (1 + mu*stepLen + sigma*sqrt(stepLen)*matNorm[,1]) * X0
+  
+  # Build price processes recursively
+  for (k in 2:nSteps){
+    matX[,k] <- (1 + mu*stepLen + sigma*sqrt(stepLen)*matNorm[,k]) * matX[,k-1]
+  }
+  
+  # return matrix with simulated price processes
+  return(matX)
+}
 
-## Euler
-#### confusing formula on slides
-#X_k <- X_k_1 + mu*((k-1)*T)
+# Run Euler scheme
+nSim <- 10000
+nSteps <- 1000
+matX <- fnEulerScheme(nSim, nSteps, TCall, mu, sigma, X0)
 
+# Get MC approximation of arbitrage-free price C
+payouts <- matX[, nSteps] - K
+payouts[payouts <= 0] <- 0
 
-
-
-C$Euler <- NULL
-## plotting
-plot(C$MC)
-abline(h=C$BlackScholes,col='red')
-
+C$Euler <- exp(-r) * mean(payouts)
 ```
 
+Zusammenfassend bekommen wir folgende Ergebnisse:
 
-Die Black-Scholes Formel [Formel] ergibt...
-
-Die MC Simulation ...
-
-Das Euler-Schema...
+```{r Table Prices, echo = FALSE, results = "asis"}
+print(xtable(matrix(c(C$BlackScholes, C$MC, C$Euler), ncol = 1, 
+                    dimnames = list(c("Black and Scholes", "MC BM", "Euler"))),
+             caption = "Arbitrage-free prices of European Call Option."),
+      comment = FALSE)
+```
 
 
 <!--Footnotes-->
