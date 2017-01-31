@@ -300,7 +300,7 @@ Anders gesagt: Ein betrunkener Mensch (d=2) findet meist nach Hause, ein betrunk
 
 Dazu betrachten wir eine brownsche Bewegung $B_t$, die vom Punkt x ausgeht...
 
-```{r illustrate drunk bird and human}
+```{r Illustrate drunk bird and human}
 # check if library is there
 require('ggplot2')
 
@@ -338,7 +338,7 @@ birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
 
 Mensch und Vogel besuchen die gleiche Kneipe (die des Vogels liegt auf dem Dach der Bar), und torkeln nach getanem Werk nach Hause:
 
-```{r human walk, echo=FALSE}
+```{r Human walk, echo=FALSE}
 # Plotting human random walk
 start <- data.frame(X=10, Y=10, Z=10)
 goal <- data.frame(X=0, Y=0, Z=10)
@@ -351,7 +351,7 @@ p1
 
 Der Mensch muss sich nur in $R²$ bewegen...
 
-```{r bird walk, echo=FALSE}
+```{r Bird walk, echo=FALSE}
 # Plotting bird random walk
 birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
 p2 <- ggplot(birdWalk, aes(x=X1, y=X2, color=X4)) +
@@ -368,7 +368,7 @@ während der Vogel in $R³$ Probleme bekommt.
 ## Monte Carlo
 
 Jetzt simulieren wir den random walk für d=2 und d=3 mit einer Monte Carlo Simulation
-```{r Simulate random walks}
+```{r Simulate random walks, cache = TRUE}
 
 a <- proc.time()
 set.seed(4579)
@@ -427,16 +427,129 @@ Die y-Achse zeigt den %-Anteil an random walks, die nach Hause führen. Die x-Ac
 
 ## Verhalten der geometrischen Brownschen Bewegung
 
-```{r}
+### Erwartungswert und Varianz
 
+Zur Berechnung des Erwartungswertes und der Varianz der geometrischen Brownschen Bewegung wird die momenterzeugende Funktion der Normalverteilung verwendet
+
+\begin{equation}
+\label{eq:momerz}
+\mu_X(s) = \E[\exp(sX)] = \exp\left( \mu s + \frac{1}{2} \sigma^2 s^2 \right),
+\end{equation}
+
+wobei die Lösung der geometrischen Brownschen Bewegung gegeben ist, als
+
+$$
+X_t = X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t + \sigma B_t \right),
+$$
+
+wobei $B_t$ eine Zufallsvariable ist mit $B_t \sim N(0,t)$. Wir nehmen an, dass $X_0$ deterministisch ist und $t \ge 0$.
+
+Für den Ewartungswert gilt:
+
+\begin{align*}
+\E[X_t] &= \E\left[ X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t + \sigma B_t \right) \right]\\
+&= \E[X_0] \cdot \E\left[ \exp\left(\mu - \frac{\sigma^2}{2} \right) \right] \cdot \E[\exp(\sigma B_t)]\\
+&\overset{\eqref{eq:momerz}}{=} X_0 \exp\left(\mu - \frac{\sigma^2}{2} \right) \exp\left( 0 \cdot \sigma + \frac{1}{2} t \sigma^2 \right)\\
+&= X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) + \frac{\sigma^2}{2} t \right)\\
+&= X_0 e^{\mu t}
+\end{align*}
+
+Und für die Varianz ergibt sich:
+
+\begin{align*}
+\Var(X_t) &= \E[X_t^2] - \E[X_t]^2\\
+&= \E\left[ X_0^2 \exp\left( 2 \left(\mu - \frac{\sigma^2}{2} \right) t + 2 \sigma B_t \right) \right] - X_0^2 \exp\left( 2\mu t \right)\\
+&= X_0^2 \exp\left( 2t \left(\mu - \frac{\sigma^2}{2} \right) \right) \cdot \E[\exp(2\sigma B_t)] - X_0^2 \exp\left( 2\mu t \right)\\
+&\overset{\eqref{eq:momerz}}{=} X_0^2 \exp\left( 2t \left(\mu - \frac{\sigma^2}{2} \right) \right) \exp\left( 0 \cdot 2\sigma + \frac{1}{2} t \cdot 4\sigma^2 \right) - X_0^2 \exp\left( 2\mu t \right)\\
+&= X_0^2 \exp\left( 2\mu t - \sigma^2 t + 2 \sigma^2 t \right) - X_0^2 \exp\left( 2\mu t \right)\\
+&= X_0^2 \exp\left( 2\mu t + \sigma^2 t \right) - X_0^2 \exp\left( 2\mu t \right)\\
+&= X_0^2 e^{2 \mu t} \left( e^{\sigma^2 t} -1 \right)\\
+\end{align*}
+
+### Grenzwertverhalten
+
+```{r Brownian Motion Function}
+fnBrownianMotion <- function(nSim, nSteps, tMax){
+  # This function simulates nSim brownian motions with nSteps of length 
+  # (tMax/nSteps). That is, the browian motions are of overall length of tMax.
+  # 
+  # Args:
+  #   nSim:   Number of simulations/walks
+  #   nSteps: Number of steps in each walk
+  #   tMax:   Overall length of each walk
+  #   
+  # Returns:
+  #   A matrix with nSim rows and nSteps columns, i.e. each row is the simulation
+  #   of one brownian motion.
+  matSteps <- matrix(rnorm(nSim*nSteps, 0, tMax/nSteps), 
+                     nrow = nSim, ncol = nSteps)
+  return(t(apply(matSteps, 1, cumsum)))
+}
 ```
+
+Für eine Überprüfung der Grenzwerte, werden die drei Fälle simuliert. Die Plots in der Abbildung zeigen die Fälle $\mu - \frac{\sigma^2}{2} = -0,0025$ (links), $\mu - \frac{\sigma^2}{2} = 0$ (mitte) und $\mu - \frac{\sigma^2}{2} = 0,0025$ (rechts).
+
+```{r Plot Geometric Brownian Motion for different parameters}
+
+fnGeometricBrown <- function(nSim, nSteps, vecMu, vecSigma) {
+  # This function simulates for every combination of parameters mu and sigma
+  # nSim geometric brownian motions with nSteps of length 1.
+  # The results are plotted, including mean Brownian.
+  # 
+  # Args:
+  #   nSim:     Number of simulations
+  #   nSteps:   Number of steps in simulation
+  #   vecMu:    Vector of mu parameters
+  #   vecSigma: Vector of sigma parameters
+  #   
+  # Returns:
+  #   Noting, just creates plots
+  
+  # Fix start value at 1
+  X0 <- 1
+  # Obtain length of parameter vectors
+  nPars <- length(vecMu)
+  
+  # Set plot frame
+  par(mfrow = c(1,nPars))
+  
+  # One time series plot for every parameter combination
+  for(i in 1:nPars) {
+    # Get Brownian
+    matBM <- fnBrownianMotion(nSim, nSteps, nSteps)
+    # Calculate Geometric Brownian
+    matX <- X0 * exp((vecMu[i]-0.5*vecSigma[i]^2)*(1:nSteps) + vecSigma[i]*t(matBM))
+    
+    # Plot all Geometric Brownian
+    ts.plot(matX, ylim = c(0,max(matX)), xlab = "steps",
+            main = bquote(mu ~ "=" ~ .(vecMu[i]) ~ "/" ~ sigma^2 ~ "=" ~ .(vecSigma[i])),
+            col = rgb(63/255, 81/255, 181/255, alpha = 0.15))
+    # Add mean of all Geometric Brownians
+    lines(rowMeans(matX), lwd = 1.5)
+  }
+  
+}
+
+nSim <- 500
+nSteps <- 1000
+vecMu = c(-0.00245, 0.00005, 0.00255)
+vecSigma = c(0.01, 0.01, 0.01)
+
+# Check if 
+vecMu-(vecSigma^2/2)
+
+# Rund and plot simulations
+fnGeometricBrown(nSim, nSteps, vecMu, vecSigma)
+```
+
+Die schwarze Linie markiert den Mittelwert der `R nSteps` Durchgänge, angegeben sind jeweils das gewählte $\mu$ und $\sigma^2$.
 
 ## Arbitrage-freier Preis einer europäischen Call-Option
 
 Black und Scholes (1973) modellieren $X_t$, den Preis eines Wertpapiers zum Zeitpunkt $t$, durch eine geometrische Brownsche Bewegung. Der arbitrage-freie Preis $C$ einer europäischen Call-Option mit Ausübungszeit $T$ und Ausübungspreis $K$ ist dann gegeben durch
-\[
+$$
   C = e^{-rT}\E^*[(X_T - K)_+],
-\]
+$$
 wobei $r > 0$ die risikolose Zinsrate und $X_T$ unter dem Maß $\mathbb{P}^*$ eine geometrische Brownsche Bewegung mit Parametern $\mu = r$ und $\sigma$ ist. \\
 
 Im Folgenden seien $T=1$, $r = 0.04$, $\sigma = 0.2$ und $X_0 = K = 100$. \\
@@ -460,29 +573,12 @@ C$BlackScholes <- X0*pnorm(d1) - K*exp(-r*TCall)*pnorm(d2)
 ```
 
 Als zweite Methode wollen wir $C$ durch Simulation von $(X_t)_{0\leq t\leq1}$ mittels der exakten Lösung der geometrischen Brownschen Bewegung, d.h.\ 
-\[
+$$
   X_t = X_0 \exp\left(\left(\mu-\frac{\sigma^2}{2}\right)t + \sigma B_t\right),
-\]
+$$
 mit Hilfe von Monte-Carlo-Simulationen berechnen. Aufgrund der exakten Lösung für $X_t$ müssen wir lediglich die Brownsche Bewegung $B_t$ simulieren.
 
 ```{r MC Simulation with exact formula}
-fnBrownianMotion <- function(nSim, nSteps, tMax){
-  # This function simulates nSim brownian motions with nSteps of length 
-  # (tMax/nSteps). That is, the browian motions are of overall length of tMax.
-  # 
-  # Args:
-  #   nSim:   Number of simulations/walks
-  #   nSteps: Number of steps in each walk
-  #   tMax:   Overall length of each walk
-  #   
-  # Returns:
-  #   A matrix with nSim rows and nSteps columns, i.e. each row is the simulation
-  #   of one brownian motion.
-  matSteps <- matrix(rnorm(nSim*nSteps, 0, tMax/nSteps), 
-                     nrow = nSim, ncol = nSteps)
-  return(t(apply(matSteps, 1, cumsum)))
-}
-
 # Simulate brownian motions
 nSim <- 10000
 nSteps <- 1000
@@ -524,7 +620,7 @@ C$MC <- apply(smth/walks,2,sum)
 
 ## Euler
 #### confusing formula on slides
-X_k <- X_k_1 + mu*((k-1)*T)
+#X_k <- X_k_1 + mu*((k-1)*T)
 
 
 
