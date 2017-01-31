@@ -450,8 +450,8 @@ Im Falle $n \to \infty$ konvergiert die "Heimkehrwahrscheinlichkeit" für $d=2$ 
 
 # The hardcoded values where obtained in more involved simulations too costly to repeat here
 #
-print(xtable(matrix(c(sum(WalksInH[,steps,])/walks, 0.7, 0.75,
-                      sum(WalksInB[,steps])/walks, 0.12, 0.14),
+print(xtable(matrix(c(WalksInH[steps]/walks, 0.7, 0.75,
+                      WalksInB[steps]/walks, 0.12, 0.14),
                     ncol = 2, dimnames = list(
                       c("10.000", "100.000", "1.000.000"),
                       c("Mensch", "Vogel"))
