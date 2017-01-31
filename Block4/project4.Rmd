@@ -322,8 +322,9 @@ Anders gesagt: Ein betrunkener Mensch (dim=2) findet meist nach Hause, ein betru
 Dazu betrachten wir eine brownsche Bewegung $B_t \sim N(0,t)$, die vom Punkt $x$ ausgeht. Wir verwenden $R=3$ und $x=(10,10)^T$ bzw. $x=(10,10,10)^T$. Polyá's Theorem besagt, dass eine brownsche Bewegung unter gewissen Voraussetzungen mit einer fixen Wahrscheinlichkeit jeden Punkt des Raumes erreicht, also auch den Ursprung.
 Daher gibt das Theorem auch die Wahrscheinlichkeit an, dass ein betrunkener Mensch (d=2) und ein Betrunkener Vogel (d=3) es von der Bar wieder nach Hause schaffen:
 
-Sei $T_R,_x = inf \{t>0:\|B_t+x\|=R\} $ blabla,
-sei $x \epsilon R^d$ mit $\|x\| \ge R^d$.
+Sei $T_R,_x = inf \{t>0:\|B_t+x\|=R\}$,
+
+sei $x \epsilon R^d$ mit $\|x\| \ge R$.
 Dann ist $\mathbb{P}(T_R,_x < \infty) = \left(\frac{R}{\|x\|}\right)^{d-2}$
 
 
@@ -333,7 +334,11 @@ und für den Vogel $\mathbb{P}(T_R,_x < \infty) = \frac{3}{14}$, mit $R=3$ und $
 Da wir uns im endlichen $t<\infty$ befinden, simulieren wir $r$ in $\lim_{r\to\infty} \mathbb{P}(T_R,_x < r)$
 
 
-```{r Illustrate drunk bird and human}
+```{r Illustrate drunk bird and human, cache=TRUE}
+# Recurrence/homecoming probability of bird and human
+rHuman <- 1
+rBird <- 3/14
+
 # check if library is there
 require('ggplot2')
 
@@ -342,6 +347,7 @@ fnRandomWalk <- function(d, x, N, R) {
   # that ends when the distance to the origin is smaller than R
   #
   # Return: dataframe containing the random walk
+  # This is just for plotting, hence the dataframe
   
   dfWalk = data.frame(matrix(nrow=N, ncol=d+1))
   
@@ -352,7 +358,7 @@ fnRandomWalk <- function(d, x, N, R) {
   dfWalk[1,d+1] = dist
   
   while(n<N && R<dist) {
-    # Thi is the loop handling the random walk
+    # This is the loop handling the random walk
     rstep <- c(round(rnorm(d),2))
     pos = pos+rstep
     dist <- sqrt(sum(pos*pos))
@@ -364,6 +370,7 @@ fnRandomWalk <- function(d, x, N, R) {
   return(na.omit(dfWalk))
 }
 
+# Simulate the two example random walks
 set.seed(257)
 humanWalk <- fnRandomWalk(2, c(10,10), 1000, 3)
 birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
@@ -375,6 +382,7 @@ Mensch und Vogel besuchen die gleiche Kneipe (die des Vogels liegt auf dem Dach 
 
 ```{r Human walk, echo=FALSE}
 # Plotting human random walk
+# The color gradient shows distance from home
 start <- data.frame(X=10, Y=10, Z=10)
 goal <- data.frame(X=0, Y=0, Z=10)
 p1 <- ggplot(humanWalk, aes(x=X1, y=X2, color=X3)) +
@@ -388,6 +396,7 @@ Der Mensch muss sich nur in $R^2$ bewegen,
 
 ```{r Bird walk, echo=FALSE}
 # Plotting bird random walk
+# The color gradient shows distance from home
 birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
 p2 <- ggplot(birdWalk, aes(x=X1, y=X2, color=X4)) +
     geom_path() +
@@ -397,7 +406,7 @@ p2
 
 ```
 
-während der Vogel in $R^3$ Probleme bekommt.
+während der Vogel in $R^3$ Probleme bekommt (hier ist die Bewegung des Vogels nach $R^2$ projeziert).
 
 
 ## Monte Carlo
@@ -405,6 +414,12 @@ während der Vogel in $R^3$ Probleme bekommt.
 Jetzt simulieren wir den Random Walk für $d=2$ und $d=3$ mit einer Monte Carlo Simulation:
 
 ```{r Simulate random walks, cache = TRUE}
+
+# Now simulate the random walks in Monte Carlo fahsion.
+# For this we sample all random values at once, add them up and compute matrices that contain
+# a 1 if walks i is "home" at position j, and a 0 if not. From this we sum the number of "home"
+# walks along the number of steps taken and arrive at the convergence towards the recurrence
+# probability r
 
 set.seed(45791)
 walks <- 1000
@@ -450,9 +465,9 @@ WalksInB <- apply(WalksB,2,sum)
 
 ```{r plot MC, echo=FALSE}
 H <- qplot(x=1:length(WalksInH), y=WalksInH,geom="line", xlab="", ylab="",
-      main="Walks 'home' after x steps")
+      main="Human walks 'home' after x steps")
 B <- qplot(x=1:length(WalksInB), y=WalksInB,geom="line", xlab="", ylab="",
-      main="Walks 'home' after x steps")
+      main="Bird walks 'home' after x steps")
 H
 B
 
@@ -476,7 +491,7 @@ print(xtable(matrix(c(WalksInH[steps]/walks, 0.7, 0.75,
       comment = FALSE)
 ```
 
-Aufgrund der endlichen Laufzeit der Simulationen ist es nicht möglich die Konvergenz gegen die von Polya gezeigten Grenzen vollständig zu visualisieren. Insbesondere der Random Walk des Menschen erreicht keine Heimkehrwahrscheinlichkeit von 1, zur Abschätzung der Konvergenzgeschwindigkeit kann obenstehende Tabelle dienen.
+Aufgrund der endlichen Laufzeit der Simulationen ist es nicht möglich die Konvergenz der Heimkehrwahrscheinlichkeit gegen die von Polya gezeigten Limes (Vogel: r=`r rBird`) vollständig zu visualisieren. Insbesondere der Random Walk des Menschen erreicht keine Heimkehrwahrscheinlichkeit von 1, zur Abschätzung der Konvergenzgeschwindigkeit kann obenstehende Tabelle dienen.
 
 
 
