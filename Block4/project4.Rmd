@@ -235,6 +235,7 @@ mSimulation <- fnSimulatePoisson(lambdaT, nSimulations)
 ```{r Evaluate Results}
 ## Task 1
 meanCarsPerDay <- mean(rowSums(mSimulation))
+print(meanCarsPerDay)
 
 ## Task 2
 thousandsCar <- NULL
@@ -248,12 +249,14 @@ for(i in 1:nSimulations) {
 }
 
 meanThousandsCar <- floor(mean(thousandsCar))
+print(meanThousandsCar)
 
 ## Task 3
 # Time between 1:30 and 1:45 is at position 7
 meanCarsAtNightQuarter <- mean(as.vector(mSimulation[,7]))
 # The result is 0, which we can easily explain as lambda is 0 in this timeslot
 # More input data, to have a more precise model, would possibly change this
+print(meanCarsAtNightQuarter)
 
 ## Task 4/5
 maxTrafficPeriodIndices <- NULL
@@ -274,8 +277,6 @@ for(i in 1:nSimulations) {
   maxTrafficPeriodIndices[i] <- which.max(sumHourlyPeriod)
   maxTrafficPeriodValues[i] <- max(sumHourlyPeriod)
 }
-
-par(mfrow = c(1,2))
 
 hist(maxTrafficPeriodIndices,
      breaks = max(maxTrafficPeriodIndices)-min(maxTrafficPeriodIndices),
@@ -489,9 +490,9 @@ fnBrownianMotion <- function(nSim, nSteps, tMax){
 }
 ```
 
-Für eine Überprüfung der Grenzwerte, werden die drei Fälle simuliert. Die Plots in der Abbildung zeigen die Fälle $\mu - \frac{\sigma^2}{2} = -0,0025$ (links), $\mu - \frac{\sigma^2}{2} = 0$ (mitte) und $\mu - \frac{\sigma^2}{2} = 0,0025$ (rechts).
+Für eine Überprüfung der Grenzwerte, werden die drei Fälle simuliert. Dabei werden jeweils `nSteps` Schritte betrachtet und `nSim` Simulationen. Übergeben werden außerdem die entsprechenden Parameter $\mu$ und $\sigma$.
 
-```{r Plot Geometric Brownian Motion for different parameters}
+```{r Plot Geometric Brownian Motion for different parameters, cache = TRUE}
 
 fnGeometricBrown <- function(nSim, nSteps, vecMu, vecSigma) {
   # This function simulates for every combination of parameters mu and sigma
@@ -512,9 +513,6 @@ fnGeometricBrown <- function(nSim, nSteps, vecMu, vecSigma) {
   # Obtain length of parameter vectors
   nPars <- length(vecMu)
   
-  # Set plot frame
-  par(mfrow = c(1,nPars))
-  
   # One time series plot for every parameter combination
   for(i in 1:nPars) {
     # Get Brownian
@@ -528,6 +526,7 @@ fnGeometricBrown <- function(nSim, nSteps, vecMu, vecSigma) {
             col = rgb(63/255, 81/255, 181/255, alpha = 0.15))
     # Add mean of all Geometric Brownians
     lines(rowMeans(matX), lwd = 1.5)
+    cat('\r\n\r\n')
   }
   
 }
@@ -544,7 +543,7 @@ vecMu-(vecSigma^2/2)
 fnGeometricBrown(nSim, nSteps, vecMu, vecSigma)
 ```
 
-Die schwarze Linie markiert den Mittelwert der `R nSteps` Durchgänge, angegeben sind jeweils das gewählte $\mu$ und $\sigma^2$.
+Die Plots in der Abbildung zeigen die Fälle $\mu - \frac{\sigma^2}{2} = -0,0025$ (links), $\mu - \frac{\sigma^2}{2} = 0$ (mitte) und $\mu - \frac{\sigma^2}{2} = 0,0025$ (rechts) für jeweils `r nSteps` Schritte. Die schwarze Linie markiert den Mittelwert der `r nSim` Durchgänge, im Titel der Plots angegeben sind jeweils die gewählten Parameter $\mu$ und $\sigma^2$.
 
 ## Arbitrage-freier Preis einer europäischen Call-Option
 
@@ -600,7 +599,7 @@ C$MC <- exp(-r) * mean(payouts)
 ```
 
 
-```{r geometric brownian motion MC}
+```{r Geometric Brownian Motion MC}
 ############## Monte Carlo
 # walks <- 1000
 # steps <- 100
