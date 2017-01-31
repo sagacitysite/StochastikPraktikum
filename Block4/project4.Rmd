@@ -294,21 +294,39 @@ hist(maxTrafficPeriodValues,
 grid()
 ```
 
+
+
 # Der betrunkene Vogel
 
 In dieser Aufgabe beschäftigen wir uns mit dem Unterschied in State Recurrence zwischen zwei- und dreidimensionalen Random Walks.
-Anders gesagt: Ein betrunkener Mensch (d=2) findet meist nach Hause, ein betrunkener Vogel (d=3) aber vielleicht nicht.
+Anders gesagt: Ein betrunkener Mensch (dim=2) findet meist nach Hause, ein betrunkener Vogel (dim=3) aber vielleicht nicht.
 
-Dazu betrachten wir eine brownsche Bewegung $B_t$, die vom Punkt x ausgeht...
+## Theorie / Theorem von Polyá
+
+Dazu betrachten wir eine brownsche Bewegung $B_t \sim N(0,t)$, die vom Punkt $x$ ausgeht. Wir verwenden $R=3$ und $x=(10,10)^T$ bzw. $x=(10,10,10)^T$. Polyá's Theorem besagt, dass eine brownsche Bewegung unter gewissen Voraussetzungen mit einer fixen Wahrscheinlichkeit jeden Punkt des Raumes erreicht, also auch den Ursprung.
+Daher gibt das Theorem auch die Wahrscheinlichkeit an, dass ein betrunkener Mensch (d=2) und ein Betrunkener Vogel (d=3) es von der Bar wieder nach Hause schaffen:
+
+Sei $T_R,_x = inf \{t>0:\|B_t+x\|=R\} $ blabla,
+sei $x \epsilon R^d$ mit $\|x\| \ge R^d$.
+Dann ist $\mathbb{P}(T_R,_x < \infty) = \left(\frac{R}{\|x\|}\right)^{d-2}$
+
+
+Damit gilt für den Menschen mit d=2: $\mathbb{P}(T_R,_x < \infty)=\left(\frac{3}{14}\right)^{0} = 1$
+und für den Vogel $\mathbb{P}(T_R,_x < \infty) = \frac{3}{14}$, mit $R=3$ und $\|x\|=14$.
+
+Da wir uns im endlichen $t<\infty$ befinden, simulieren wir $r$ in $\lim_{r\to\infty} \mathbb{P}(T_R,_x < r)$
+
 
 ```{r Illustrate drunk bird and human}
 # check if library is there
 require('ggplot2')
 
 fnRandomWalk <- function(d, x, N, R) {
-  # This function generates a random walk of dimension d
+  # This function generates a random walk of dimension d, starting from x, with N steps,
+  # that ends when the distance to the origin is smaller than R
   #
-  #
+  # Return: dataframe containing the random walk
+  
   dfWalk = data.frame(matrix(nrow=N, ncol=d+1))
   
   n=1
@@ -330,7 +348,7 @@ fnRandomWalk <- function(d, x, N, R) {
   return(na.omit(dfWalk))
 }
 
-set.seed(2567)
+set.seed(257)
 humanWalk <- fnRandomWalk(2, c(10,10), 1000, 3)
 birdWalk <- fnRandomWalk(3, c(10,10,10), 1000, 3)
 ```
@@ -350,7 +368,7 @@ p1 <- ggplot(humanWalk, aes(x=X1, y=X2, color=X3)) +
 p1
 ```
 
-Der Mensch muss sich nur in $R²$ bewegen...
+Der Mensch muss sich nur in $R^2$ bewegen,
 
 ```{r Bird walk, echo=FALSE}
 # Plotting bird random walk
@@ -363,24 +381,25 @@ p2
 
 ```
 
-während der Vogel in $R³$ Probleme bekommt.
+während der Vogel in $R^3$ Probleme bekommt.
 
 
 ## Monte Carlo
 
-Jetzt simulieren wir den random walk für d=2 und d=3 mit einer Monte Carlo Simulation
+Jetzt simulieren wir den Random Walk für $d=2$ und $d=3$ mit einer Monte Carlo Simulation:
+
 ```{r Simulate random walks, cache = TRUE}
 
-set.seed(4579)
+set.seed(45791)
 walks <- 1000
 steps <- 10000
 length <- 10000
 startpos <- c(10,10,10)
 R <- 3
 
-randValsX <- matrix(rnorm(walks*steps,0,length/steps),nrow=walks,ncol=steps)
-randValsY <- matrix(rnorm(walks*steps,0,length/steps),nrow=walks,ncol=steps)
-randValsZ <- matrix(rnorm(walks*steps,0,length/steps),nrow=walks,ncol=steps)
+randValsX <- matrix(rnorm(walks*steps,0,sqrt(length/steps)),nrow=walks,ncol=steps)
+randValsY <- matrix(rnorm(walks*steps,0,sqrt(length/steps)),nrow=walks,ncol=steps)
+randValsZ <- matrix(rnorm(walks*steps,0,sqrt(length/steps)),nrow=walks,ncol=steps)
 randValsX[,1] <- startpos[1]
 randValsY[,1] <- startpos[2]
 randValsZ[,1] <- startpos[3]
@@ -424,7 +443,26 @@ B
 ```
 
 Die y-Achse zeigt den %-Anteil an random walks, die nach Hause führen. Die x-Achse zeigt die Anzahl der gelaufenen Schritte.
-Wie aus dem Theorem von Polya ersichtlich, findet der Mensch in endlicher Laufzeit mit deutlich höherer Wahrscheinlichkeit nach Hause als der Vogel, im Falle $n \to \infty$ konvergiert die "Heimkehr-Wahrscheinlichkeit" sogar gegen 1.
+Wie aus dem Theorem von Polya ersichtlich, findet der Mensch auch in endlicher Laufzeit mit deutlich höherer Wahrscheinlichkeit nach Hause als der Vogel.
+Im Falle $n \to \infty$ konvergiert die "Heimkehrwahrscheinlichkeit" für $d=2$ sogar gegen 1.
+
+```{r Table Convergence Speed, echo = FALSE, results = "asis"}
+
+# The hardcoded values where obtained in more involved simulations too costly to repeat here
+#
+print(xtable(matrix(c(sum(WalksInH[,steps,])/walks, 0.7, 0.75,
+                      sum(WalksInB[,steps])/walks, 0.12, 0.14),
+                    ncol = 2, dimnames = list(
+                      c("10.000", "100.000", "1.000.000"),
+                      c("Mensch", "Vogel"))
+                    ),
+             caption = "Convergence of Possibility for 'Home'"),
+      comment = FALSE)
+```
+
+Aufgrund der endlichen Laufzeit der Simulationen ist es nicht möglich die Konvergenz gegen die von Polya gezeigten Grenzen vollständig zu visualisieren. Insbesondere der Random Walk des Menschen erreicht keine Heimkehrwahrscheinlichkeit von 1, zur Abschätzung der Konvergenzgeschwindigkeit kann obenstehende Tabelle dienen.
+
+
 
 # Geometrische Brownsche Bewegung und Option Pricing
 
