@@ -463,8 +463,6 @@ WalksB <- t(apply(WalksB,1,fnWalkIn))
 
 WalksInH <- apply(WalksH,2,sum)
 WalksInB <- apply(WalksB,2,sum)
-
-####################################
 ```
 
 ```{r plot MC, echo=FALSE}
