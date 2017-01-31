@@ -370,7 +370,6 @@ während der Vogel in $R³$ Probleme bekommt.
 Jetzt simulieren wir den random walk für d=2 und d=3 mit einer Monte Carlo Simulation
 ```{r Simulate random walks, cache = TRUE}
 
-a <- proc.time()
 set.seed(4579)
 walks <- 1000
 steps <- 10000
@@ -392,10 +391,14 @@ WalksH <- sqrt((randValsX^2)+(randValsY^2)) < R
 WalksB <- sqrt(((randValsX^2)+(randValsY^2)+(randValsZ^2))) < R
 
 fnWalkIn <- function(slice) {
-  len <- length(slice)
+  # This function takes the columns of the matrix with 0-1 values for distance < R or > R
+  # and looks for the first 1 in each row. When found, all entries in the remaining row
+  # are set to 1, to signify that the walk has already been 'in'
+  # Args:
+  #   slice: column of the matrix with 0-1 values for out-in on pos i,j
   first <- match(1,slice)
   if(is.finite(first)) {
-    slice[first:len] <- 1
+    slice[first:length(slice)] <- 1
   }
   return(slice)
 }
@@ -403,8 +406,6 @@ fnWalkIn <- function(slice) {
 WalksH <- t(apply(WalksH,1,fnWalkIn))
 WalksB <- t(apply(WalksB,1,fnWalkIn))
 
-b <- proc.time()
-b-a
 WalksInH <- apply(WalksH,2,sum)
 WalksInB <- apply(WalksB,2,sum)
 
@@ -422,6 +423,7 @@ B
 ```
 
 Die y-Achse zeigt den %-Anteil an random walks, die nach Hause führen. Die x-Achse zeigt die Anzahl der gelaufenen Schritte.
+Wie aus dem Theorem von Polya ersichtlich, findet der Mensch in endlicher Laufzeit mit deutlich höherer Wahrscheinlichkeit nach Hause als der Vogel, im Falle $n \to \infty$ konvergiert die "Heimkehr-Wahrscheinlichkeit" sogar gegen 1.
 
 # Geometrische Brownsche Bewegung und Option Pricing
 
@@ -561,6 +563,7 @@ sigma <- 0.2
 X0 <- 100
 K <- 100
 C <- list()
+mu <- r
 ```
 
 Nach der expliziten Formel, die von Black und Scholes 1973 gezeigt wurde, folgt für den arbitrage-freien Preis $C$:
@@ -593,30 +596,31 @@ payouts <- matX[, nSteps] - K
 payouts[payouts <= 0] <- 0
 
 C$MC <- exp(-r) * mean(payouts)
+
 ```
 
 
 ```{r geometric brownian motion MC}
 ############## Monte Carlo
-walks <- 1000
-steps <- 100
-TCalls <- c(seq(0.01,1,1/steps))
-
-randValsBrown <- matrix(rnorm(walks*steps,0,TCalls/steps),nrow=walks,ncol=steps)
-randValsBrown <- t(apply(randValsBrown,1,cumsum))
-mu <- r
-X_t <- X0*exp((mu-0.5*sigma^2)*TCalls+sigma*randValsBrown)
-
-expVals <- (X_t - K)
-######
-rep.row<-function(x,n){
-   matrix(rep(x,each=n),nrow=n)
-}
-TCalls <- rep.row(TCalls,walks)
-######
-smth <- exp(-r*TCalls)/(walks)*expVals
-smth[smth<0] <- 0
-C$MC <- apply(smth/walks,2,sum)
+# walks <- 1000
+# steps <- 100
+# TCalls <- c(seq(0.01,1,1/steps))
+# 
+# randValsBrown <- matrix(rnorm(walks*steps,0,TCalls/steps),nrow=walks,ncol=steps)
+# randValsBrown <- t(apply(randValsBrown,1,cumsum))
+# mu <- r
+# X_t <- X0*exp((mu-0.5*sigma^2)*TCalls+sigma*randValsBrown)
+# 
+# expVals <- (X_t - K)
+# ######
+# rep.row<-function(x,n){
+#    matrix(rep(x,each=n),nrow=n)
+# }
+# TCalls <- rep.row(TCalls,walks)
+# ######
+# smth <- exp(-r*TCalls)/(walks)*expVals
+# smth[smth<0] <- 0
+# C$MC <- apply(smth/walks,2,sum)
 
 ## Euler
 #### confusing formula on slides
