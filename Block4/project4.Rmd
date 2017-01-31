@@ -243,6 +243,7 @@ Nach der Simulation können wir die Daten auswerten. Zunächst bestimmen wir den
 ```{r Evaluate Results - Task 1}
 ## Task 1
 meanCarsPerDay <- mean(rowSums(mSimulation))
+print(meanCarsPerDay)
 ```
 
 Während in den erhobenen Daten ein durchschnittlicher täglicher Traffic von `r sum(Nt)` Fahrzeugen beobachtet wurde, liefert die Simulation mit der erhöhten Intensität $\tilde\lambda(t)$ einen geschätzten Traffic von `r meanCarsPerDay` Fahzeugen pro Tag.
@@ -257,6 +258,7 @@ cumsumDays <- t(apply(mSimulation, 1, cumsum))
 thousandsCars <- apply(cumsumDays, 1, function(row) max(which(row <= 1000))/4)
 # Take mean over all columns and round
 thousandsCar <- floor(mean(thousandsCars))
+print(thousandsCar)
 ```
 
 Im Ergebnis fährt das tausendste Auto im Schnitt in der `r thousandsCar` Stunde, d.h zwischen `r thousandsCar-1`:00 Uhr und `r thousandsCar`:00 Uhr am Autobahnabschnitt vorbei.
@@ -267,6 +269,7 @@ Im nächsten Schritt soll untersucht werden, wie viele Autos im Schnitt zwischen
 ## Task 3
 # Calculate mean cars at position 7 (between 1:30 and 1:45)
 meanCarsAtNightQuarter <- mean(as.vector(mSimulation[,7]))
+print(meanCarsAtNightQuarter)
 ```
 
 Im Ergebnis fahren `r meanCarsAtNightQuarter` Fahrzeuge zu dieser Zeit am Abschnitt vorbei. Dies kann damit erklärt werden, dass die Intensitätsfunktion an dieser Stelle $0$ ist. Für die Poisson-Verteilung gilt jedoch, dass $\lambda > 0$ sein muss. Für diese Viertelstunde ist demnach keine Verteilung definiert. Im Fall von $\lambda = 0$ ist die Wahrscheinlichkeit, dass ein Auto vorbeikommt $\mathbb{P}(X \neq 0) = 0$ bzw. die Wahrscheinlichkeit, dass kein Auto vorbeikommt $\mathbb{P}(X = 0) = 1$.
@@ -654,7 +657,7 @@ fnGeometricBrown <- function(nSim, nSteps, vecMu, vecSigma) {
     matX <- X0 * exp((vecMu[i]-0.5*vecSigma[i]^2)*(1:nSteps) + vecSigma[i]*t(matBM))
     
     # Plot all Geometric Brownian
-    ts.plot(matX, ylim = c(0,max(matX)), xlab = "steps",
+    ts.plot(matX, ylim = c(0,max(matX)), xlab = "",
             main = bquote(mu ~ "=" ~ .(vecMu[i]) ~ "/" ~ sigma^2 ~ "=" ~ .(vecSigma[i])),
             col = rgb(63/255, 81/255, 181/255, alpha = 0.15))
     # Add mean of all Geometric Brownians
@@ -696,15 +699,25 @@ X0 <- 100
 K <- 100
 C <- list()
 mu <- r
+
+# Set number of simulations and steps
+nSim <- 10000
+nSteps <- 1000
 ```
 
 Nach der expliziten Formel, die von Black und Scholes 1973 gezeigt wurde, folgt für den arbitrage-freien Preis $C$:
 
 ```{r Black and Scholes solution}
 # Black-Scholes
-d1 <- 1/(sigma*sqrt(TCall)) * (log(X0/K)+(r+(0.5*sigma^2))*TCall)
+stepsScholes <- seq(1/nSteps, 1, 1/nSteps)
+
+# Calculate Black-Scholes values
+d1 <- 1/(sigma*sqrt(TCall)) * (log(X0/K)+(r+(0.5*sigma^2))*stepsScholes)
 d2 <- d1-sigma*sqrt(TCall)
-C$BlackScholes <- X0*pnorm(d1) - K*exp(-r*TCall)*pnorm(d2)
+vecScholes <- X0*pnorm(d1) - K*exp(-r*stepsScholes)*pnorm(d2)
+
+# Get last value
+C$BlackScholes <- tail(vecScholes, 1)
 ```
 
 Als zweite Methode wollen wir $C$ durch Simulation von $(X_t)_{0\leq t\leq1}$ mittels der exakten Lösung der geometrischen Brownschen Bewegung, d.h.\ 
@@ -715,8 +728,6 @@ mit Hilfe von Monte-Carlo-Simulationen berechnen. Aufgrund der exakten Lösung f
 
 ```{r MC Simulation with exact formula}
 # Simulate brownian motions
-nSim <- 10000
-nSteps <- 1000
 matBM <- fnBrownianMotion(nSim, nSteps, TCall)
 
 # Compute price processes using exact solution of SDE
@@ -724,10 +735,11 @@ times <- seq(TCall/nSteps, TCall, 1/nSteps)
 matX <- t(X0 * exp((mu-0.5*sigma^2)*times + sigma*t(matBM)))
 
 # Get MC approximation of arbitrage-free price C
-payouts <- matX[, nSteps] - K
+payouts <- matX - K
 payouts[payouts <= 0] <- 0
 
-C$MC <- exp(-r) * mean(payouts)
+matMC <- exp(-r) * payouts
+C$MC <- exp(-r) * mean(payouts[, nSteps])
 ```
 
 In der dritten Methode wollen wir $C$ mit Hilfe des Euler-Schemas berechnen. Für die Black and Scholes SDE
@@ -778,15 +790,14 @@ fnEulerScheme <- function(nSim, nSteps, tMax, mu, sigma, X0){
 }
 
 # Run Euler scheme
-nSim <- 10000
-nSteps <- 1000
 matX <- fnEulerScheme(nSim, nSteps, TCall, mu, sigma, X0)
 
 # Get MC approximation of arbitrage-free price C
-payouts <- matX[, nSteps] - K
+payouts <- matX - K
 payouts[payouts <= 0] <- 0
 
-C$Euler <- exp(-r) * mean(payouts)
+matEU <- exp(-r) * payouts
+C$Euler <- exp(-r) * mean(payouts[, nSteps])
 ```
 
 Zusammenfassend bekommen wir folgende Ergebnisse:
@@ -798,5 +809,18 @@ print(xtable(matrix(c(C$BlackScholes, C$MC, C$Euler), ncol = 1,
       comment = FALSE)
 ```
 
+In den folgenden zwei Plots werden der MC-Alghoritmus mit seinen Mittelwerten und den berechneten Black-Scholes-Werten, sowie das Euler-Schema mit seinen Mittelwerten und den berechneten Black-Scholes-Werten über den Zeitverlauf verglichen.
 
-<!--Footnotes-->
+```{r Plot Payouts MC}
+ts.plot(t(matMC[1:500,]), xlab = "",
+            main = "MC-Simulation, Mitteltwert (schwarz) und Black Scholes (rot)",
+            col = rgb(63/255, 81/255, 181/255, alpha = 0.15))
+lines(colMeans(matMC), col = "black", lwd = 1.5)
+lines(vecScholes, col = "red", lwd = 1.5)
+
+ts.plot(t(matEU[1:500,]), xlab = "",
+            main = "Euler-Schema, Mitteltwert (schwarz) und Black Scholes (rot)",
+            col = rgb(63/255, 81/255, 181/255, alpha = 0.15))
+lines(colMeans(matEU), col = "black", lwd = 1.5)
+lines(vecScholes, col = "red", lwd = 1.5)
+```
