@@ -192,7 +192,10 @@ print(xtable(matrix(c(meanStepsBladder1, meanStepsBrain1, meanStepsHeart1,
 
 # Poisson-Prozess
 
+Die Intensitätsfunktion $\tilde\lambda(t)$ definieren wir diskret mit $96$ Werten, wobei jeder Wert dem Intensitätsparameter einer Viertelstunde entspricht. Möglich wäre auch die Intensität jeder Viertelstunde durch $15$ zu teilen (also in diesem Fall eine Gleichverteilung innerhalb der Viertelstunden anzunehmen), um minütliche Werte zu erhalten. Die Egebnisse sollten sich jedoch zum einen nur marginal unterscheiden, für große Simulationen unbedeutend gering werden und im Limes der Anzahl der Simulationen gegen Unendlich verschwinden, zum anderen haben wir keine Angabe darüber, ob die Annahme einer Gleichverteilung gerechtfertigt wäre. Wir verwenden daher v.a. zur einfacheren Berechnung der Aufgaben direkt eine Intensitätsfunktion mit den angesprochenen $96$ Werten aus den Daten.
+
 ```{r Read Data}
+# Read csv data
 N <- as.matrix(read.csv("data/traffic.csv", header = TRUE))
 
 # Get vector of 96 data points
@@ -203,24 +206,26 @@ lambdaTildeT <- Nt
 lambdaT <- 1.2 * lambdaTildeT
 ```
 
+Wir simulieren $10.000$ Tagesverkehrsdaten für die jeweils $96$ Viertelstunden, basierend auf der Intensitätsfunktion $\lambda(t) = 1,2 \cdot \tilde\lambda(t)$ und speichern diese in einer Matrix, wobei die Zeilen den Tagen und die Spalten den Viertelstunden des jeweiligen Tages entsprechen.
+
 ```{r Simulate Poisson Traffic}
-fnSimulatePoisson <- function(lambda, n) {
+fnSimulatePoisson <- function(vecLambda, n) {
   # This function simulates poisson values based on vector of parameters lambda
   # 
   # Args:
-  #   lambda:   Vector of parameters for poisson distribution
-  #   n:        Number of simulations
+  #   vecLambda:  Vector of parameters for poisson distribution
+  #   n:          Number of simulations
   #   
   # Returns:
   #   Simulated vectors as matrix, where every row is a simulation of one day
   #   therefore the matrix as n rows.
   
   # Get random poisson distributed values for n days
-  vSimulated <- rpois(length(lambda)*n, lambda)
+  vSimulated <- rpois(length(vecLambda)*n, vecLambda)
   
   # Split data into matrix of form: mSplitted[day, quarter-hour]
   # where day goes from 1 to n and quater-hour from 1 to 96
-  mSplitted <- t(matrix(vSimulated, nrow=length(lambda), ncol=n))
+  mSplitted <- t(matrix(vSimulated, nrow=length(vecLambda), ncol=n))
   
   return(mSplitted)
 }
@@ -232,62 +237,73 @@ nSimulations = 10000
 mSimulation <- fnSimulatePoisson(lambdaT, nSimulations)
 ```
 
-```{r Evaluate Results}
+Nach der Simulation können wir die Daten auswerten. Zunächst bestimmen wir den durchschnittlichen täglichen Tagestraffic, der sich einfach aus dem Mittelwert der Summen der Zeilen ergibt.
+
+```{r Evaluate Results - Task 1}
 ## Task 1
 meanCarsPerDay <- mean(rowSums(mSimulation))
-print(meanCarsPerDay)
+```
 
+Während in den erhobenen Daten ein durchschnittlicher täglicher Traffic von `r sum(Nt)` Fahrzeugen beobachtet wurde, liefert die Simulation mit der erhöhten Intensität $\tilde\lambda(t)$ einen geschätzten Traffic von `r meanCarsPerDay` Fahzeugen pro Tag.
+
+Anschließend wird diejenige Stunde bestimmt, in der das $1000$. Auto vorbei fährt. Dazu werden die kumulierten Summen je Zeile bestimmt. Für jede Zeile wird diejenige Position bestimmt, an der die $1000$ überschritten wird, letztlich wird über alle Simulationen gemittelt.
+
+```{r Evaluate Results - Task 2}
 ## Task 2
-thousandsCar <- NULL
-for(i in 1:nSimulations) {
-  # Calculate cumulative sums per day (per simulation)
-  cumsumDay <- cumsum(mSimulation[i,])
-  
-  # It's not clear if floor should ne applies only for mean, or also here
-  # However, in the end the results seems to be the same
-  thousandsCar[i] <- floor(max(which(cumsumDay <= 1000))/4)
-}
+# Calculate cumsums for every day
+cumsumDays <- t(apply(mSimulation, 1, cumsum))
+# Take position of all values below or equal 1000 and take maximum index value
+thousandsCars <- apply(cumsumDays, 1, function(row) max(which(row <= 1000))/4)
+# Take mean over all columns and round
+thousandsCar <- floor(mean(thousandsCars))
+```
 
-meanThousandsCar <- floor(mean(thousandsCar))
-print(meanThousandsCar)
+Im Ergebnis fährt das tausendste Auto im Schnitt in der `r thousandsCar` Stunde, d.h zwischen `r thousandsCar-1`:00 Uhr und `r thousandsCar`:00 Uhr am Autobahnabschnitt vorbei.
 
+Im nächsten Schritt soll untersucht werden, wie viele Autos im Schnitt zwischen 1:30 Uhr und 1:45 Uhr vorbeifahren, d.h. in der $7$. Viertelstunde, worfür die entsprechende Spalte aus der Matrix entnommen und über diese gemittelt wird.
+
+```{r Evaluate Results - Task 3}
 ## Task 3
-# Time between 1:30 and 1:45 is at position 7
+# Calculate mean cars at position 7 (between 1:30 and 1:45)
 meanCarsAtNightQuarter <- mean(as.vector(mSimulation[,7]))
-# The result is 0, which we can easily explain as lambda is 0 in this timeslot
-# More input data, to have a more precise model, would possibly change this
-print(meanCarsAtNightQuarter)
+```
 
+Im Ergebnis fahren `r meanCarsAtNightQuarter` Fahrzeuge zu dieser Zeit am Abschnitt vorbei. Dies kann damit erklärt werden, dass die Intensitätsfunktion an dieser Stelle $0$ ist. Für die Poisson-Verteilung gilt jedoch, dass $\lambda > 0$ sein muss. Für diese Viertelstunde ist demnach keine Verteilung definiert. Im Fall von $\lambda = 0$ ist die Wahrscheinlichkeit, dass ein Auto vorbeikommt $\mathbb{P}(X \neq 0) = 0$ bzw. die Wahrscheinlichkeit, dass kein Auto vorbeikommt $\mathbb{P}(X = 0) = 1$.
+
+Im letzten Schritt sollen zwei Histogramme erstellt werden, wobei für jeden Tag nach derjenigen einstündigen Periode gesucht wird (in Viertelstunde-Schritten), in der der Traffic ein Maximum erreicht. Dafür wird zunächst eine zeilenweise kumulierte Summe gebildet. Anschließend werden zwei Matrizen entnommen. Bei der ersten Matrix werden die ersten drei Spalten verworfen, bei der zweiten Matrix die letzten $4$, zusätzlich wird dort eine Spalte mit Nullen vor der ersten Spalte hinzugefügt. Anschließend werden beide Matrizen subtrahiert.
+
+```{r Evaluate Results - Task 4/5}
 ## Task 4/5
-maxTrafficPeriodIndices <- NULL
-maxTrafficPeriodValues <- NULL
-for(i in 1:nSimulations) {
-  # Calculate cumulative sums per day (per simulation)
-  cumsumDay <- cumsum(mSimulation[i,])
-  
-  # Initialize new vector
-  sumHourlyPeriod <- NULL
-  
-  # Run from 0.0 to 23.0
-  for(j in 1:(length(cumsumDay)-4)) {
-    sumHourlyPeriod[j] <- cumsumDay[j+4] - cumsumDay[j]
-  }
-  
-  # Get maximum position and store in vector
-  maxTrafficPeriodIndices[i] <- which.max(sumHourlyPeriod)
-  maxTrafficPeriodValues[i] <- max(sumHourlyPeriod)
-}
+# Do rowwise cumsum
+cumsumDays <- t(apply(mSimulation, 1, cumsum))
+# Take cumsumDays and remove first 3 columns and
+# take cumsumDays and remove last 4 colums and add zeros to the beginning
+# Subtract both matrices to get hourly periods in quater hour steps
+sumHourlyPeriod <- cumsumDays[,-(1:3)] -
+  t(apply(cumsumDays[,1:(dim(cumsumDays)[2]-4)],1,function(row) c(0,row)))
+```
+
+Nach der Berechnung der Differenz, können die Maxima der Indizes bestimmt werden, indem in jeder Zeile der Index des maximalen Traffic bestimmt wird. Anschließend werden die Häufigkeiten in einem Histogramm dargestellt. Dabei entsprechen die Werte auf der $x$-Achse den Viertelstunden-Indizes.
+
+```{r Evaluate Results - Task 4}
+# Get maximum traffic indices and plot histogram
+maxTrafficPeriodIndices <- apply(sumHourlyPeriod, 1, function(row) which.max(row))
 
 hist(maxTrafficPeriodIndices,
      breaks = max(maxTrafficPeriodIndices)-min(maxTrafficPeriodIndices),
      main = paste("4) Histogramm bzgl. ", nSimulations, "Simulationen"),
      xlab = "Einstündige Periode mit maximalem Traffic", ylab = "Häufigkeit")
 grid()
-# where eg. 30 is the time period between 07:15 - 08:15,
-# 31 is 07:30 - 08:30, and so on
+```
+
+Zusätzlich können die Maximalwerte in jeder Zeile bestimmt werden. Die Häufigkeiten werden erneut in einem Histogramm dargestellt.
+
+```{r Evaluate Results - Task 5}
+# Get maximum traffic values and plot histogram
+maxTrafficPeriodValues <- apply(sumHourlyPeriod, 1, function(row) max(row))
 
 hist(maxTrafficPeriodValues,
-     main = paste("5) Histogramm bzgl. ", nSimulations, "Simulationen"),
+     main = paste("Histogramm bzgl. ", nSimulations, "Simulationen"),
      xlab = paste("Anzahl der vorbeifahrende Fahrzeuge in einstündiger Periode",
                   "mit maximalem Traffic"),
      ylab = "Häufigkeit")
@@ -472,7 +488,7 @@ Und für die Varianz ergibt sich:
 ### Grenzwertverhalten
 
 ```{r Brownian Motion Function}
-fnBrownianMotion <- function(nSim, nSteps, tMax){
+fnBrownianMotion <- function(nSim, nSteps, tMax = nSteps){
   # This function simulates nSim brownian motions with nSteps of length 
   # (tMax/nSteps). That is, the browian motions are of overall length of tMax.
   # 
@@ -516,7 +532,7 @@ fnGeometricBrown <- function(nSim, nSteps, vecMu, vecSigma) {
   # One time series plot for every parameter combination
   for(i in 1:nPars) {
     # Get Brownian
-    matBM <- fnBrownianMotion(nSim, nSteps, nSteps)
+    matBM <- fnBrownianMotion(nSim, nSteps)
     # Calculate Geometric Brownian
     matX <- X0 * exp((vecMu[i]-0.5*vecSigma[i]^2)*(1:nSteps) + vecSigma[i]*t(matBM))
     
