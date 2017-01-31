@@ -18,6 +18,7 @@ header-includes:
 - \usepackage{bbm}
 - \usepackage{subfig}
 - \usepackage{theoremref}
+- \usepackage{german}
 - \newtheorem{satz}{Satz}
 - \newcommand{\E}{\mathbb{E}}
 - \newcommand{\Var}{\text{Var}}
@@ -291,7 +292,7 @@ maxTrafficPeriodIndices <- apply(sumHourlyPeriod, 1, function(row) which.max(row
 
 hist(maxTrafficPeriodIndices,
      breaks = max(maxTrafficPeriodIndices)-min(maxTrafficPeriodIndices),
-     main = paste("4) Histogramm bzgl. ", nSimulations, "Simulationen"),
+     main = paste("Histogramm bzgl. ", nSimulations, "Simulationen"),
      xlab = "Einstündige Periode mit maximalem Traffic", ylab = "Häufigkeit")
 grid()
 ```
@@ -525,6 +526,69 @@ Und für die Varianz ergibt sich:
 
 ### Grenzwertverhalten
 
+Zunächst erfolgt eine theoretische Betrachtung des Grentwertverhaltens von $X_t$, wobei das Gesetz vom iterierten Logarithmus verwendet wird, welches besagt, dass
+
+$$
+\limsup_{t \to\infty} \frac{B_t}{\sqrt{2t \ln \ln t}} = 1 \quad\text{und}\quad \liminf_{t \to\infty} \frac{B_t}{\sqrt{2t \ln \ln t}} = -1.
+$$
+
+Für den Limes superior gilt:
+
+\begin{subequations}
+\begin{align}
+\limsup_{t \to\infty} X_t &= \limsup_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t + \sigma B_t \right)\nonumber\\
+&= \limsup_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t \right) \exp\left( \sigma B_t \right)\nonumber\\
+&= \limsup_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t \right) \exp\left( \sigma \sqrt{2t \ln \ln t} \cdot \frac{B_t}{\sqrt{2t \ln \ln t}} \right)\nonumber\\
+&= \limsup_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t \right) \exp\left( \sigma \sqrt{2t \ln \ln t} \cdot C \right) \label{eq:limsup1}\\
+&= \limsup_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t + \sigma \sqrt{2t \ln \ln t} \cdot C \right) \label{eq:limsup2}
+\end{align}
+\end{subequations}
+
+Für den Limes inferior gilt analog:
+
+\begin{subequations}
+\begin{align}
+\liminf_{t \to\infty} X_t &= \liminf_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t + \sigma B_t \right)\nonumber\\
+&= \liminf_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t \right) \exp\left( \sigma B_t \right)\nonumber\\
+&= \liminf_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t \right) \exp\left( \sigma \sqrt{2t \ln \ln t} \cdot \frac{B_t}{\sqrt{2t \ln \ln t}} \right)\nonumber\\
+&= \liminf_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t \right) \exp\left( \sigma \sqrt{2t \ln \ln t} \cdot C \right) \label{eq:liminf1}\\
+&= \liminf_{t \to\infty} X_0 \exp\left( \left(\mu - \frac{\sigma^2}{2} \right) t + \sigma \sqrt{2t \ln \ln t} \cdot C \right) \label{eq:liminf2}
+\end{align}
+\end{subequations}
+
+Wegen des Gesetzes vom iterierten Logarithmus, wird in \eqref{eq:limsup1} und \eqref{eq:liminf1} der entsprechende Faktor mit $C$ bezeichnet. Dieser Anteil kovergiert für $t \to\infty$ gegen $1$ bzw. $-1$. Es sind folgende Fälle zu betrachten:
+
+\textbf{1.} $\mu - \frac{\sigma^2}{2} > 0$
+
+Im Limes superior divergieren in \eqref{eq:limsup1} sowhol der erste, als auch der zweite Exponentialanteil. Im Limes inferior divergiert in \eqref{eq:liminf1} der erste Exponentialanteil, der zweite Exponentialanteil konvergiert jedoch gegen $0$ (da $C$ gegen $-1$ konvergiert), weshalb eine genauere Betrachtung notwendig ist. Betrachtet man \eqref{eq:liminf2}, dann kann Folgendes abgeleitet werden:
+
+$$
+\left(\mu - \frac{\sigma^2}{2} \right) t - \sigma \sqrt{2t \ln \ln t} = 0 \quad\Rightarrow\quad \mu = \frac{\sigma^2}{t} \left( \frac{1}{t} + \sqrt{2t \ln \ln t} \right) \;\text{und}\; \sigma^2 = \mu t \left( \frac{1}{t} + \sqrt{2t \ln \ln t} \right)^{-1}
+$$
+
+Gilt $=0$, so wird der Exponent $0$ und der Limes inferior konvergiert gegen $X_0$. Für $<0$ konvergiert er gegen $0$ und für $>0$ gegen $\infty$.
+
+Während der Limes superior also in jedem Fall nach \glqq oben\grqq\ divergiert, zeigt der Limes inferior ein differenziertes Verhalten.
+
+\textbf{2.} $\mu - \frac{\sigma^2}{2} = 0$
+
+Im Limes superior konvergiert der erste Teil in \eqref{eq:limsup1} gegen $1$, entscheidend ist also das Verhalten des zweiten Teils, der gegen $\infty$ divergiert. Demnach divergiert der Limes superior.
+
+Auch beim Limes inferior \eqref{eq:liminf1} konvergiert der erste Teil gegen $1$. Der zweite Teil konvergiert jedoch gegen $0$, so dass der Limes inferior insgesamt gegen Null konvergiert.
+
+\textbf{3.} $\mu - \frac{\sigma^2}{2} < 0$
+
+Im Limes superior in \eqref{eq:limsup1} konvergiert der erste Teil gegen $0$, der zweite Teil divergiert jedoch gegen $\infty$, weshalb eine differenziertere Betrachtung in $\eqref{eq:limsup2}$ notwendig ist. Analog zum ersten Fall gilt mit $C \to 1$ für $t \to\infty$:
+
+$$
+\left(\mu - \frac{\sigma^2}{2} \right) t + \sigma \sqrt{2t \ln \ln t} = 0 \quad\Rightarrow\quad \mu = \frac{\sigma^2}{t} \left( \frac{1}{t} - \sqrt{2t \ln \ln t} \right) \;\text{und}\; \sigma^2 = \mu t \left( \frac{1}{t} - \sqrt{2t \ln \ln t} \right)^{-1}
+$$
+
+Für den Limes inferior gilt in \eqref{eq:liminf1}, dass beide Anteile gegen $0$ konvergieren und somit der gesamte Limes inferior gegen $0$ konvergiert.
+
+Im Ergebnis konvergiert der Limes inferior immer gegen $0$, während sich der Limes superior differenziert verhält.
+
+
 ```{r Brownian Motion Function}
 fnBrownianMotion <- function(nSim, nSteps, tMax = nSteps){
   # This function simulates nSim brownian motions with nSteps of length 
@@ -590,14 +654,14 @@ nSteps <- 1000
 vecMu = c(-0.00245, 0.00005, 0.00255)
 vecSigma = c(0.01, 0.01, 0.01)
 
-# Check if 
+# Check conditions
 vecMu-(vecSigma^2/2)
 
 # Rund and plot simulations
 fnGeometricBrown(nSim, nSteps, vecMu, vecSigma)
 ```
 
-Die Plots in der Abbildung zeigen die Fälle $\mu - \frac{\sigma^2}{2} = -0,0025$ (links), $\mu - \frac{\sigma^2}{2} = 0$ (mitte) und $\mu - \frac{\sigma^2}{2} = 0,0025$ (rechts) für jeweils `r nSteps` Schritte. Die schwarze Linie markiert den Mittelwert der `r nSim` Durchgänge, im Titel der Plots angegeben sind jeweils die gewählten Parameter $\mu$ und $\sigma^2$.
+Die Plots in der Abbildung zeigen in absteigender Reihenfolge die Fälle $\mu - \frac{\sigma^2}{2} = -0,0025$ (beides Limes konvergieren), $\mu - \frac{\sigma^2}{2} = 0$ (Limes superior divergiert, Limes inferior konvergiert gegen Null) und $\mu - \frac{\sigma^2}{2} = 0,0025$ (beide Limes divergieren) für jeweils `r nSteps` Schritte. Die schwarze Linie markiert den Mittelwert der `r nSim` Durchgänge, im Titel der Plots angegeben sind jeweils die gewählten Parameter $\mu$ und $\sigma^2$. $\sigma$ wurde bei $0,01$ festgehalten und $\mu$ entsprechend der jeweiligen Bedingung angepasst.
 
 ## Arbitrage-freier Preis einer europäischen Call-Option
 
