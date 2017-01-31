@@ -707,11 +707,11 @@ Nach der expliziten Formel, die von Black und Scholes 1973 gezeigt wurde, folgt 
 
 ```{r Black and Scholes solution}
 # Black-Scholes
-stepsScholes <- seq(1/nSteps, 1, 1/nSteps)
+stepsScholes <- seq(1/nSteps, TCall, 1/nSteps)
 
 # Calculate Black-Scholes values
-d1 <- 1/(sigma*sqrt(TCall)) * (log(X0/K)+(r+(0.5*sigma^2))*stepsScholes)
-d2 <- d1-sigma*sqrt(TCall)
+d1 <- 1/(sigma*sqrt(stepsScholes)) * (log(X0/K)+(r+(0.5*sigma^2))*stepsScholes)
+d2 <- d1-sigma*sqrt(stepsScholes)
 vecScholes <- X0*pnorm(d1) - K*exp(-r*stepsScholes)*pnorm(d2)
 
 # Get last value
